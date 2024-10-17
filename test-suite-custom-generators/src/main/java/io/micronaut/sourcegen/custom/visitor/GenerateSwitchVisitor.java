@@ -18,7 +18,6 @@ package io.micronaut.sourcegen.custom.visitor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.custom.example.GenerateSwitch;
@@ -27,7 +26,6 @@ import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.MethodDef;
-import io.micronaut.sourcegen.model.ObjectDef;
 import io.micronaut.sourcegen.model.TypeDef;
 
 import javax.lang.model.element.Modifier;
@@ -59,14 +57,14 @@ public final class GenerateSwitchVisitor implements TypeElementVisitor<GenerateS
                         resultType1,
                         Map.of(
                             ExpressionDef.constant("abc"), ExpressionDef.constant(1),
-                            ExpressionDef.constant("xyz"), ExpressionDef.constant(2),
-                            ExpressionDef.nullValue(), ExpressionDef.constant(3)
-                        )
+                            ExpressionDef.constant("xyz"), ExpressionDef.constant(2)
+                        ),
+                        ExpressionDef.constant(3)
                     ).returning()
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch1Def);
+        sourceGenerator.write(switch1Def, context, element);
 
         TypeDef resultType2 = TypeDef.of(TimeUnit.class);
         ClassDef switch2Def = ClassDef.builder(element.getPackageName() + ".Switch2")
@@ -78,14 +76,14 @@ public final class GenerateSwitchVisitor implements TypeElementVisitor<GenerateS
                         resultType2,
                         Map.of(
                             ExpressionDef.constant("abc"), ExpressionDef.constant(TimeUnit.SECONDS),
-                            ExpressionDef.constant("xyz"), ExpressionDef.constant(TimeUnit.MINUTES),
-                            ExpressionDef.nullValue(), ExpressionDef.constant(TimeUnit.HOURS)
-                        )
+                            ExpressionDef.constant("xyz"), ExpressionDef.constant(TimeUnit.MINUTES)
+                        ),
+                        ExpressionDef.constant(TimeUnit.HOURS)
                     ).returning()
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch2Def);
+        sourceGenerator.write(switch2Def, context, element);
 
         TypeDef resultType3 = TypeDef.of(TimeUnit.class);
         ClassDef switch3Def = ClassDef.builder(element.getPackageName() + ".Switch3")
@@ -102,37 +100,37 @@ public final class GenerateSwitchVisitor implements TypeElementVisitor<GenerateS
                                 resultType3,
                                 Map.of(
                                     ExpressionDef.constant(1), ExpressionDef.constant(TimeUnit.MILLISECONDS),
-                                    ExpressionDef.constant(2), ExpressionDef.constant(TimeUnit.NANOSECONDS),
-                                    ExpressionDef.nullValue(), ExpressionDef.constant(TimeUnit.MICROSECONDS)
-                                )
+                                    ExpressionDef.constant(2), ExpressionDef.constant(TimeUnit.NANOSECONDS)
+                                ),
+                                ExpressionDef.constant(TimeUnit.MICROSECONDS)
                             ),
-                            ExpressionDef.constant("xyz"), ExpressionDef.constant(TimeUnit.MINUTES),
-                            ExpressionDef.nullValue(), ExpressionDef.constant(TimeUnit.HOURS)
-                        )
+                            ExpressionDef.constant("xyz"), ExpressionDef.constant(TimeUnit.MINUTES)
+                        ),
+                        ExpressionDef.constant(TimeUnit.HOURS)
                     ).returning()
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch3Def);
+        sourceGenerator.write(switch3Def, context, element);
 
-        TypeDef resultType4 = TypeDef.of(Integer.class);
+        TypeDef.Primitive intType = TypeDef.Primitive.INT;
         ClassDef switch4Def = ClassDef.builder(element.getPackageName() + ".Switch4")
             .addMethod(MethodDef.builder("test").addParameter("param", String.class)
                 .addModifiers(Modifier.PUBLIC)
-                .returns(resultType4)
+                .returns(intType)
                 .build((self, parameterDefs) ->
                     parameterDefs.get(0).asStatementSwitch(
-                        resultType4,
+                        intType,
                         Map.of(
-                            ExpressionDef.constant("abc"), ExpressionDef.constant(1).returning(),
-                            ExpressionDef.constant("xyz"), ExpressionDef.constant(2).returning(),
-                            ExpressionDef.nullValue(), ExpressionDef.constant(3).returning()
+                            ExpressionDef.constant("abc"), intType.constant(1).returning(),
+                            ExpressionDef.constant("xyz"), intType.constant(2).returning(),
+                            ExpressionDef.nullValue(), intType.constant(3).returning()
                         )
                     )
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch4Def);
+        sourceGenerator.write(switch4Def, context, element);
 
         TypeDef resultType5 = TypeDef.of(TimeUnit.class);
         ClassDef switch5Def = ClassDef.builder(element.getPackageName() + ".Switch5")
@@ -151,7 +149,7 @@ public final class GenerateSwitchVisitor implements TypeElementVisitor<GenerateS
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch5Def);
+        sourceGenerator.write(switch5Def, context, element);
 
         TypeDef resultType6 = TypeDef.of(TimeUnit.class);
         ClassDef switch6Def = ClassDef.builder(element.getPackageName() + ".Switch6")
@@ -179,7 +177,7 @@ public final class GenerateSwitchVisitor implements TypeElementVisitor<GenerateS
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch6Def);
+        sourceGenerator.write(switch6Def, context, element);
 
         TypeDef resultType7 = TypeDef.of(TimeUnit.class);
         ClassDef switch7Def = ClassDef.builder(element.getPackageName() + ".Switch7")
@@ -199,18 +197,18 @@ public final class GenerateSwitchVisitor implements TypeElementVisitor<GenerateS
                                     ExpressionDef.constant(2), new ExpressionDef.SwitchYieldCase(
                                         resultType7,
                                         ExpressionDef.constant(TimeUnit.NANOSECONDS).returning()
-                                    ),
-                                    ExpressionDef.nullValue(), ExpressionDef.constant(TimeUnit.MICROSECONDS)
-                                )
+                                    )
+                                ),
+                                ExpressionDef.constant(TimeUnit.MICROSECONDS)
                             ),
-                            ExpressionDef.constant("xyz"), ExpressionDef.constant(TimeUnit.MINUTES),
-                            ExpressionDef.nullValue(), ExpressionDef.constant(TimeUnit.HOURS)
-                        )
+                            ExpressionDef.constant("xyz"), ExpressionDef.constant(TimeUnit.MINUTES)
+                        ),
+                        ExpressionDef.constant(TimeUnit.HOURS)
                     ).returning()
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch7Def);
+        sourceGenerator.write(switch7Def, context, element);
 
         TypeDef resultType8 = TypeDef.of(TimeUnit.class);
         ClassDef switch8Def = ClassDef.builder(element.getPackageName() + ".Switch8")
@@ -225,24 +223,32 @@ public final class GenerateSwitchVisitor implements TypeElementVisitor<GenerateS
                             ExpressionDef.constant("xyz"), new ExpressionDef.SwitchYieldCase(
                                 resultType8,
                                 ExpressionDef.constant(TimeUnit.MINUTES).returning()
-                            ),
-                            ExpressionDef.nullValue(), ExpressionDef.constant(TimeUnit.HOURS)
-                        )
+                            )
+                        ),
+                        ExpressionDef.constant(TimeUnit.HOURS)
                     ).returning()
                 ))
             .build();
 
-        writeObject(element, context, sourceGenerator, switch8Def);
+        sourceGenerator.write(switch8Def, context, element);
+
+        ClassDef switch9Def = ClassDef.builder(element.getPackageName() + ".Switch9")
+            .addMethod(MethodDef.builder("test").addParameter("param", intType)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(intType)
+                .build((self, parameterDefs) ->
+                    parameterDefs.get(0).asStatementSwitch(
+                        intType,
+                        Map.of(
+                            intType.constant(111), intType.constant(1).returning(),
+                            intType.constant(222), intType.constant(2).returning(),
+                            ExpressionDef.nullValue(), intType.constant(3).returning()
+                        )
+                    )
+                ))
+            .build();
+
+        sourceGenerator.write(switch9Def, context, element);
     }
 
-    private void writeObject(ClassElement element, VisitorContext context, SourceGenerator sourceGenerator, ObjectDef objectDef) {
-        context.visitGeneratedSourceFile(objectDef.getPackageName(), objectDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(objectDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
-    }
 }

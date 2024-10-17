@@ -17,6 +17,7 @@ package io.micronaut.sourcegen.example;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,5 +56,54 @@ class IfsPredicateTest {
         IfNonElseExpressionPredicate predicate = new IfNonElseExpressionPredicate();
         assertTrue(predicate.test(null));
         assertFalse(predicate.test(""));
+    }
+
+    @Test
+    public void testIfElse2() {
+        IfElsePredicate2 predicate = new IfElsePredicate2();
+        assertEquals(predicate.test(null), 1);
+        assertEquals(predicate.test(""), 2);
+    }
+
+    @Test
+    public void testIfExpressionElse() {
+        IfNonElseExpressionPredicate predicate = new IfNonElseExpressionPredicate();
+        assertTrue(predicate.test(null));
+        assertFalse(predicate.test(""));
+    }
+
+    @Test
+    public void testIfExpressionElse2() {
+        IfNonElseExpressionPredicate2 predicate = new IfNonElseExpressionPredicate2();
+        assertEquals(predicate.test(null), 1);
+        assertEquals(predicate.test(""), 2);
+    }
+
+    @Test
+    public void testIfArray() {
+        IfPredicateArray predicate = new IfPredicateArray();
+        assertTrue(predicate.test(null));
+        assertFalse(predicate.test(new String[0]));
+    }
+
+    @Test
+    public void testIfArrayGenerics() {
+        IfPredicateArrayGenerics<String> predicate = new IfPredicateArrayGenerics<String>();
+        assertTrue(predicate.test(null, "GG"));
+        assertFalse(predicate.test(new String[0], "GG"));
+    }
+
+    @Test
+    public void testPrimitive1() {
+        IfPredicatePrimitive1 predicate = new IfPredicatePrimitive1();
+        assertTrue(predicate.test(Integer.valueOf(1)));
+        assertFalse(predicate.test(Integer.valueOf(2)));
+    }
+
+    @Test
+    public void testPrimitive2() {
+        IfPredicatePrimitive2 predicate = new IfPredicatePrimitive2();
+        assertTrue(predicate.test(1));
+        assertFalse(predicate.test(2));
     }
 }

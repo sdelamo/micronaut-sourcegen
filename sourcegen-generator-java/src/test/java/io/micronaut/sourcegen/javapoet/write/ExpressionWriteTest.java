@@ -30,10 +30,10 @@ public class ExpressionWriteTest extends AbstractWriteTest {
     @Test
     public void returnStaticInvoke() throws IOException {
         ExpressionDef two = ExpressionDef.constant(
-            ClassElement.of(int.class), new TypeDef.Primitive("int"), "2"
+            ClassElement.of(int.class), TypeDef.Primitive.INT, "2"
         );
-        ExpressionDef valueOfTwo = ExpressionDef.invokeStatic(
-            STRING, "valueOf", List.of(two), STRING
+        ExpressionDef valueOfTwo = STRING.invokeStatic(
+            "valueOf", STRING, two
         );
         String result = writeMethodWithExpression(valueOfTwo);
 
@@ -45,9 +45,7 @@ public class ExpressionWriteTest extends AbstractWriteTest {
         ExpressionDef helloString = ExpressionDef.constant(
             ClassElement.of(String.class), STRING, "hello"
         );
-        ExpressionDef equals = ExpressionDef.invoke(
-            new VariableDef.This(ClassTypeDef.of("test.Test")),
-            "equals", List.of(helloString), new TypeDef.Primitive("boolean"));
+        ExpressionDef equals = new VariableDef.This().invoke("equals", TypeDef.Primitive.BOOLEAN, helloString);
         String result = writeMethodWithExpression(equals);
 
         assertEquals("this.equals(\"hello\")", result);
@@ -83,8 +81,8 @@ public class ExpressionWriteTest extends AbstractWriteTest {
     @Test
     public void returnCastedValue() throws IOException {
         ExpressionDef castedExpression = ExpressionDef
-            .constant(ClassElement.of(Double.TYPE), TypeDef.primitive("double"), 10.5)
-            .cast(TypeDef.primitive("float"));
+            .constant(ClassElement.of(Double.TYPE), TypeDef.Primitive.DOUBLE, 10.5)
+            .cast(TypeDef.Primitive.FLOAT);
         String result = writeMethodWithExpression(castedExpression);
 
         assertEquals("(float) (10.5d)", result);
@@ -158,7 +156,7 @@ public class ExpressionWriteTest extends AbstractWriteTest {
 
     @Test
     public void returnPrimitiveInitialization() throws IOException {
-        ExpressionDef intExpression = TypeDef.Primitive.INT.initialize(ExpressionDef.constant(0));
+        ExpressionDef intExpression = ExpressionDef.constant(0);
         String result = writeMethodWithExpression(intExpression);
 
         assertEquals("0", result);
@@ -166,7 +164,7 @@ public class ExpressionWriteTest extends AbstractWriteTest {
 
     @Test
     public void returnPrimitiveInitialization2() throws IOException {
-        ExpressionDef intExpression = TypeDef.Primitive.INT.initialize(0);
+        ExpressionDef intExpression = TypeDef.Primitive.INT.constant(0);
         String result = writeMethodWithExpression(intExpression);
 
         assertEquals("0", result);

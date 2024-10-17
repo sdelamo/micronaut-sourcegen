@@ -85,8 +85,8 @@ public final class AnnotationDef {
         Map<String, ClassElement> fieldTypes = annotationElement.getMethods().stream()
             .collect(Collectors.toMap(MethodElement::getName, MethodElement::getReturnType));
 
-        String annotationTypeName = annotation.getAnnotationName().replace("$", ".");
-        ClassTypeDef annotationType = ClassTypeDef.of(annotationTypeName);
+        // The other way to determine if the annotation is inner would be use the context to get the class element
+        ClassTypeDef annotationType = ClassTypeDef.of(annotation.getAnnotationName(), annotation.getAnnotationName().contains("$"));
         AnnotationDefBuilder builder = AnnotationDef.builder(annotationType);
         annotation.getConvertibleValues().asMap().forEach((key, value) ->
             copyAnnotationValue(value, fieldTypes.get(key), context)
@@ -123,12 +123,12 @@ public final class AnnotationDef {
             return Optional.of(value);
         } else if (requiredType.getName().equals("java.lang.Class")) {
             return context.getClassElement(value.toString()).map(type ->
-                new VariableDef.StaticField(TypeDef.of(type), "class", TypeDef.of(Class.class))
+                ClassTypeDef.of(type).getStaticField("class", TypeDef.of(Class.class))
             );
         } else {
             // Must be an enum
-            TypeDef type = ClassTypeDef.of(requiredType);
-            return Optional.of(new VariableDef.StaticField(type, value.toString(), type));
+            ClassTypeDef type = ClassTypeDef.of(requiredType);
+            return Optional.of(type.getStaticField(value.toString(), type));
         }
     }
 

@@ -18,6 +18,7 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.Experimental;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -47,6 +48,11 @@ public sealed class ObjectDefBuilder<ThisType>
         return thisInstance;
     }
 
+    public final ThisType addMethods(Collection<MethodDef> methods) {
+        this.methods.addAll(methods);
+        return thisInstance;
+    }
+
     public final ThisType addProperty(PropertyDef property) {
         properties.add(property);
         return thisInstance;
@@ -54,6 +60,11 @@ public sealed class ObjectDefBuilder<ThisType>
 
     public final ThisType addSuperinterface(TypeDef superinterface) {
         superinterfaces.add(superinterface);
+        return thisInstance;
+    }
+
+    public final ThisType addSuperinterfaces(Collection<TypeDef> superinterfaces) {
+        this.superinterfaces.addAll(superinterfaces);
         return thisInstance;
     }
 

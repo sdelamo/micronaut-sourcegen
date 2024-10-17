@@ -24,7 +24,7 @@ import io.micronaut.core.annotation.Experimental;
  * @since 1.0
  */
 @Experimental
-public sealed interface VariableDef extends ExpressionDef permits VariableDef.Field, VariableDef.Local, VariableDef.MethodParameter, VariableDef.StaticField, VariableDef.This {
+public sealed interface VariableDef extends ExpressionDef permits VariableDef.ExceptionVar, VariableDef.Field, VariableDef.Local, VariableDef.MethodParameter, VariableDef.StaticField, VariableDef.Super, VariableDef.This {
 
     /**
      * Assign this variable an expression.
@@ -33,7 +33,7 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Fi
      * @return The statement
      */
     default StatementDef assign(ExpressionDef expression) {
-        return new StatementDef.Assign(this, expression);
+        throw new UnsupportedOperationException("VariableDef " + getClass() + "  does not support assign");
     }
 
     /**
@@ -43,10 +43,7 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Fi
      * @return The statement
      */
     default StatementDef assign(ParameterDef parameterDef) {
-        return new StatementDef.Assign(
-            this,
-            new MethodParameter(parameterDef.name, parameterDef.getType())
-        );
+        return assign(new MethodParameter(parameterDef.name, parameterDef.getType()));
     }
 
     /**
@@ -59,6 +56,11 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Fi
      */
     @Experimental
     record Local(String name, TypeDef type) implements VariableDef {
+
+        @Override
+        public StatementDef assign(ExpressionDef expression) {
+            return new StatementDef.Assign(this, expression);
+        }
 
         /**
          * Define and assign the variable.
@@ -102,6 +104,21 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Fi
     record Field(ExpressionDef instance,
                  String name,
                  TypeDef type) implements VariableDef {
+
+        @Override
+        public StatementDef.PutField assign(ExpressionDef expression) {
+            return put(expression);
+        }
+
+        /**
+         * @param expression The expression
+         * @return The put expression
+         * @since 1.5
+         */
+        public StatementDef.PutField put(ExpressionDef expression) {
+            return new StatementDef.PutField(this, expression);
+        }
+
     }
 
     /**
@@ -114,20 +131,64 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Fi
      * @since 1.0
      */
     @Experimental
-    record StaticField(TypeDef ownerType,
+    record StaticField(ClassTypeDef ownerType,
                        String name,
                        TypeDef type) implements VariableDef {
+
+        /**
+         * @param expression The expression
+         * @return The put expression
+         * @since 1.5
+         */
+        public StatementDef.PutStaticField put(ExpressionDef expression) {
+            return new StatementDef.PutStaticField(this, expression);
+        }
+
     }
 
     /**
      * The variable of `this`.
      *
-     * @param type The type
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
-    record This(TypeDef type) implements VariableDef {
+    record This() implements VariableDef {
+
+        public Super superRef() {
+            return new Super(TypeDef.SUPER);
+        }
+
+        public Super superRef(ClassTypeDef superType) {
+            return new Super(superType);
+        }
+
+        @Override
+        public TypeDef type() {
+            return TypeDef.THIS;
+        }
+    }
+
+    /**
+     * The variable of `super`.
+     *
+     * @param type The type
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record Super(ClassTypeDef type) implements VariableDef {
+    }
+
+    /**
+     * The exception that is part of Try-Catch block.
+     *
+     * @param type The exception type
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record ExceptionVar(ClassTypeDef type) implements VariableDef {
     }
 
 }

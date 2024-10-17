@@ -18,7 +18,6 @@ package io.micronaut.sourcegen.custom.visitor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.custom.example.GenerateIfsPredicate;
@@ -27,7 +26,6 @@ import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.MethodDef;
-import io.micronaut.sourcegen.model.ObjectDef;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
@@ -61,57 +59,53 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
             .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
                 .addModifiers(Modifier.PUBLIC)
                 .overrides()
-                .addStatement(new StatementDef.If(
-                    new VariableDef.MethodParameter(PARAM, paramType).isNull(),
-                    ExpressionDef.trueValue().returning()
-                ))
-                .addStatement(ExpressionDef.falseValue().returning())
                 .returns(boolean.class)
-                .build())
+                .build((aThis, methodParameters) -> StatementDef.multi(
+                    methodParameters.get(0).isNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    TypeDef.Primitive.FALSE.returning()
+                )))
             .build();
 
-        writeObject(element, context, sourceGenerator, ifPredicateDef);
+        sourceGenerator.write(ifPredicateDef, context, element);
 
         ClassDef ifNonPredicateDef = ClassDef.builder(element.getPackageName() + ".IfNonPredicate")
             .addSuperinterface(TypeDef.parameterized(implementsType, paramType))
             .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
                 .addModifiers(Modifier.PUBLIC)
                 .overrides()
-                .addStatement(
-                    new VariableDef.MethodParameter(PARAM, paramType)
-                        .isNonNull()
-                        .asConditionIf(ExpressionDef.trueValue().returning())
-                )
-                .addStatement(ExpressionDef.falseValue().returning())
                 .returns(boolean.class)
-                .build())
+                .build((aThis, methodParameters) -> StatementDef.multi(
+                    methodParameters.get(0).isNonNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    TypeDef.Primitive.FALSE.returning()
+                )))
             .build();
 
-        writeObject(element, context, sourceGenerator, ifNonPredicateDef);
+        sourceGenerator.write(ifNonPredicateDef, context, element);
 
         ClassDef ifElsePredicateDef = ClassDef.builder(element.getPackageName() + ".IfElsePredicate")
             .addSuperinterface(TypeDef.parameterized(implementsType, paramType))
             .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
                 .addModifiers(Modifier.PUBLIC)
                 .overrides()
-                .addStatement(new StatementDef.IfElse(
-                    new ExpressionDef.Condition(
-                        " == ",
-                        new VariableDef.MethodParameter(PARAM, paramType),
-                        new ExpressionDef.Constant(TypeDef.of(Object.class), null)
-                    ),
-                    new StatementDef.Return(
-                        new ExpressionDef.Constant(TypeDef.of(boolean.class), true)
-                    ),
-                    new StatementDef.Return(
-                        new ExpressionDef.Constant(TypeDef.of(boolean.class), false)
-                    )
-                ))
                 .returns(boolean.class)
-                .build())
+                .build((aThis, methodParameters)
+                    -> methodParameters.get(0).isNull().asConditionIfElse(TypeDef.Primitive.TRUE.returning(), TypeDef.Primitive.FALSE.returning())))
             .build();
 
-        writeObject(element, context, sourceGenerator, ifElsePredicateDef);
+        sourceGenerator.write(ifElsePredicateDef, context, element);
+
+        ClassDef ifElsePredicateDef2 = ClassDef.builder(element.getPackageName() + ".IfElsePredicate2")
+            .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(int.class)
+                .build((aThis, methodParameters) -> methodParameters.get(0).isNull()
+                    .asConditionIfElse(
+                        TypeDef.Primitive.INT.constant(1).returning(),
+                        TypeDef.Primitive.INT.constant(2).returning()
+                    )))
+            .build();
+
+        sourceGenerator.write(ifElsePredicateDef2, context, element);
 
         ClassDef ifNonElsePredicateDef = ClassDef.builder(element.getPackageName() + ".IfNonElsePredicate")
             .addSuperinterface(TypeDef.parameterized(implementsType, paramType))
@@ -130,13 +124,11 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
                 .build())
             .build();
 
-        writeObject(element, context, sourceGenerator, ifNonElsePredicateDef);
+        sourceGenerator.write(ifNonElsePredicateDef, context, element);
 
         ClassDef ifNonElseExpressionPredicateDef = ClassDef.builder(element.getPackageName() + ".IfNonElseExpressionPredicate")
-            .addSuperinterface(TypeDef.parameterized(implementsType, paramType))
             .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
                 .addModifiers(Modifier.PUBLIC)
-                .overrides()
                 .returns(boolean.class)
                 .build((self, methodParameters) -> methodParameters.get(0).isNull().asConditionIfElse(
                     ExpressionDef.trueValue(),
@@ -145,17 +137,77 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
             )
             .build();
 
-        writeObject(element, context, sourceGenerator, ifNonElseExpressionPredicateDef);
+        sourceGenerator.write(ifNonElseExpressionPredicateDef, context, element);
+
+        ClassDef ifNonElseExpressionPredicateDef2 = ClassDef.builder(element.getPackageName() + ".IfNonElseExpressionPredicate2")
+            .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(int.class)
+                .build((self, methodParameters) -> methodParameters.get(0).isNull().asConditionIfElse(
+                    TypeDef.Primitive.INT.constant(1),
+                    TypeDef.Primitive.INT.constant(2)
+                ).returning())
+            )
+            .build();
+
+        sourceGenerator.write(ifNonElseExpressionPredicateDef2, context, element);
+
+        ClassDef ifPredicateArray = ClassDef.builder(element.getPackageName() + ".IfPredicateArray")
+            .addSuperinterface(TypeDef.parameterized(implementsType, TypeDef.STRING.array()))
+            .addMethod(MethodDef.builder("test").addParameter(PARAM, TypeDef.STRING.array())
+                .addModifiers(Modifier.PUBLIC)
+                .overrides()
+                .returns(boolean.class)
+                .build((aThis, methodParameters) -> StatementDef.multi(
+                    methodParameters.get(0).isNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    TypeDef.Primitive.FALSE.returning()
+                )))
+            .build();
+
+        sourceGenerator.write(ifPredicateArray, context, element);
+
+        TypeDef.TypeVariable variableV = TypeDef.variable("V");
+
+        ClassDef ifPredicateArrayGenerics = ClassDef.builder(element.getPackageName() + ".IfPredicateArrayGenerics")
+            .addTypeVariable(variableV)
+            .addMethod(MethodDef.builder("test")
+                .addParameter(TypeDef.STRING.array())
+                .addParameter(variableV)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(boolean.class)
+                .build((aThis, methodParameters) -> StatementDef.multi(
+                    methodParameters.get(0).isNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    TypeDef.Primitive.FALSE.returning()
+                )))
+            .build();
+
+        sourceGenerator.write(ifPredicateArrayGenerics, context, element);
+
+        ClassDef ifPredicatePrimitive1 = ClassDef.builder(element.getPackageName() + ".IfPredicatePrimitive1")
+            .addTypeVariable(variableV)
+            .addMethod(MethodDef.builder("test")
+                .addParameter(TypeDef.of(Integer.class))
+                .addModifiers(Modifier.PUBLIC)
+                .returns(boolean.class)
+                .build((aThis, methodParameters) ->
+                    methodParameters.get(0).equalsStructurally(ExpressionDef.constant(1)).returning())
+            )
+            .build();
+
+        sourceGenerator.write(ifPredicatePrimitive1, context, element);
+
+        ClassDef ifPredicatePrimitive2 = ClassDef.builder(element.getPackageName() + ".IfPredicatePrimitive2")
+            .addTypeVariable(variableV)
+            .addMethod(MethodDef.builder("test")
+                .addParameter(TypeDef.Primitive.INT)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(boolean.class)
+                .build((aThis, methodParameters) ->
+                    methodParameters.get(0).equalsStructurally(ExpressionDef.constant(Integer.valueOf(1))).returning())
+            )
+            .build();
+
+        sourceGenerator.write(ifPredicatePrimitive2, context, element);
     }
 
-    private void writeObject(ClassElement element, VisitorContext context, SourceGenerator sourceGenerator, ObjectDef objectDef) {
-        context.visitGeneratedSourceFile(objectDef.getPackageName(), objectDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(objectDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
-    }
 }

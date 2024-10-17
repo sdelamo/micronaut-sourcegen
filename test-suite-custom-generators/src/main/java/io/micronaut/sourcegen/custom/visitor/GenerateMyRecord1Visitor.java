@@ -73,14 +73,7 @@ public final class GenerateMyRecord1Visitor implements TypeElementVisitor<Genera
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .returns(builderDef)
                 .addStatement(
-                    new StatementDef.Return(
-                        ExpressionDef.invokeStatic(
-                            builderDef,
-                            "builder",
-                            List.of(),
-                            builderDef
-                        )
-                    )
+                    builderDef.invokeStatic("builder", builderDef).returning()
                 )
                 .build())
             .addProperty(
@@ -122,12 +115,7 @@ public final class GenerateMyRecord1Visitor implements TypeElementVisitor<Genera
             .addProperty(
                 PropertyDef.builder("tags")
                     .addModifiers(Modifier.PUBLIC)
-                    .ofType(new ClassTypeDef.Parameterized(
-                        ClassTypeDef.of(List.class),
-                        List.of(
-                            TypeDef.wildcard()
-                        )
-                    ))
+                    .ofType(TypeDef.parameterized(List.class, TypeDef.wildcard()))
                     .build()
             )
             .build();
@@ -136,14 +124,7 @@ public final class GenerateMyRecord1Visitor implements TypeElementVisitor<Genera
         if (sourceGenerator == null) {
             return;
         }
-        context.visitGeneratedSourceFile(beanDef.getPackageName(), beanDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(beanDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
+        sourceGenerator.write(beanDef, context, element);
     }
 
 }

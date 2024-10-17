@@ -38,6 +38,7 @@ public final class ClassDef extends ObjectDef {
     private final List<FieldDef> fields;
     private final List<TypeDef.TypeVariable> typeVariables;
     private final ClassTypeDef superclass;
+    private final StatementDef staticInitializer;
 
     private ClassDef(String name,
                      EnumSet<Modifier> modifiers,
@@ -49,11 +50,21 @@ public final class ClassDef extends ObjectDef {
                      List<TypeDef.TypeVariable> typeVariables,
                      List<TypeDef> superinterfaces,
                      ClassTypeDef superclass,
-                     List<ObjectDef> innerTypes) {
+                     List<ObjectDef> innerTypes,
+                     StatementDef staticInitializer) {
         super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
         this.typeVariables = typeVariables;
         this.superclass = superclass;
+        this.staticInitializer = staticInitializer;
+    }
+
+    @Override
+    public ClassTypeDef asTypeDef() {
+        if (typeVariables.isEmpty()) {
+            return super.asTypeDef();
+        }
+        return TypeDef.parameterized(super.asTypeDef(), typeVariables.toArray(new TypeDef.TypeVariable[0]));
     }
 
     public static ClassDefBuilder builder(String name) {
@@ -123,6 +134,11 @@ public final class ClassDef extends ObjectDef {
         return false;
     }
 
+    @Nullable
+    public StatementDef getStaticInitializer() {
+        return staticInitializer;
+    }
+
     @Override
     public String toString() {
         return "ClassDef{" + "name='" + name + '\'' + '}';
@@ -140,6 +156,7 @@ public final class ClassDef extends ObjectDef {
         private final List<FieldDef> fields = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
         private ClassTypeDef superclass;
+        private StatementDef staticInitializer;
 
         private ClassDefBuilder(String name) {
             super(name);
@@ -160,8 +177,13 @@ public final class ClassDef extends ObjectDef {
             return this;
         }
 
+        public ClassDefBuilder addStaticInitializer(StatementDef staticInitializer) {
+            this.staticInitializer = staticInitializer;
+            return this;
+        }
+
         public ClassDef build() {
-            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes);
+            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
         }
 
         /**
@@ -173,7 +195,7 @@ public final class ClassDef extends ObjectDef {
          */
         public ClassDefBuilder addConstructor(Collection<ParameterDef> parameterDefs, Modifier... modifiers) {
             return this.addMethod(
-                MethodDef.constructor(ClassTypeDef.of(name), parameterDefs, modifiers)
+                MethodDef.constructor(parameterDefs, modifiers)
             );
         }
 
@@ -192,7 +214,7 @@ public final class ClassDef extends ObjectDef {
                 constructorParameters.add(ParameterDef.of(field.getName(), field.getType()));
             }
             return this.addMethod(
-                MethodDef.constructor(ClassTypeDef.of(name), constructorParameters, modifiers)
+                MethodDef.constructor(constructorParameters, modifiers)
             );
         }
 
@@ -204,7 +226,7 @@ public final class ClassDef extends ObjectDef {
          */
         public ClassDefBuilder addNoFieldsConstructor(Modifier... modifiers) {
             return this.addMethod(
-                MethodDef.constructor(ClassTypeDef.of(name), Collections.emptyList(), modifiers)
+                MethodDef.constructor(Collections.emptyList(), modifiers)
             );
         }
 

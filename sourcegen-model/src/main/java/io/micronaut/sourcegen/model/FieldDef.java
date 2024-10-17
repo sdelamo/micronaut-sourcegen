@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 import javax.lang.model.element.Modifier;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -49,6 +50,14 @@ public final class FieldDef extends AbstractElement {
         return new FieldDefBuilder(name);
     }
 
+    public static FieldDefBuilder builder(String name, TypeDef type) {
+        return new FieldDefBuilder(name, type);
+    }
+
+    public static FieldDefBuilder builder(String name, Class<?> type) {
+        return new FieldDefBuilder(name, TypeDef.of(type));
+    }
+
     public TypeDef getType() {
         return type;
     }
@@ -73,12 +82,19 @@ public final class FieldDef extends AbstractElement {
             super(name);
         }
 
+        private FieldDefBuilder(String name, TypeDef type) {
+            this(name);
+            this.type = type;
+        }
+
         public FieldDefBuilder ofType(TypeDef type) {
             this.type = type;
             return this;
         }
 
         public FieldDef build() {
+            Objects.requireNonNull(name, "Name cannot be null");
+            Objects.requireNonNull(type, "Type cannot be null");
             return new FieldDef(name, modifiers, type, initializer, annotations, javadoc);
         }
 

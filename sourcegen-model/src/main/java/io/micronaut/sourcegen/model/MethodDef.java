@@ -18,15 +18,19 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.inject.ast.MethodElement;
 
 import javax.lang.model.element.Modifier;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * The method definition.
@@ -37,7 +41,7 @@ import java.util.function.BiFunction;
 @Experimental
 public final class MethodDef extends AbstractElement {
 
-    private static final String CONSTRUCTOR = "<init>";
+    public static final String CONSTRUCTOR = "<init>";
     private final TypeDef returnType;
     private final List<ParameterDef> parameters;
     private final List<StatementDef> statements;
@@ -49,9 +53,10 @@ public final class MethodDef extends AbstractElement {
               List<ParameterDef> parameters,
               List<StatementDef> statements,
               List<AnnotationDef> annotations,
-              List<String> javadoc, boolean override) {
+              List<String> javadoc,
+              boolean override) {
         super(name, modifiers, annotations, javadoc);
-        this.returnType = returnType;
+        this.returnType = Objects.requireNonNullElse(returnType, TypeDef.VOID);
         this.parameters = Collections.unmodifiableList(parameters);
         this.statements = statements;
         this.override = override;
@@ -67,26 +72,76 @@ public final class MethodDef extends AbstractElement {
     /**
      * Create a new constructor with parameters assigned to fields with the same name.
      *
-     * @param thisType      The type to be constructed
      * @param parameterDefs The parameters of the body
      * @param modifiers     The constructor modifiers
      * @return A new constructor with a body.
      */
-    public static MethodDef constructor(ClassTypeDef thisType, Collection<ParameterDef> parameterDefs, Modifier... modifiers) {
+    public static MethodDef constructor(Collection<ParameterDef> parameterDefs, Modifier... modifiers) {
         MethodDefBuilder builder = MethodDef.builder(CONSTRUCTOR);
+        int paramIndex = 0;
         for (ParameterDef parameterDef : parameterDefs) {
             builder.addParameter(parameterDef);
-            builder.addStatement(new StatementDef.Assign(
-                new VariableDef.Field(
-                    new VariableDef.This(thisType),
-                    parameterDef.getName(),
-                    parameterDef.getType()
-                ),
-                parameterDef.asExpression()
-            ));
+            int finalParamIndex = paramIndex;
+            builder.addStatement((aThis, methodParameters) -> aThis.field(parameterDef.getName(), parameterDef.getType())
+                .put(methodParameters.get(finalParamIndex)));
+            paramIndex++;
         }
         builder.addModifiers(modifiers);
         return builder.build();
+    }
+
+    public static MethodDef of(MethodElement methodElement) {
+        return MethodDef.builder(methodElement.getName())
+            .addParameters(Arrays.stream(methodElement.getSuspendParameters()).map(p -> TypeDef.erasure(p.getType())).toList())
+            .returns(methodElement.isSuspend() ? TypeDef.OBJECT : TypeDef.erasure(methodElement.getReturnType()))
+            .build();
+    }
+
+    public static MethodDef of(Method method) {
+        return MethodDef.builder(method.getName())
+            .addParameters(Arrays.stream(method.getParameters()).map(p -> TypeDef.of(p.getType())).toList())
+            .returns(TypeDef.of(method.getReturnType()))
+            .build();
+    }
+
+    public static MethodDefBuilder override(MethodElement methodElement) {
+        return MethodDef.builder(methodElement.getName())
+            .addModifiers(toOverrideModifiers(methodElement))
+            .addParameters(Arrays.stream(methodElement.getSuspendParameters()).map(p -> TypeDef.erasure(p.getType())).toList())
+            .returns(methodElement.isSuspend() ? TypeDef.OBJECT : TypeDef.erasure(methodElement.getReturnType()));
+    }
+
+    public static MethodDefBuilder override(Method method) {
+        return MethodDef.builder(method.getName())
+            .addModifiers(toOverrideModifiers(method.getModifiers()))
+            .addParameters(Arrays.stream(method.getParameters()).map(p -> TypeDef.of(p.getType())).toList())
+            .returns(TypeDef.of(method.getReturnType()));
+    }
+
+    private static Modifier[] toOverrideModifiers(int modifiers) {
+        List<Modifier> modifiersList = new ArrayList<>();
+        if (java.lang.reflect.Modifier.isPublic(modifiers)) {
+            modifiersList.add(Modifier.PUBLIC);
+        }
+        if (java.lang.reflect.Modifier.isProtected(modifiers)) {
+            modifiersList.add(Modifier.PROTECTED);
+        }
+        return modifiersList.toArray(new Modifier[0]);
+    }
+
+    private static Modifier[] toOverrideModifiers(MethodElement methodElement) {
+        List<Modifier> modifiersList = new ArrayList<>();
+        if (methodElement.isPublic()) {
+            modifiersList.add(Modifier.PUBLIC);
+        }
+        if (methodElement.isProtected()) {
+            modifiersList.add(Modifier.PROTECTED);
+        }
+        return modifiersList.toArray(new Modifier[0]);
+    }
+
+    public boolean isDefaultConstructor() {
+        return CONSTRUCTOR.equals(getName()) && parameters.isEmpty();
     }
 
     public TypeDef getReturnType() {
@@ -138,6 +193,18 @@ public final class MethodDef extends AbstractElement {
         return new MethodDefBuilder(name);
     }
 
+    @Override
+    public String toString() {
+        return "MethodDef{" +
+            "name='" + name + '\'' +
+            ", modifiers=" + modifiers +
+            ", returnType=" + returnType +
+            ", parameters=" + parameters +
+            ", statements=" + statements +
+            ", override=" + override +
+            '}';
+    }
+
     /**
      * The method builder definition.
      *
@@ -149,6 +216,7 @@ public final class MethodDef extends AbstractElement {
 
         private final List<ParameterDef> parameters = new ArrayList<>();
         private TypeDef returnType;
+        private final List<BodyBuilder> bodyBuilders = new ArrayList<>();
         private final List<StatementDef> statements = new ArrayList<>();
         private boolean overrides;
 
@@ -197,6 +265,10 @@ public final class MethodDef extends AbstractElement {
             return addParameter(parameterDef);
         }
 
+        public MethodDefBuilder addParameter(TypeDef type) {
+            return addParameter("parameter" + (parameters.size() + 1), type);
+        }
+
         public MethodDefBuilder addParameter(ParameterDef parameterDef) {
             Objects.requireNonNull(parameterDef, "Parameter cannot be null");
             parameters.add(parameterDef);
@@ -205,6 +277,32 @@ public final class MethodDef extends AbstractElement {
 
         public MethodDefBuilder addParameter(String name, Class<?> type) {
             return addParameter(name, TypeDef.of(type));
+        }
+
+        public MethodDefBuilder addParameter(Class<?> type) {
+            return addParameter(TypeDef.of(type));
+        }
+
+        public MethodDefBuilder addParameters(Class<?>... types) {
+            for (Class<?> type : types) {
+                addParameter(type);
+            }
+            return this;
+        }
+
+        public MethodDefBuilder addParameters(TypeDef... types) {
+            return addParameters(List.of(types));
+        }
+
+        public MethodDefBuilder addParameters(List<TypeDef> types) {
+            for (TypeDef type : types) {
+                addParameter(type);
+            }
+            return this;
+        }
+
+        public MethodDefBuilder addStaticStatement(Function<List<VariableDef.MethodParameter>, StatementDef> bodyBuilder) {
+            return addStatement((aThis, methodParameters) -> bodyBuilder.apply(methodParameters));
         }
 
         public MethodDefBuilder addStatement(StatementDef statement) {
@@ -216,34 +314,70 @@ public final class MethodDef extends AbstractElement {
             return this;
         }
 
+        public MethodDefBuilder addStatement(BodyBuilder bodyBuilder) {
+            bodyBuilders.add(bodyBuilder);
+            return this;
+        }
+
         public MethodDefBuilder addStatements(Collection<StatementDef> newStatements) {
             statements.addAll(newStatements);
             return this;
         }
 
         public MethodDef build() {
-            return build((self, parameterDefs) -> null);
-        }
-
-        public MethodDef build(BiFunction<VariableDef.This, List<VariableDef.MethodParameter>, StatementDef> bodyBuilder) {
             List<VariableDef.MethodParameter> variables = parameters.stream()
                 .map(ParameterDef::asVariable)
                 .toList();
-            StatementDef statement = bodyBuilder.apply(new VariableDef.This(TypeDef.THIS), variables);
-            if (statement != null) {
-                addStatement(statement);
-                if (returnType == null && !statements.isEmpty()) {
-                    StatementDef lastStatement = statements.get(statements.size() - 1);
-                    if (lastStatement instanceof StatementDef.Return aReturn) {
-                        returnType = aReturn.expression().type();
-                    }
+            for (BodyBuilder bodyBuilder : bodyBuilders) {
+                StatementDef statement = bodyBuilder.apply(new VariableDef.This(), variables);
+                if (statement != null) {
+                    addStatement(statement);
+                }
+            }
+            if (returnType == null && !statements.isEmpty()) {
+                StatementDef lastStatement = statements.get(statements.size() - 1);
+                if (lastStatement instanceof StatementDef.Return aReturn) {
+                    returnType = aReturn.expression().type();
+                }
+                if (lastStatement instanceof StatementDef.Try aTry) {
+                    returnType = findReturnType(aTry);
                 }
             }
             if (returnType == null && !name.equals(CONSTRUCTOR)) {
-                throw new IllegalStateException("Return type of method: " + name + " not specified!");
+                returnType = TypeDef.VOID;
             }
             return new MethodDef(name, modifiers, returnType, parameters, statements, annotations, javadoc, overrides);
         }
 
+        private TypeDef findReturnType(StatementDef statement) {
+            if (statement instanceof StatementDef.Return aReturn) {
+                return aReturn.expression().type();
+            }
+            if (statement instanceof StatementDef.Try aTry) {
+                return findReturnType(aTry.statement());
+            }
+            return null;
+        }
+
+        public MethodDef build(BodyBuilder bodyBuilder) {
+            bodyBuilders.add(bodyBuilder);
+            return build();
+        }
+
+        public MethodDef buildStatic(Function<List<VariableDef.MethodParameter>, StatementDef> bodyBuilder) {
+            modifiers.add(Modifier.STATIC);
+            bodyBuilders.add((aThis, methodParameters) -> bodyBuilder.apply(methodParameters));
+            return build();
+        }
+
+    }
+
+    /**
+     * The body builder.
+     *
+     * @author Denis Stepanov
+     * @since 1.4
+     */
+    public interface BodyBuilder extends BiFunction<VariableDef.This, List<VariableDef.MethodParameter>, StatementDef> {
     }
 }

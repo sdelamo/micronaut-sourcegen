@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation(mn.micronaut.core.processor)
+    compileOnly(mn.micronaut.core.processor)
 }

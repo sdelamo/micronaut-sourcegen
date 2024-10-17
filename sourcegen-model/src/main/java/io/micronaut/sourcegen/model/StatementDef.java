@@ -17,10 +17,13 @@ package io.micronaut.sourcegen.model;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * The statement definition.
@@ -29,7 +32,7 @@ import java.util.Map;
  * @since 1.0
  */
 @Experimental
-public sealed interface StatementDef permits ExpressionDef.CallInstanceMethod, ExpressionDef.CallStaticMethod, StatementDef.Assign, StatementDef.DefineAndAssign, StatementDef.If, StatementDef.IfElse, StatementDef.Multi, StatementDef.Return, StatementDef.Switch, StatementDef.Throw, StatementDef.While {
+public sealed interface StatementDef permits ExpressionDef.InvokeInstanceMethod, ExpressionDef.InvokeStaticMethod, StatementDef.Assign, StatementDef.DefineAndAssign, StatementDef.If, StatementDef.IfElse, StatementDef.Multi, StatementDef.PutField, StatementDef.PutStaticField, StatementDef.Return, StatementDef.Switch, StatementDef.Synchronized, StatementDef.Throw, StatementDef.Try, StatementDef.While {
 
     /**
      * The helper method to turn this statement into a multi statement.
@@ -50,6 +53,27 @@ public sealed interface StatementDef permits ExpressionDef.CallInstanceMethod, E
      */
     default List<StatementDef> flatten() {
         return List.of(this);
+    }
+
+    /**
+     * Try statement.
+     *
+     * @return The try statement
+     * @since 1.5
+     */
+    default Try doTry() {
+        return new Try(this);
+    }
+
+    /**
+     * Try statement.
+     *
+     * @param statement The statement to try
+     * @return The try statement
+     * @since 1.5
+     */
+    static Try doTry(StatementDef statement) {
+        return new Try(statement);
     }
 
     /**
@@ -97,12 +121,12 @@ public sealed interface StatementDef permits ExpressionDef.CallInstanceMethod, E
     /**
      * The throw statement.
      *
-     * @param variableDef The exception
+     * @param expression The exception expression
      * @author Denis Stepanov
      * @since 1.2
      */
     @Experimental
-    record Throw(ExpressionDef variableDef) implements StatementDef {
+    record Throw(ExpressionDef expression) implements StatementDef {
     }
 
     /**
@@ -113,7 +137,21 @@ public sealed interface StatementDef permits ExpressionDef.CallInstanceMethod, E
      * @since 1.0
      */
     @Experimental
-    record Return(ExpressionDef expression) implements StatementDef {
+    record Return(@Nullable ExpressionDef expression) implements StatementDef {
+
+        /**
+         * Validate the return of the method.
+         * @param method The method
+         */
+        public void validate(MethodDef method) {
+            if ((expression == null || expression.type().equals(TypeDef.VOID)) && !method.getReturnType().equals(TypeDef.VOID)) {
+                throw new IllegalStateException("The return expression returns VOID but method: " + method.getName() + " doesn't return VOID (" + method.getReturnType() + ")!");
+            }
+            if (expression != null && !expression.type().equals(TypeDef.VOID) && method.getReturnType().equals(TypeDef.VOID)) {
+                throw new IllegalStateException("The return expression (" + expression.type() + ") doesn't returns VOID but method: " + method.getName() + " returns VOID!");
+            }
+        }
+
     }
 
     /**
@@ -125,12 +163,38 @@ public sealed interface StatementDef permits ExpressionDef.CallInstanceMethod, E
      * @since 1.0
      */
     @Experimental
-    record Assign(VariableDef variable,
+    record Assign(VariableDef.Local variable,
                   ExpressionDef expression) implements StatementDef {
     }
 
     /**
-     * The local variable definition and assigment statement.
+     * The put field expression.
+     *
+     * @param field   The Field
+     * @param expression The expression
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record PutField(VariableDef.Field field,
+                    ExpressionDef expression) implements StatementDef {
+    }
+
+    /**
+     * The set a static field expression.
+     *
+     * @param field      The field
+     * @param expression The expression
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record PutStaticField(VariableDef.StaticField field,
+                          ExpressionDef expression) implements StatementDef {
+    }
+
+    /**
+     * The local variable definition and assignment statement.
      *
      * @param variable   The local variable
      * @param expression The expression
@@ -168,15 +232,17 @@ public sealed interface StatementDef permits ExpressionDef.CallInstanceMethod, E
      * The switch statement.
      * Note: null constant or null value represents a default case.
      *
-     * @param expression The switch expression
-     * @param type       The switch type
-     * @param cases      The cases
+     * @param expression  The switch expression
+     * @param type        The switch type
+     * @param cases       The cases
+     * @param defaultCase The default case
      * @since 1.2
      */
     @Experimental
     record Switch(ExpressionDef expression,
                   TypeDef type,
-                  Map<ExpressionDef.Constant, StatementDef> cases) implements StatementDef {
+                  Map<ExpressionDef.Constant, StatementDef> cases,
+                  @Nullable StatementDef defaultCase) implements StatementDef {
     }
 
     /**
@@ -188,6 +254,67 @@ public sealed interface StatementDef permits ExpressionDef.CallInstanceMethod, E
      */
     @Experimental
     record While(ExpressionDef expression, StatementDef statement) implements StatementDef {
+    }
+
+    /**
+     * The try statement.
+     *
+     * @param statement        The try statement
+     * @param catches          The catches
+     * @param finallyStatement The finally statement
+     * @since 1.5
+     */
+    @Experimental
+    record Try(StatementDef statement,
+               List<Catch> catches,
+               @Nullable StatementDef finallyStatement) implements StatementDef {
+
+        public Try(StatementDef statement) {
+            this(statement, List.of(), null);
+        }
+
+        public Try doCatch(Class<?> exception, Function<VariableDef.ExceptionVar, StatementDef> catchBlock) {
+            return doCatch(ClassTypeDef.of(exception), catchBlock);
+        }
+
+        public Try doCatch(ClassTypeDef exception, Function<VariableDef.ExceptionVar, StatementDef> catchBlock) {
+            return new Try(statement,
+                CollectionUtils.concat(
+                    catches,
+                    new Catch(exception, catchBlock.apply(new VariableDef.ExceptionVar(exception)))
+                ),
+                finallyStatement);
+        }
+
+        public Try doFinally(StatementDef finallyStatement) {
+            if (this.finallyStatement != null) {
+                throw new IllegalStateException("Finally statement already exists!");
+            }
+            return new Try(statement, catches, finallyStatement);
+        }
+
+        /**
+         * The catch.
+         *
+         * @param exception The exception
+         * @param statement The catch statement
+         * @since 1.2
+         */
+        @Experimental
+        public record Catch(ClassTypeDef exception, StatementDef statement) {
+        }
+
+    }
+
+    /**
+     * The synchronized statement.
+     *
+     * @param monitor   The monitor
+     * @param statement The statement to be synchronized
+     * @since 1.5
+     */
+    @Experimental
+    record Synchronized(ExpressionDef monitor, StatementDef statement) implements StatementDef {
     }
 
 }

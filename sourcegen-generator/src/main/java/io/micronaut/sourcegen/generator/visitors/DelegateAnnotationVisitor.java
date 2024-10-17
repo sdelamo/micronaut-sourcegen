@@ -127,19 +127,8 @@ public final class DelegateAnnotationVisitor implements TypeElementVisitor<Deleg
 
             ClassDef builderDef = delegate.build();
             processed.add(element.getName());
-            context.visitGeneratedSourceFile(
-                builderDef.getPackageName(),
-                builderDef.getSimpleName(),
-                element
-            ).ifPresent(sourceFile -> {
-                try {
-                    sourceFile.write(
-                        writer -> sourceGenerator.write(builderDef, writer)
-                    );
-                } catch (Exception e) {
-                    throw new ProcessingException(element, "Failed to generate a delegate: " + e.getMessage(), e);
-                }
-            });
+
+            sourceGenerator.write(builderDef, context, element);
         } catch (ProcessingException e) {
             throw e;
         } catch (Exception e) {
@@ -173,7 +162,7 @@ public final class DelegateAnnotationVisitor implements TypeElementVisitor<Deleg
                 methodBuilder.addParameter(parameter.getName(), TypeDef.of(parameter.getGenericType()));
             }
             builder.addMethod(methodBuilder.build((aThis, methodParameters) -> {
-                ExpressionDef.CallInstanceMethod delegateInvocation = aThis.field(delegateField)
+                ExpressionDef.InvokeInstanceMethod delegateInvocation = aThis.field(delegateField)
                     .invoke(method.getName(), TypeDef.of(method.getGenericReturnType()), methodParameters);
                 if (method.getReturnType().isVoid()) {
                     return delegateInvocation;

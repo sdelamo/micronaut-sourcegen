@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.model;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 
@@ -38,7 +39,7 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
 
     ObjectDef(
             String name, Set<Modifier> modifiers, List<AnnotationDef> annotations,
-            List<String> javadoc, List<MethodDef> methods,  List<PropertyDef> properties, 
+            List<String> javadoc, List<MethodDef> methods,  List<PropertyDef> properties,
             List<TypeDef> superinterfaces,
             List<ObjectDef> innerTypes
     ) {
@@ -80,6 +81,41 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
      */
     public ClassTypeDef asTypeDef() {
         return ClassTypeDef.of(getName());
+    }
+
+    /**
+     * Get the actual contextual type.
+     *
+     * @param typeDef The type
+     * @return The contextual type or original type
+     * @since 1.5
+     */
+    public TypeDef getContextualType(TypeDef typeDef) {
+        if (typeDef == TypeDef.THIS) {
+            return asTypeDef();
+        } else if (typeDef == TypeDef.SUPER) {
+            if (this instanceof ClassDef classDef) {
+                if (classDef.getSuperclass() == null) {
+                    return TypeDef.of(Object.class);
+                }
+                return classDef.getSuperclass();
+            } else if (this instanceof EnumDef) {
+                return ClassTypeDef.of(Enum.class);
+            } else if (this instanceof InterfaceDef interfaceDef) {
+                throw new IllegalStateException("Super class is not supported for interface def: " + interfaceDef);
+            }
+        }
+        return typeDef;
+    }
+
+    public static TypeDef getContextualType(@Nullable ObjectDef objectDef, TypeDef typeDef) {
+        if (objectDef == null) {
+            if ((typeDef == TypeDef.THIS || typeDef == TypeDef.SUPER)) {
+                throw new IllegalStateException("Cannot determine type: " + typeDef + " because object def is null");
+            }
+            return typeDef;
+        }
+        return objectDef.getContextualType(typeDef);
     }
 
 }
