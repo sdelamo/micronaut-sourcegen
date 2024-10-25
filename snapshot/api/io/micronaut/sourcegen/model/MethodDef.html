@@ -140,8 +140,9 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#constructor()" class="member-name-link">constructor</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="MethodDef.html" title="class in io.micronaut.sourcegen.model">MethodDef</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#constructor(io.micronaut.sourcegen.model.ClassTypeDef,java.util.Collection)" class="member-name-link">constructor</a><wbr>(<a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a>&nbsp;thisType,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="ParameterDef.html" title="class in io.micronaut.sourcegen.model">ParameterDef</a>&gt;&nbsp;parameterDefs)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#constructor(io.micronaut.sourcegen.model.ClassTypeDef,java.util.Collection,javax.lang.model.element.Modifier...)" class="member-name-link">constructor</a><wbr>(<a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a>&nbsp;thisType,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="ParameterDef.html" title="class in io.micronaut.sourcegen.model">ParameterDef</a>&gt;&nbsp;parameterDefs,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/Modifier.html" title="class or interface in javax.lang.model.element" class="external-link">Modifier</a>...&nbsp;modifiers)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Create a new constructor with parameters assigned to fields with the same name.</div>
 </div>
@@ -226,15 +227,17 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="constructor(io.micronaut.sourcegen.model.ClassTypeDef,java.util.Collection)">
+<section class="detail" id="constructor(io.micronaut.sourcegen.model.ClassTypeDef,java.util.Collection,javax.lang.model.element.Modifier...)">
 <h3>constructor</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="MethodDef.html" title="class in io.micronaut.sourcegen.model">MethodDef</a></span>&nbsp;<span class="element-name">constructor</span><wbr><span class="parameters">(<a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a>&nbsp;thisType,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="ParameterDef.html" title="class in io.micronaut.sourcegen.model">ParameterDef</a>&gt;&nbsp;parameterDefs)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="ParameterDef.html" title="class in io.micronaut.sourcegen.model">ParameterDef</a>&gt;&nbsp;parameterDefs,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/Modifier.html" title="class or interface in javax.lang.model.element" class="external-link">Modifier</a>...&nbsp;modifiers)</span></div>
 <div class="block">Create a new constructor with parameters assigned to fields with the same name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>thisType</code> - The type to be constructed</dd>
 <dd><code>parameterDefs</code> - The parameters of the body</dd>
+<dd><code>modifiers</code> - The constructor modifiers</dd>
 <dt>Returns:</dt>
 <dd>A new constructor with a body.</dd>
 </dl>

@@ -107,6 +107,8 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-equalsAndHashCode"><a href="#equalsAndHashCode"><strong>5.6</strong><span>Equals and HashCode</span></a></div>
         
+        <div class="toc-item" style="margin-left:10px" id="toc-item-delegate"><a href="#delegate"><strong>5.7</strong><span>Delegate</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-repository"><a href="#repository"><strong>6</strong><span>Repository</span></a></div>
         
         </div>
@@ -1071,16 +1073,8 @@ public void testToString() {
     var person = new Person4(123L, Person4.Title.MR,"Cédric", new byte[]{1,2,3});
 
     assertNotNull(Person4Object.toString(person));
-    assertTrue(person.toString().contains("Person4["));
+    Assertions.assertTrue(person.toString().contains("Person4["));
     assertEquals("Person4[id=123, title=MR, name=Cédric, bytes=[1, 2, 3]]", person.toString());
-}
-
-@Test
-public void testToStringWithExclude() {
-    var elephant = new Elephant("Daisy", 5, false, 1);
-
-    assertNotNull(ElephantObject.toString(elephant));
-    assertEquals("Elephant[name=Daisy, hasSibling=false]", elephant.toString());
 }</code></pre>
 </div>
 </div>
@@ -1211,8 +1205,8 @@ public void testEqualsWithExclude() {
     var elephantDiff = new Elephant("Daisy", 5, false, 2);
     var elephantSame = new Elephant("Dumbo", 5, false, 1);
 
-    assertFalse(elephant.equals(elephantDiff));
-    assertTrue(elephant.equals(elephantSame));
+    assertNotEquals(elephant, elephantDiff);
+    assertEquals(elephant, elephantSame);
 }
 
 @Test
@@ -1226,13 +1220,13 @@ public void testEqualsWithCorrectObjects() {
 
     assertNotNull(Person4Object.equals(person, personSame));
 
-    assertTrue(person.equals(person));
-    assertTrue(person.equals(personSame));
+    assertEquals(person, person);
+    assertEquals(person, personSame);
 
-    assertFalse(person.equals(personDiffPrimitive));
-    assertFalse(person.equals(personDiffEnum));
-    assertFalse(person.equals(personDiffObject));
-    assertFalse(person.equals(personDiffArray));
+    assertNotEquals(person, personDiffPrimitive);
+    assertNotEquals(person, personDiffEnum);
+    assertNotEquals(person, personDiffObject);
+    assertNotEquals(person, personDiffArray);
 }
 
 @Test
@@ -1242,12 +1236,24 @@ public void testEqualsWithNulls() {
     var personDoubleNull2 = new Person4(123L, Person4.Title.MR,null, new byte[]{1,2,3});
     var personSingleNull = new Person4(124L, Person4.Title.MR,"Cédric", null);
 
-    assertFalse(person.equals(null));
-    assertFalse(person.equals(new Object()));
+    assertNotEquals(null, person);
+    assertNotEquals(person, new Object());
 
-    assertTrue(personDoubleNull1.equals(personDoubleNull2));
-    assertFalse(personSingleNull.equals(person));
-    assertFalse(person.equals(personSingleNull));
+    assertEquals(personDoubleNull1, personDoubleNull2);
+    assertNotEquals(personSingleNull, person);
+    assertNotEquals(person, personSingleNull);
+}
+
+@Test
+public void testHashCodeWithNulls() {
+    var person = new Person4(123L, Person4.Title.MR,"Cédric", new byte[]{1,2,3});
+    var personDoubleNull1 = new Person4(123L, Person4.Title.MR,null, new byte[]{1,2,3});
+    var personDoubleNull2 = new Person4(123L, Person4.Title.MR,null, new byte[]{1,2,3});
+    var personSingleNull = new Person4(124L, Person4.Title.MR,"Cédric", null);
+
+    assertEquals(personDoubleNull1.hashCode(), personDoubleNull2.hashCode());
+    assertNotEquals(personSingleNull.hashCode(), person.hashCode());
+    assertNotEquals(person.hashCode(), personSingleNull.hashCode());
 }
 
 @Test
@@ -1267,6 +1273,99 @@ public void testHashCode() {
     assertNotEquals(person.hashCode(), personDiffObject.hashCode());
     assertNotEquals(person.hashCode(), personDiffArray.hashCode());
 }</code></pre>
+</div>
+</div>
+
+<h2 id="delegate"><a class="anchor" href="#delegate"></a>5.7 Delegate</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-sourcegen/edit/1.3.x/src/main/docs/guide/annotations/delegate.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>If you annotate a Java interface with <code>@Delegate</code>, a <code>&lt;type&gt;Delegate</code> abstract class is generated at compilation-time.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import io.micronaut.sourcegen.annotations.Delegate;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * A worker interface that delegate will be generated for.
+ */
+@Delegate
+public interface Worker&lt;T&gt; extends SimpleWorker {
+
+    String name();
+
+    boolean canComplete(List&lt;T&gt; tasks);
+
+    T currentTask();
+
+    List&lt;String&gt; competencies();
+
+    Set&lt;?&gt; complaints();
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">/**
+ * A simple worker interface.
+ */
+public interface SimpleWorker {
+
+    String name();
+
+    double tasksPerDay();
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can use a delegate pattern to change the behavior of a Worker delegatee:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">/**
+ * A delegate changing tasks per day.
+ */
+public class OvertimeWorker&lt;T&gt; extends WorkerDelegate&lt;T&gt; {
+
+    OvertimeWorker(Worker&lt;T&gt; delegatee) {
+        super(delegatee);
+    }
+
+    @Override
+    public double tasksPerDay() {
+        return super.tasksPerDay() * 1.2;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The delegate will delegate the behavior to inner object except for changed methods:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">OvertimeWorker&lt;String&gt; worker = new OvertimeWorker&lt;&gt;(new RobotWorker&lt;String&gt;(
+    "robot",
+    10,
+    List.of("does everything"),
+    "wash flowers",
+    Set.of()
+));
+
+assertEquals("robot", worker.name());
+assertEquals(12, worker.tasksPerDay()); // increased because of delegate
+assertEquals(List.of("does everything"), worker.competencies());
+assertEquals("wash flowers", worker.currentTask());</code></pre>
 </div>
 </div>
 
