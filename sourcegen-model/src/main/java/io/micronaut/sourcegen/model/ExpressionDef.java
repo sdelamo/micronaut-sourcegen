@@ -300,7 +300,7 @@ public sealed interface ExpressionDef
      * @return The call to the instance method
      * @since 1.2
      */
-    default CallInstanceMethod invoke(String name, TypeDef returning, List<ExpressionDef> parameters) {
+    default CallInstanceMethod invoke(String name, TypeDef returning, List<? extends ExpressionDef> parameters) {
         return new CallInstanceMethod(
             this,
             name,
@@ -587,7 +587,7 @@ public sealed interface ExpressionDef
     @Experimental
     record CallInstanceMethod(ExpressionDef instance,
                               String name,
-                              List<ExpressionDef> parameters,
+                              List<? extends ExpressionDef> parameters,
                               TypeDef returningType) implements ExpressionDef, StatementDef {
 
         public CallInstanceMethod(ExpressionDef instance, MethodDef methodDef) {

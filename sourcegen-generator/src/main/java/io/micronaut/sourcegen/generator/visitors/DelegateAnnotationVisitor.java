@@ -34,16 +34,11 @@ import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.MethodDef.MethodDefBuilder;
-import io.micronaut.sourcegen.model.ParameterDef;
-import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.TypeDef.TypeVariable;
-import io.micronaut.sourcegen.model.VariableDef.This;
 
 import javax.lang.model.element.Modifier;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -56,9 +51,9 @@ import java.util.Set;
 @Internal
 public final class DelegateAnnotationVisitor implements TypeElementVisitor<Delegate, Object> {
 
-    public static final String DELEGATE_TYPE_MEMBER = "type";
-    public static final String DELEGATEE_MEMBER = "delegatee";
-    public static final String NAME_SUFFIX = "Delegate";
+    private static final String DELEGATE_TYPE_MEMBER = "type";
+    private static final String DELEGATEE_MEMBER = "delegatee";
+    private static final String NAME_SUFFIX = "Delegate";
 
     private final Set<String> processed = new HashSet<>();
 
@@ -80,7 +75,7 @@ public final class DelegateAnnotationVisitor implements TypeElementVisitor<Deleg
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         AnnotationValue<?> annotation = element.getAnnotation(Delegate.class);
-        Optional<Class<?>> type = annotation.classValue("type");
+        Optional<Class<?>> type = annotation.classValue(DELEGATE_TYPE_MEMBER);
 
         if (type.isPresent() && !type.get().equals(Void.class)) {
             ClassElement typeElement = context.getClassElement(type.get()).orElseThrow(
@@ -105,7 +100,6 @@ public final class DelegateAnnotationVisitor implements TypeElementVisitor<Deleg
             String delegateClassName = element.getPackageName() + "." + simpleName;
 
             ClassTypeDef typeDef = ClassTypeDef.of(element);
-            ClassTypeDef delegateType = ClassTypeDef.of(delegateClassName);
             ClassDefBuilder delegate = ClassDef.builder(delegateClassName)
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT);
 
@@ -115,16 +109,16 @@ public final class DelegateAnnotationVisitor implements TypeElementVisitor<Deleg
                 );
                 typeDef = TypeDef.parameterized(
                     typeDef,
-                    element.getTypeArguments().keySet().stream().map(
-                        classElement -> (TypeDef) new TypeVariable(classElement)
-                    ).toList()
+                    element.getTypeArguments().keySet().stream().<TypeDef>map(TypeVariable::new).toList()
                 );
             }
+            FieldDef delegateField = FieldDef.builder(DELEGATEE_MEMBER).ofType(typeDef).build();
+
             delegate.addSuperinterface(typeDef)
-                .addField(FieldDef.builder(DELEGATEE_MEMBER).ofType(typeDef).build())
+                .addField(delegateField)
                 .addAllFieldsConstructor();
 
-            addDelegateMethods(element, delegate, typeDef, delegateType);
+            addDelegateMethods(element, delegate, delegateField);
 
             SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
             if (sourceGenerator == null) {
@@ -161,41 +155,32 @@ public final class DelegateAnnotationVisitor implements TypeElementVisitor<Deleg
         }
     }
 
-    private void addDelegateMethods(
-            ClassElement element, ClassDefBuilder builder,
-            TypeDef typeDef, TypeDef delegateType
-    ) {
+    private void addDelegateMethods(ClassElement element, ClassDefBuilder builder, FieldDef delegateField) {
         for (MethodElement method: element.getMethods()) {
             if (method.isPrivate()) {
                 continue;
             }
 
-            TypeDef returnType = TypeDef.of(method.getGenericReturnType());
             MethodDefBuilder methodBuilder = MethodDef.builder(method.getName())
                 .overrides()
-                .returns(returnType);
-            List<ExpressionDef> parameters = new ArrayList<>();
+                .returns(TypeDef.of(method.getGenericReturnType()));
             if (method.isPublic()) {
                 methodBuilder.addModifiers(Modifier.PUBLIC);
             } else if (method.isProtected()) {
                 methodBuilder.addModifiers(Modifier.PROTECTED);
             }
             for (ParameterElement parameter: method.getParameters()) {
-                ParameterDef def = ParameterDef.builder(
-                    parameter.getName(), TypeDef.of(parameter.getGenericType())
-                ).build();
-                methodBuilder.addParameter(def);
-                parameters.add(def.asVariable());
+                methodBuilder.addParameter(parameter.getName(), TypeDef.of(parameter.getGenericType()));
             }
-            ExpressionDef.CallInstanceMethod delegateCall = new This(delegateType)
-                .field(DELEGATEE_MEMBER, typeDef)
-                .invoke(method.getName(), returnType, parameters);
-            if (!method.getReturnType().isVoid()) {
-                methodBuilder.addStatement(new StatementDef.Return(delegateCall));
-            } else {
-                methodBuilder.addStatement(delegateCall);
-            }
-            builder.addMethod(methodBuilder.build());
+            builder.addMethod(methodBuilder.build((aThis, methodParameters) -> {
+                ExpressionDef.CallInstanceMethod delegateInvocation = aThis.field(delegateField)
+                    .invoke(method.getName(), TypeDef.of(method.getGenericReturnType()), methodParameters);
+                if (method.getReturnType().isVoid()) {
+                    return delegateInvocation;
+                } else {
+                    return delegateInvocation.returning();
+                }
+            }));
         }
     }
 
