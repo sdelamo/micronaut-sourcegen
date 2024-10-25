@@ -153,12 +153,20 @@ public class ExpressionWriteTest extends AbstractWriteTest {
         );
         String result = writeMethodWithExpression(orExpression);
 
-        assertEquals("(true && false) || (true || false)", result);
+        assertEquals("true && false || (true || false)", result);
     }
 
     @Test
     public void returnPrimitiveInitialization() throws IOException {
         ExpressionDef intExpression = TypeDef.Primitive.INT.initialize(ExpressionDef.constant(0));
+        String result = writeMethodWithExpression(intExpression);
+
+        assertEquals("0", result);
+    }
+
+    @Test
+    public void returnPrimitiveInitialization2() throws IOException {
+        ExpressionDef intExpression = TypeDef.Primitive.INT.initialize(0);
         String result = writeMethodWithExpression(intExpression);
 
         assertEquals("0", result);

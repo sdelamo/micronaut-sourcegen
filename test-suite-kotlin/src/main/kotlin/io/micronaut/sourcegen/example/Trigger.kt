@@ -15,6 +15,8 @@
  */
 package io.micronaut.sourcegen.example
 
+import io.micronaut.sourcegen.custom.example.GenerateArray
+import io.micronaut.sourcegen.custom.example.GenerateIfsPredicate
 import io.micronaut.sourcegen.custom.example.GenerateMyBean1
 import io.micronaut.sourcegen.custom.example.GenerateMyBean2
 import io.micronaut.sourcegen.custom.example.GenerateMyBean3
@@ -22,6 +24,7 @@ import io.micronaut.sourcegen.custom.example.GenerateMyEnum1
 import io.micronaut.sourcegen.custom.example.GenerateInterface
 import io.micronaut.sourcegen.custom.example.GenerateMyRecord1
 import io.micronaut.sourcegen.custom.example.GenerateMyRepository1
+import io.micronaut.sourcegen.custom.example.GenerateSwitch
 
 @GenerateMyBean1
 @GenerateMyBean2
@@ -30,4 +33,7 @@ import io.micronaut.sourcegen.custom.example.GenerateMyRepository1
 @GenerateMyRepository1
 @GenerateMyRecord1
 @GenerateMyEnum1
+@GenerateIfsPredicate
+@GenerateSwitch
+@GenerateArray
 class Trigger
