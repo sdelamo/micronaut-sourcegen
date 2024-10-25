@@ -24,6 +24,14 @@ import static org.junit.Assert.assertTrue;
 
 public class InnerTypesTest {
 
+    private static void assertAndClean(File classBuilder, String expectedString) throws IOException {
+        File outputFile = classBuilder;
+        assertTrue(outputFile.exists());
+        String actual = compareFileContentWithString(outputFile, expectedString);
+        assertEquals(expectedString, actual);
+        outputFile.delete();
+    }
+
     @Test
     public void enumInClass() throws IOException {
         String expectedString = "class StatusClass {\n" +
@@ -38,11 +46,7 @@ public class InnerTypesTest {
         EnumDef enumDef = enumBuilder.build();
 
         ClassDef.ClassDefBuilder classBuilder = getClassDefBuilderWith(enumDef);
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -58,11 +62,7 @@ public class InnerTypesTest {
         recordBuilder.addProperty(propertyBuilder.build());
 
         ClassDef.ClassDefBuilder classBuilder = getClassDefBuilderWith(recordBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -74,11 +74,7 @@ public class InnerTypesTest {
         ClassDef.ClassDefBuilder innerClassBuilder = ClassDef.builder("Inner");
 
         ClassDef.ClassDefBuilder classBuilder = getClassDefBuilderWith(innerClassBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -90,11 +86,7 @@ public class InnerTypesTest {
         InterfaceDef.InterfaceDefBuilder interfaceBuilder = InterfaceDef.builder("Interface");
 
         ClassDef.ClassDefBuilder classBuilder = getClassDefBuilderWith(interfaceBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -111,11 +103,7 @@ public class InnerTypesTest {
         EnumDef enumDef = enumBuilder.build();
 
         RecordDef.RecordDefBuilder classBuilder = getRecordDefBuilderWith(enumDef);
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -131,11 +119,7 @@ public class InnerTypesTest {
         recordBuilder.addProperty(propertyBuilder.build());
 
         RecordDef.RecordDefBuilder classBuilder = getRecordDefBuilderWith(recordBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -147,11 +131,7 @@ public class InnerTypesTest {
         ClassDef.ClassDefBuilder innerClassBuilder = ClassDef.builder("Inner");
 
         RecordDef.RecordDefBuilder classBuilder = getRecordDefBuilderWith(innerClassBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -163,11 +143,7 @@ public class InnerTypesTest {
         InterfaceDef.InterfaceDefBuilder interfaceBuilder = InterfaceDef.builder("Interface");
 
         RecordDef.RecordDefBuilder classBuilder = getRecordDefBuilderWith(interfaceBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -184,11 +160,7 @@ public class InnerTypesTest {
         EnumDef enumDef = enumBuilder.build();
 
         InterfaceDef.InterfaceDefBuilder classBuilder = getInterfaceDefBuilderWith(enumDef);
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -204,11 +176,7 @@ public class InnerTypesTest {
         recordBuilder.addProperty(propertyBuilder.build());
 
         InterfaceDef.InterfaceDefBuilder classBuilder = getInterfaceDefBuilderWith(recordBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -220,11 +188,7 @@ public class InnerTypesTest {
         ClassDef.ClassDefBuilder innerClassBuilder = ClassDef.builder("Inner");
 
         InterfaceDef.InterfaceDefBuilder classBuilder = getInterfaceDefBuilderWith(innerClassBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     @Test
@@ -236,11 +200,7 @@ public class InnerTypesTest {
         InterfaceDef.InterfaceDefBuilder interfaceBuilder = InterfaceDef.builder("Inner");
 
         InterfaceDef.InterfaceDefBuilder classBuilder = getInterfaceDefBuilderWith(interfaceBuilder.build());
-        File outputFile = generateClass(classBuilder.build());
-        assertTrue(outputFile.exists());
-        String actual = compareFileContentWithString(outputFile, expectedString);
-        assertEquals(expectedString, actual);
-        outputFile.delete();
+        assertAndClean(generateClass(classBuilder.build()), expectedString);
     }
 
     private static ClassDef.ClassDefBuilder getClassDefBuilderWith(ObjectDef objectDef) {
