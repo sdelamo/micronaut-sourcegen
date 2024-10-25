@@ -62,8 +62,6 @@ public final class EnumDef extends ObjectDef {
     public static final class EnumDefBuilder extends ObjectDefBuilder<EnumDefBuilder> {
 
         private final List<String> enumConstants = new ArrayList<>();
-        private final List<MethodDef> methods = new ArrayList<>();
-        private final List<TypeDef> superinterfaces = new ArrayList<>();
 
         private EnumDefBuilder(String name) {
             super(name);

@@ -68,10 +68,8 @@ public final class InterfaceDef extends ObjectDef {
     @Experimental
     public static final class InterfaceDefBuilder extends ObjectDefBuilder<InterfaceDefBuilder> {
 
-        private final List<MethodDef> methods = new ArrayList<>();
         private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
-        private final List<TypeDef> superinterfaces = new ArrayList<>();
 
         private InterfaceDefBuilder(String name) {
             super(name);

@@ -68,10 +68,8 @@ public final class RecordDef extends ObjectDef {
     @Experimental
     public static final class RecordDefBuilder extends ObjectDefBuilder<RecordDefBuilder> {
 
-        private final List<MethodDef> methods = new ArrayList<>();
         private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
-        private final List<TypeDef> superinterfaces = new ArrayList<>();
 
         private RecordDefBuilder(String name) {
             super(name);
