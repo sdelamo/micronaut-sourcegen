@@ -137,7 +137,7 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 .build());
         }
 
-        addInnerTypes(interfaceDef.getInnerTypes(), interfaceBuilder);
+        addInnerTypes(interfaceDef.getInnerTypes(), interfaceBuilder, true);
 
         for (MethodDef method : interfaceDef.getMethods()) {
             interfaceBuilder.addMethod(
@@ -247,7 +247,7 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             );
         }
 
-        addInnerTypes(classDef.getInnerTypes(), classBuilder);
+        addInnerTypes(classDef.getInnerTypes(), classBuilder, false);
 
         for (MethodDef method : classDef.getMethods()) {
             classBuilder.addMethod(
@@ -288,7 +288,7 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             );
         }
 
-        addInnerTypes(recordDef.getInnerTypes(), classBuilder);
+        addInnerTypes(recordDef.getInnerTypes(), classBuilder, false);
 
         for (MethodDef method : recordDef.getMethods()) {
             classBuilder.addMethod(
@@ -298,12 +298,11 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         return classBuilder;
     }
 
-    private void addInnerTypes(List<ObjectDef> innerTypes, TypeSpec.Builder classBuilder) {
+    private void addInnerTypes(List<ObjectDef> innerTypes, TypeSpec.Builder classBuilder, boolean isInterface) {
         for (ObjectDef innerType : innerTypes) {
             TypeSpec.Builder innerBuilder;
             if (innerType instanceof ClassDef innerClassDef) {
                 innerBuilder = getClassBuilder(innerClassDef);
-                classBuilder.addPermittedSubclass(innerBuilder.build().superclass);
             } else if (innerType instanceof InterfaceDef innerInterfaceDef) {
                 innerBuilder = getInterfaceBuilder(innerInterfaceDef);
             } else if (innerType instanceof EnumDef innerEnumDef) {
@@ -312,6 +311,9 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 innerBuilder = getRecordBuilder(innerRecordDef);
             } else {
                 throw new IllegalStateException("Unknown object definition: " + innerType);
+            }
+            if (isInterface) {
+                innerBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
             }
             classBuilder.addType(innerBuilder.build());
         }

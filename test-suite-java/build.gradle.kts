@@ -6,6 +6,8 @@ dependencies {
     annotationProcessor(mn.micronaut.inject.java)
     annotationProcessor(projects.sourcegenGeneratorJava)
     annotationProcessor(projects.testSuiteCustomGenerators)
+    implementation(projects.sourcegenGenerator)
+    implementation(projects.sourcegenGeneratorJava)
     implementation(projects.sourcegenAnnotations)
     implementation(projects.testSuiteCustomAnnotations)
     testImplementation(mnTest.micronaut.test.junit5)
