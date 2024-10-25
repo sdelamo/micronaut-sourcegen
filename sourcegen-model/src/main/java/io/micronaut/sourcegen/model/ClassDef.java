@@ -39,6 +39,7 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
     private final List<TypeDef.TypeVariable> typeVariables;
     private final List<TypeDef> superinterfaces;
     private final ClassTypeDef superclass;
+    private final List<ObjectDef> innerTypes;
 
     private ClassDef(String name,
                      EnumSet<Modifier> modifiers,
@@ -49,7 +50,8 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
                      List<String> javadoc,
                      List<TypeDef.TypeVariable> typeVariables,
                      List<TypeDef> superinterfaces,
-                     ClassTypeDef superclass) {
+                     ClassTypeDef superclass,
+                     List<ObjectDef> innerTypes) {
         super(name, modifiers, annotations, javadoc);
         this.fields = fields;
         this.methods = methods;
@@ -57,6 +59,7 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
         this.typeVariables = typeVariables;
         this.superinterfaces = superinterfaces;
         this.superclass = superclass;
+        this.innerTypes = innerTypes;
     }
 
     public static ClassDefBuilder builder(String name) {
@@ -81,6 +84,10 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
 
     public List<TypeDef> getSuperinterfaces() {
         return superinterfaces;
+    }
+
+    public List<ObjectDef> getInnerTypes() {
+        return innerTypes;
     }
 
     @Nullable
@@ -152,6 +159,7 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
         private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
         private final List<TypeDef> superinterfaces = new ArrayList<>();
+        private final List<ObjectDef> innerTypes = new ArrayList<>();
         private ClassTypeDef superclass;
 
         private ClassDefBuilder(String name) {
@@ -188,8 +196,13 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
             return this;
         }
 
+        public ClassDefBuilder addInnerType(ObjectDef innerType) {
+            innerTypes.add(innerType);
+            return this;
+        }
+
         public ClassDef build() {
-            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass);
+            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes);
         }
 
     }
