@@ -17,6 +17,35 @@ import static org.junit.Assert.assertEquals;
 
 public class InnerTypesTest extends AbstractWriteTest {
     /** -----------------------------------------------------------
+     * INNER TYPES INSIDE AN ENUM
+     * -----------------------------------------------------------
+     */
+    @Test
+    public void enumInEnum() throws IOException {
+        String expectedString = """
+            package test;
+
+            public enum StatusEnum {
+
+              HI,
+              HELLO;
+
+              enum Status {
+
+                SINGLE,
+                MARRIED
+              }
+            }""";
+        EnumDef.EnumDefBuilder enumBuilder = EnumDef.builder("Status");
+        enumBuilder.addEnumConstant("SINGLE").addEnumConstant("MARRIED");
+        EnumDef enumDef = enumBuilder.build();
+
+        EnumDef.EnumDefBuilder classBuilder = getEnumDefBuilderWith(enumDef);
+        String actual = writeClass(classBuilder.build(), "enum");
+        assertEquals(expectedString.strip(), actual);
+    }
+
+    /** -----------------------------------------------------------
      * INNER TYPES INSIDE A CLASS
      * -----------------------------------------------------------
      */
@@ -310,6 +339,14 @@ public class InnerTypesTest extends AbstractWriteTest {
     private static RecordDef.RecordDefBuilder getRecordDefBuilderWith(ObjectDef objectDef) {
         RecordDef.RecordDefBuilder classBuilder = RecordDef.builder("test." + objectDef.getSimpleName() + "Record")
             .addModifiers(Modifier.PUBLIC);
+        classBuilder.addInnerType(objectDef);
+        return classBuilder;
+    }
+
+    private static EnumDef.EnumDefBuilder getEnumDefBuilderWith(ObjectDef objectDef) {
+        EnumDef.EnumDefBuilder classBuilder = EnumDef.builder("test." + objectDef.getSimpleName() + "Enum")
+            .addModifiers(Modifier.PUBLIC)
+            .addEnumConstant("HI").addEnumConstant("HELLO");
         classBuilder.addInnerType(objectDef);
         return classBuilder;
     }

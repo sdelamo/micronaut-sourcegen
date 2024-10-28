@@ -177,6 +177,7 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 asMethodSpec(enumDef, method)
             );
         }
+        addInnerTypes(enumDef.getInnerTypes(), enumBuilder, false);
         return enumBuilder;
     }
 

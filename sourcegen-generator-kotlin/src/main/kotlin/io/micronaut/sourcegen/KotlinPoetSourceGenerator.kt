@@ -378,6 +378,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         if (companionBuilder != null) {
             enumBuilder.addType(companionBuilder.build())
         }
+        addInnerTypes(enumDef.innerTypes, enumBuilder)
         return enumBuilder
     }
 

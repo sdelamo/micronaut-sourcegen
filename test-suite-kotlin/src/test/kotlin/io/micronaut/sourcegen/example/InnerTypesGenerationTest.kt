@@ -3,6 +3,7 @@ package io.micronaut.sourcegen.example
 import io.micronaut.sourcegen.KotlinPoetSourceGenerator
 import io.micronaut.sourcegen.model.*
 import io.micronaut.sourcegen.model.ClassDef.ClassDefBuilder
+import io.micronaut.sourcegen.model.EnumDef.EnumDefBuilder
 import io.micronaut.sourcegen.model.InterfaceDef.InterfaceDefBuilder
 import io.micronaut.sourcegen.model.RecordDef.RecordDefBuilder
 import org.junit.Assert
@@ -24,7 +25,8 @@ class InnerTypesGenerationTest {
             generator.write(classDef, writer)
             result = writer.toString()
         }
-        val className = if (classType == "record") "data class" else classType
+        var className = if (classType == "record") "data class" else classType
+        className = if (classType == "enum") "enum class" else classType
         val CLASS_REGEX = Pattern.compile(
             "package test[\\s\\S]+" +
                     "public " + className + " " + classDef.simpleName + " \\{\\s+" +
@@ -56,6 +58,44 @@ class InnerTypesGenerationTest {
             .addModifiers(Modifier.PUBLIC)
         classBuilder.addInnerType(objectDef)
         return classBuilder
+    }
+
+    private fun getEnumDefBuilderWith(objectDef: ObjectDef): EnumDefBuilder {
+        val classBuilder = EnumDef.builder("test." + objectDef.simpleName + "Enum")
+            .addModifiers(Modifier.PUBLIC)
+            .addEnumConstant("HI").addEnumConstant("HELLO")
+        classBuilder.addInnerType(objectDef)
+        return classBuilder
+    }
+
+    /** -----------------------------------------------------------
+     * INNER TYPES INSIDE AN ENUM
+     * -----------------------------------------------------------
+     */
+    @Test
+    @Throws(IOException::class)
+    fun enumInEnum() {
+        val expectedString = """
+            package test
+
+            public enum class StatusEnum {
+              HI,
+              HELLO,
+              ;
+
+              public enum class Status {
+                SINGLE,
+                MARRIED,
+              }
+            }
+            """.trimIndent()
+        val enumBuilder = EnumDef.builder("Status")
+        enumBuilder.addEnumConstant("SINGLE").addEnumConstant("MARRIED")
+        val enumDef = enumBuilder.build()
+
+        val classBuilder: EnumDefBuilder = getEnumDefBuilderWith(enumDef)
+        val actual = writeClass(classBuilder.build(), "enum")
+        Assert.assertEquals(expectedString.trim(), actual)
     }
 
     /** -----------------------------------------------------------
