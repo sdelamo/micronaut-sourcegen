@@ -397,6 +397,10 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         if (typeDef instanceof TypeDef.TypeVariable typeVariable) {
             return asTypeVariable(typeVariable, objectDef);
         }
+        if (typeDef instanceof TypeDef.AnnotatedTypeDef annotatedType) {
+            var annotationsSpecs = annotatedType.getAnnotations().stream().map(this::asAnnotationSpec).toList();
+            return asType(annotatedType.getType(), objectDef).annotated(annotationsSpecs);
+        }
         throw new IllegalStateException("Unrecognized type definition " + typeDef);
     }
 

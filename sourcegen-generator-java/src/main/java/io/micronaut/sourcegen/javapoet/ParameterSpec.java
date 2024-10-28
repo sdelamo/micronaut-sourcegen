@@ -15,6 +15,9 @@
  */
 package io.micronaut.sourcegen.javapoet;
 
+import com.github.javaparser.quality.NotNull;
+import io.micronaut.sourcegen.model.AnnotationDef;
+
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;

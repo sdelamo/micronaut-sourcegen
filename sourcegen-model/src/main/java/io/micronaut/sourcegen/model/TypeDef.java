@@ -22,6 +22,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.GenericPlaceholderElement;
 import io.micronaut.inject.ast.WildcardElement;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
  * @since 1.0
  */
 @Experimental
-public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
+public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
 
     TypeDef VOID = primitive("void");
 
@@ -47,6 +48,21 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
      * A simple type representing a special this-type, in context of a class def, method or field the type will be replaced by the current type.
      */
     TypeDef THIS = of(ThisType.class);
+
+    /**
+     * Define a type with annotations
+     *
+     * @param annotations The length of the array
+     * @return The AnnotatedTypeDef
+     * @since 1.3
+     */
+    default AnnotatedTypeDef annotated(AnnotationDef... annotations) {
+        return new AnnotatedTypeDef(this, List.of(annotations));
+    }
+
+    default AnnotatedTypeDef annotated(List<AnnotationDef> annotations) {
+        return new AnnotatedTypeDef(this, annotations);
+    }
 
     /**
      * Instantiate an array of this class.
@@ -446,6 +462,49 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
         @Override
         public boolean isArray() {
             return true;
+        }
+    }
+
+    /**
+     * A combined type for representing a TypeDef with annotations.
+     *
+     * @author Elif Kurtay
+     * @since 1.3
+     */
+    @Experimental
+    final class AnnotatedTypeDef implements TypeDef {
+        TypeDef typeDef;
+        List<AnnotationDef> annotations;
+
+        public AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations) {
+            this.typeDef = typeDef;
+            this.annotations = annotations;
+        }
+
+        public void addAnnotation(AnnotationDef annotation) {
+            if (annotations != null) {
+                annotations.add(annotation);
+            } else {
+                annotations = new ArrayList<>(List.of(annotation));
+            }
+        }
+
+        public List<AnnotationDef> getAnnotations() {
+            return this.annotations;
+        }
+
+        public TypeDef getType() {
+            return typeDef;
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return typeDef.isPrimitive();
+        }
+
+        @Override
+        public boolean isArray() {
+            return typeDef.isArray();
         }
     }
 }
