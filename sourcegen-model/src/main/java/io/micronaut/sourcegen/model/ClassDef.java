@@ -33,13 +33,11 @@ import java.util.List;
  * @since 1.0
  */
 @Experimental
-public final class ClassDef extends AbstractElement implements ObjectDef {
+public final class ClassDef extends ObjectDef {
 
     private final List<FieldDef> fields;
-    private final List<MethodDef> methods;
     private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
-    private final List<TypeDef> superinterfaces;
     private final ClassTypeDef superclass;
     private final List<ObjectDef> innerTypes;
 
@@ -54,12 +52,10 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
                      List<TypeDef> superinterfaces,
                      ClassTypeDef superclass,
                      List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc);
+        super(name, modifiers, annotations, javadoc, methods, superinterfaces);
         this.fields = fields;
-        this.methods = methods;
         this.properties = properties;
         this.typeVariables = typeVariables;
-        this.superinterfaces = superinterfaces;
         this.superclass = superclass;
         this.innerTypes = innerTypes;
     }
@@ -72,20 +68,12 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
         return fields;
     }
 
-    public List<MethodDef> getMethods() {
-        return methods;
-    }
-
     public List<PropertyDef> getProperties() {
         return properties;
     }
 
     public List<TypeDef.TypeVariable> getTypeVariables() {
         return typeVariables;
-    }
-
-    public List<TypeDef> getSuperinterfaces() {
-        return superinterfaces;
     }
 
     public List<ObjectDef> getInnerTypes() {
@@ -159,13 +147,11 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
      * @since 1.0
      */
     @Experimental
-    public static final class ClassDefBuilder extends AbstractElementBuilder<ClassDefBuilder> {
+    public static final class ClassDefBuilder extends ObjectDefBuilder<ClassDefBuilder> {
 
         private final List<FieldDef> fields = new ArrayList<>();
-        private final List<MethodDef> methods = new ArrayList<>();
         private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
-        private final List<TypeDef> superinterfaces = new ArrayList<>();
         private final List<ObjectDef> innerTypes = new ArrayList<>();
         private ClassTypeDef superclass;
 
@@ -183,11 +169,6 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
             return this;
         }
 
-        public ClassDefBuilder addMethod(MethodDef method) {
-            methods.add(method);
-            return this;
-        }
-
         public ClassDefBuilder addProperty(PropertyDef property) {
             properties.add(property);
             return this;
@@ -195,11 +176,6 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
 
         public ClassDefBuilder addTypeVariable(TypeDef.TypeVariable typeVariable) {
             typeVariables.add(typeVariable);
-            return this;
-        }
-
-        public ClassDefBuilder addSuperinterface(TypeDef superinterface) {
-            superinterfaces.add(superinterface);
             return this;
         }
 

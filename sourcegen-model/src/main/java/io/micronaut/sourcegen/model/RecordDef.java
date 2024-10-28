@@ -29,13 +29,10 @@ import java.util.List;
  * @since 1.0
  */
 @Experimental
-public final class RecordDef extends AbstractElement implements ObjectDef {
+public final class RecordDef extends ObjectDef {
 
-    private final List<MethodDef> methods;
     private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
-    private final List<TypeDef> superinterfaces;
-    private final List<ObjectDef> innerTypes;
 
     private RecordDef(String name,
                       EnumSet<Modifier> modifiers,
@@ -44,22 +41,14 @@ public final class RecordDef extends AbstractElement implements ObjectDef {
                       List<AnnotationDef> annotations,
                       List<String> javadoc,
                       List<TypeDef.TypeVariable> typeVariables,
-                      List<TypeDef> superinterfaces,
-                      List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc);
-        this.methods = methods;
+                      List<TypeDef> superinterfaces) {
+        super(name, modifiers, annotations, javadoc, methods, superinterfaces);
         this.properties = properties;
         this.typeVariables = typeVariables;
-        this.superinterfaces = superinterfaces;
-        this.innerTypes = innerTypes;
     }
 
     public static RecordDefBuilder builder(String name) {
         return new RecordDefBuilder(name);
-    }
-
-    public List<MethodDef> getMethods() {
-        return methods;
     }
 
     public List<PropertyDef> getProperties() {
@@ -70,14 +59,6 @@ public final class RecordDef extends AbstractElement implements ObjectDef {
         return typeVariables;
     }
 
-    public List<TypeDef> getSuperinterfaces() {
-        return superinterfaces;
-    }
-
-    public List<ObjectDef> getInnerTypes() {
-        return innerTypes;
-    }
-
     /**
      * The record definition builder.
      *
@@ -85,21 +66,13 @@ public final class RecordDef extends AbstractElement implements ObjectDef {
      * @since 1.0
      */
     @Experimental
-    public static final class RecordDefBuilder extends AbstractElementBuilder<RecordDefBuilder> {
+    public static final class RecordDefBuilder extends ObjectDefBuilder<RecordDefBuilder> {
 
-        private final List<MethodDef> methods = new ArrayList<>();
         private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
-        private final List<TypeDef> superinterfaces = new ArrayList<>();
-        private final List<ObjectDef> innerTypes = new ArrayList<>();
 
         private RecordDefBuilder(String name) {
             super(name);
-        }
-
-        public RecordDefBuilder addMethod(MethodDef method) {
-            methods.add(method);
-            return this;
         }
 
         public RecordDefBuilder addProperty(PropertyDef property) {
@@ -112,18 +85,8 @@ public final class RecordDef extends AbstractElement implements ObjectDef {
             return this;
         }
 
-        public RecordDefBuilder addSuperinterface(TypeDef superinterface) {
-            superinterfaces.add(superinterface);
-            return this;
-        }
-
-        public RecordDefBuilder addInnerType(ObjectDef innerType) {
-            innerTypes.add(innerType);
-            return this;
-        }
-
         public RecordDef build() {
-            return new RecordDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
+            return new RecordDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces);
         }
 
     }
