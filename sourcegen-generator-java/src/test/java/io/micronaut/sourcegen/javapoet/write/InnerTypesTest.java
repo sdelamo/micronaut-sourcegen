@@ -2,6 +2,7 @@ package io.micronaut.sourcegen.javapoet.write;
 
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.EnumDef;
+import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.InterfaceDef;
 import io.micronaut.sourcegen.model.ObjectDef;
 import io.micronaut.sourcegen.model.PropertyDef;
@@ -70,6 +71,36 @@ public class InnerTypesTest extends AbstractWriteTest {
               }
             }""";
         ClassDef.ClassDefBuilder innerClassBuilder = ClassDef.builder("Inner");
+
+        ClassDef.ClassDefBuilder classBuilder = getClassDefBuilderWith(innerClassBuilder.build());
+        String actual = writeClass(classBuilder.build(),"class");
+        assertEquals(expectedString.strip(), actual);
+    }
+
+    @Test
+    public void class2InClass() throws IOException {
+        String expectedString = """
+            package test;
+
+            import java.lang.String;
+
+            public class InnerClass {
+              private class Inner {
+                String name;
+
+                Inner(String name) {
+                  this.name = name;
+                }
+
+                Inner() {
+                }
+              }
+            }""";
+        ClassDef.ClassDefBuilder innerClassBuilder = ClassDef.builder("Inner")
+            .addModifiers(Modifier.PRIVATE)
+            .addField(FieldDef.builder("name").ofType(TypeDef.STRING).build())
+            .addAllFieldsConstructor()
+            .addNoFieldsConstructor();
 
         ClassDef.ClassDefBuilder classBuilder = getClassDefBuilderWith(innerClassBuilder.build());
         String actual = writeClass(classBuilder.build(),"class");
