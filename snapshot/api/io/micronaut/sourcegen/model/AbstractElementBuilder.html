@@ -80,12 +80,12 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>Direct Known Subclasses:</dt>
-<dd><code><a href="ClassDef.ClassDefBuilder.html" title="class in io.micronaut.sourcegen.model">ClassDef.ClassDefBuilder</a></code>, <code><a href="EnumDef.EnumDefBuilder.html" title="class in io.micronaut.sourcegen.model">EnumDef.EnumDefBuilder</a></code>, <code><a href="FieldDef.FieldDefBuilder.html" title="class in io.micronaut.sourcegen.model">FieldDef.FieldDefBuilder</a></code>, <code><a href="InterfaceDef.InterfaceDefBuilder.html" title="class in io.micronaut.sourcegen.model">InterfaceDef.InterfaceDefBuilder</a></code>, <code><a href="MethodDef.MethodDefBuilder.html" title="class in io.micronaut.sourcegen.model">MethodDef.MethodDefBuilder</a></code>, <code><a href="ParameterDef.ParameterDefBuilder.html" title="class in io.micronaut.sourcegen.model">ParameterDef.ParameterDefBuilder</a></code>, <code><a href="PropertyDef.PropertyDefBuilder.html" title="class in io.micronaut.sourcegen.model">PropertyDef.PropertyDefBuilder</a></code>, <code><a href="RecordDef.RecordDefBuilder.html" title="class in io.micronaut.sourcegen.model">RecordDef.RecordDefBuilder</a></code></dd>
+<dd><code><a href="FieldDef.FieldDefBuilder.html" title="class in io.micronaut.sourcegen.model">FieldDef.FieldDefBuilder</a></code>, <code><a href="MethodDef.MethodDefBuilder.html" title="class in io.micronaut.sourcegen.model">MethodDef.MethodDefBuilder</a></code>, <code><a href="ObjectDefBuilder.html" title="class in io.micronaut.sourcegen.model">ObjectDefBuilder</a></code>, <code><a href="ParameterDef.ParameterDefBuilder.html" title="class in io.micronaut.sourcegen.model">ParameterDef.ParameterDefBuilder</a></code>, <code><a href="PropertyDef.PropertyDefBuilder.html" title="class in io.micronaut.sourcegen.model">PropertyDef.PropertyDefBuilder</a></code></dd>
 </dl>
 <hr>
 <div class="type-signature"><span class="modifiers">public sealed class </span><span class="element-name type-name-label">AbstractElementBuilder&lt;ThisType&gt;</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span>
-<span class="permits">permits <a href="ClassDef.ClassDefBuilder.html" title="class in io.micronaut.sourcegen.model">ClassDef.ClassDefBuilder</a>, <a href="EnumDef.EnumDefBuilder.html" title="class in io.micronaut.sourcegen.model">EnumDef.EnumDefBuilder</a>, <a href="FieldDef.FieldDefBuilder.html" title="class in io.micronaut.sourcegen.model">FieldDef.FieldDefBuilder</a>, <a href="InterfaceDef.InterfaceDefBuilder.html" title="class in io.micronaut.sourcegen.model">InterfaceDef.InterfaceDefBuilder</a>, <a href="MethodDef.MethodDefBuilder.html" title="class in io.micronaut.sourcegen.model">MethodDef.MethodDefBuilder</a>, <a href="ParameterDef.ParameterDefBuilder.html" title="class in io.micronaut.sourcegen.model">ParameterDef.ParameterDefBuilder</a>, <a href="PropertyDef.PropertyDefBuilder.html" title="class in io.micronaut.sourcegen.model">PropertyDef.PropertyDefBuilder</a>, <a href="RecordDef.RecordDefBuilder.html" title="class in io.micronaut.sourcegen.model">RecordDef.RecordDefBuilder</a></span></div>
+<span class="permits">permits <a href="ObjectDefBuilder.html" title="class in io.micronaut.sourcegen.model">ObjectDefBuilder</a>&lt;ThisType&gt;, <a href="FieldDef.FieldDefBuilder.html" title="class in io.micronaut.sourcegen.model">FieldDef.FieldDefBuilder</a>, <a href="MethodDef.MethodDefBuilder.html" title="class in io.micronaut.sourcegen.model">MethodDef.MethodDefBuilder</a>, <a href="ParameterDef.ParameterDefBuilder.html" title="class in io.micronaut.sourcegen.model">ParameterDef.ParameterDefBuilder</a>, <a href="PropertyDef.PropertyDefBuilder.html" title="class in io.micronaut.sourcegen.model">PropertyDef.PropertyDefBuilder</a></span></div>
 <div class="block">The abstract element builder.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -117,6 +117,9 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color"><code>protected final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#name" class="member-name-link">name</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected final <a href="AbstractElementBuilder.html" title="type parameter in AbstractElementBuilder">ThisType</a></code></div>
+<div class="col-second even-row-color"><code><a href="#thisInstance" class="member-name-link">thisInstance</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -203,6 +206,12 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="javadoc">
 <h3>javadoc</h3>
 <div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">javadoc</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="thisInstance">
+<h3>thisInstance</h3>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="AbstractElementBuilder.html" title="type parameter in AbstractElementBuilder">ThisType</a></span>&nbsp;<span class="element-name">thisInstance</span></div>
 </section>
 </li>
 </ul>
