@@ -35,6 +35,7 @@ public sealed class ObjectDefBuilder<ThisType>
 
     protected final List<MethodDef> methods = new ArrayList<>();
     protected final List<TypeDef> superinterfaces = new ArrayList<>();
+    protected final List<ObjectDef> innerTypes = new ArrayList<>();
 
     protected ObjectDefBuilder(String name) {
         super(name);
@@ -47,6 +48,11 @@ public sealed class ObjectDefBuilder<ThisType>
 
     public final ThisType addSuperinterface(TypeDef superinterface) {
         superinterfaces.add(superinterface);
+        return thisInstance;
+    }
+
+    public ThisType addInnerType(ObjectDef innerType) {
+        innerTypes.add(innerType);
         return thisInstance;
     }
 

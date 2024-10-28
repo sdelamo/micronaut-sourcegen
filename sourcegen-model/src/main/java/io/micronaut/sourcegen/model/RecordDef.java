@@ -41,8 +41,9 @@ public final class RecordDef extends ObjectDef {
                       List<AnnotationDef> annotations,
                       List<String> javadoc,
                       List<TypeDef.TypeVariable> typeVariables,
-                      List<TypeDef> superinterfaces) {
-        super(name, modifiers, annotations, javadoc, methods, superinterfaces);
+                      List<TypeDef> superinterfaces,
+                      List<ObjectDef> innerTypes) {
+        super(name, modifiers, annotations, javadoc, methods, superinterfaces, innerTypes);
         this.properties = properties;
         this.typeVariables = typeVariables;
     }
@@ -86,7 +87,7 @@ public final class RecordDef extends ObjectDef {
         }
 
         public RecordDef build() {
-            return new RecordDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces);
+            return new RecordDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
         }
 
     }

@@ -39,7 +39,6 @@ public final class ClassDef extends ObjectDef {
     private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
     private final ClassTypeDef superclass;
-    private final List<ObjectDef> innerTypes;
 
     private ClassDef(String name,
                      EnumSet<Modifier> modifiers,
@@ -52,12 +51,11 @@ public final class ClassDef extends ObjectDef {
                      List<TypeDef> superinterfaces,
                      ClassTypeDef superclass,
                      List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc, methods, superinterfaces);
+        super(name, modifiers, annotations, javadoc, methods, superinterfaces, innerTypes);
         this.fields = fields;
         this.properties = properties;
         this.typeVariables = typeVariables;
         this.superclass = superclass;
-        this.innerTypes = innerTypes;
     }
 
     public static ClassDefBuilder builder(String name) {
@@ -74,10 +72,6 @@ public final class ClassDef extends ObjectDef {
 
     public List<TypeDef.TypeVariable> getTypeVariables() {
         return typeVariables;
-    }
-
-    public List<ObjectDef> getInnerTypes() {
-        return innerTypes;
     }
 
     @Nullable
@@ -152,7 +146,6 @@ public final class ClassDef extends ObjectDef {
         private final List<FieldDef> fields = new ArrayList<>();
         private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
-        private final List<ObjectDef> innerTypes = new ArrayList<>();
         private ClassTypeDef superclass;
 
         private ClassDefBuilder(String name) {
@@ -176,11 +169,6 @@ public final class ClassDef extends ObjectDef {
 
         public ClassDefBuilder addTypeVariable(TypeDef.TypeVariable typeVariable) {
             typeVariables.add(typeVariable);
-            return this;
-        }
-
-        public ClassDefBuilder addInnerType(ObjectDef innerType) {
-            innerTypes.add(innerType);
             return this;
         }
 
