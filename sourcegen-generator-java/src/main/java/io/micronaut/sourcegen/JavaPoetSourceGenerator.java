@@ -64,7 +64,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -644,9 +643,9 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             if (memberElement instanceof MethodElement methodElement) {
                 return renderExpression(objectDef, methodDef, getPropertyValue.instance().invoke(methodElement));
             }
-            if (memberElement instanceof FieldElement fieldElement) {
+            // if (memberElement instanceof FieldElement fieldElement) {
                 // TODO: support field
-            }
+            // }
             throw new IllegalStateException("Unrecognized property read element: " + propertyElement);
         }
         if (expressionDef instanceof ExpressionDef.Condition condition) {
