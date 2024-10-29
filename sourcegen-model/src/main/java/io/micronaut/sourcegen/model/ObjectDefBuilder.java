@@ -51,7 +51,7 @@ public sealed class ObjectDefBuilder<ThisType>
         return thisInstance;
     }
 
-    public ThisType addInnerType(ObjectDef innerType) {
+    public final ThisType addInnerType(ObjectDef innerType) {
         innerTypes.add(innerType);
         return thisInstance;
     }

@@ -25,8 +25,13 @@ class InnerTypesGenerationTest {
             generator.write(classDef, writer)
             result = writer.toString()
         }
-        var className = if (classType == "record") "data class" else classType
-        className = if (classType == "enum") "enum class" else classType
+
+        val className: String
+        when (classType) {
+            "record" -> className = "data class"
+            "enum" -> className = "enum class"
+            else -> className = classType
+        }
         val CLASS_REGEX = Pattern.compile(
             "package test[\\s\\S]+" +
                     "public " + className + " " + classDef.simpleName + " \\{\\s+" +
@@ -94,6 +99,75 @@ class InnerTypesGenerationTest {
         val enumDef = enumBuilder.build()
 
         val classBuilder: EnumDefBuilder = getEnumDefBuilderWith(enumDef)
+        val actual = writeClass(classBuilder.build(), "enum")
+        Assert.assertEquals(expectedString.trim(), actual)
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun recordInEnum() {
+        val expectedString = """
+            package test
+
+            import kotlin.Int
+
+            public enum class ExampleRecordEnum {
+              HI,
+              HELLO,
+              ;
+
+              public data class ExampleRecord public constructor(
+                public final val id: Int,
+              )
+            }
+            """.trimIndent()
+        val recordBuilder = RecordDef.builder("ExampleRecord")
+        val propertyBuilder = PropertyDef.builder("id").ofType(TypeDef.Primitive.INT)
+        recordBuilder.addProperty(propertyBuilder.build())
+
+        val classBuilder: EnumDefBuilder = getEnumDefBuilderWith(recordBuilder.build())
+        val actual = writeClass(classBuilder.build(), "enum")
+        Assert.assertEquals(expectedString.trim(), actual)
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun classInEnum() {
+        val expectedString = """
+            package test
+
+            public enum class InnerEnum {
+              HI,
+              HELLO,
+              ;
+
+              public class Inner
+            }
+            """.trimIndent()
+        val innerClassBuilder = ClassDef.builder("Inner")
+
+        val classBuilder: EnumDefBuilder = getEnumDefBuilderWith(innerClassBuilder.build())
+        val actual = writeClass(classBuilder.build(), "enum")
+        Assert.assertEquals(expectedString.trim(), actual)
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun interfaceInEnum() {
+        val expectedString = """
+            package test
+
+            public enum class InterfaceEnum {
+              HI,
+              HELLO,
+              ;
+
+              public interface Interface
+            }
+            """.trimIndent()
+        val interfaceBuilder = InterfaceDef.builder("Interface")
+
+        val classBuilder: EnumDefBuilder = getEnumDefBuilderWith(interfaceBuilder.build())
         val actual = writeClass(classBuilder.build(), "enum")
         Assert.assertEquals(expectedString.trim(), actual)
     }

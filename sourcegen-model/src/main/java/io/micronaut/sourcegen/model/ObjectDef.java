@@ -62,7 +62,7 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
         return NameUtils.getSimpleName(getName());
     }
 
-    public List<ObjectDef> getInnerTypes() {
+    public final List<ObjectDef> getInnerTypes() {
         return innerTypes;
     }
 

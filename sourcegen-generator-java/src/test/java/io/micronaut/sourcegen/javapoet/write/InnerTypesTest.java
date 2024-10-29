@@ -45,6 +45,70 @@ public class InnerTypesTest extends AbstractWriteTest {
         assertEquals(expectedString.strip(), actual);
     }
 
+    @Test
+    public void recordInEnum() throws IOException {
+        String expectedString = """
+            package test;
+
+            public enum ExampleRecordEnum {
+
+              HI,
+              HELLO;
+
+              record ExampleRecord(
+                  int id
+              ) {
+              }
+            }""";
+        RecordDef.RecordDefBuilder recordBuilder = RecordDef.builder("ExampleRecord");
+        PropertyDef.PropertyDefBuilder propertyBuilder = PropertyDef.builder("id").ofType(TypeDef.Primitive.INT);
+        recordBuilder.addProperty(propertyBuilder.build());
+
+        EnumDef.EnumDefBuilder classBuilder = getEnumDefBuilderWith(recordBuilder.build());
+        String actual = writeClass(classBuilder.build(), "enum");
+        assertEquals(expectedString.strip(), actual);
+    }
+
+    @Test
+    public void classInEnum() throws IOException {
+        String expectedString = """
+            package test;
+
+            public enum InnerEnum {
+
+              HI,
+              HELLO;
+
+              class Inner {
+              }
+            }""";
+        ClassDef.ClassDefBuilder innerClassBuilder = ClassDef.builder("Inner");
+
+        EnumDef.EnumDefBuilder classBuilder = getEnumDefBuilderWith(innerClassBuilder.build());
+        String actual = writeClass(classBuilder.build(),"enum");
+        assertEquals(expectedString.strip(), actual);
+    }
+
+    @Test
+    public void interfaceInEnum() throws IOException {
+        String expectedString = """
+            package test;
+
+            public enum InterfaceEnum {
+
+              HI,
+              HELLO;
+
+              interface Interface {
+              }
+            }""";
+        InterfaceDef.InterfaceDefBuilder interfaceBuilder = InterfaceDef.builder("Interface");
+
+        EnumDef.EnumDefBuilder classBuilder = getEnumDefBuilderWith(interfaceBuilder.build());
+        String actual = writeClass(classBuilder.build(),"enum");
+        assertEquals(expectedString.strip(), actual);
+    }
+
     /** -----------------------------------------------------------
      * INNER TYPES INSIDE A CLASS
      * -----------------------------------------------------------
