@@ -17,20 +17,9 @@
 
 package io.micronaut.sourcegen
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.UNIT
-import com.squareup.kotlinpoet.WildcardTypeName
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import com.squareup.kotlinpoet.javapoet.toKClassName
 import com.squareup.kotlinpoet.javapoet.toKTypeName
@@ -39,25 +28,11 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.reflect.ClassUtils
 import io.micronaut.inject.visitor.VisitorContext
 import io.micronaut.sourcegen.generator.SourceGenerator
-import io.micronaut.sourcegen.model.AnnotationDef
-import io.micronaut.sourcegen.model.ClassDef
-import io.micronaut.sourcegen.model.ClassTypeDef
-import io.micronaut.sourcegen.model.EnumDef
-import io.micronaut.sourcegen.model.ExpressionDef
+import io.micronaut.sourcegen.model.*
 import io.micronaut.sourcegen.model.ExpressionDef.*
-import io.micronaut.sourcegen.model.FieldDef
-import io.micronaut.sourcegen.model.InterfaceDef
-import io.micronaut.sourcegen.model.MethodDef
-import io.micronaut.sourcegen.model.ObjectDef
-import io.micronaut.sourcegen.model.ParameterDef
-import io.micronaut.sourcegen.model.PropertyDef
-import io.micronaut.sourcegen.model.RecordDef
-import io.micronaut.sourcegen.model.StatementDef
 import io.micronaut.sourcegen.model.StatementDef.Assign
 import io.micronaut.sourcegen.model.StatementDef.DefineAndAssign
-import io.micronaut.sourcegen.model.TypeDef
 import io.micronaut.sourcegen.model.TypeDef.Primitive.PrimitiveInstance
-import io.micronaut.sourcegen.model.VariableDef
 import java.io.IOException
 import java.io.Writer
 import java.lang.reflect.Array
@@ -354,8 +329,17 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         enumDef.annotations.stream().map { annotationDef: AnnotationDef -> asAnnotationSpec(annotationDef) }
             .forEach { annotationSpec: AnnotationSpec -> enumBuilder.addAnnotation(annotationSpec) }
 
-        for (enumConstant in enumDef.enumConstants) {
-            enumBuilder.addEnumConstant(enumConstant)
+        enumDef.enumConstants.forEach { (name: String?, exp: ExpressionDef?) ->
+            if (exp != null) {
+                enumBuilder.addEnumConstant(
+                    name,
+                    TypeSpec.anonymousClassBuilder()
+                        .addInitializerBlock(renderExpressionCode(null, MethodDef.builder("").build(), exp))
+                        .build()
+                )
+            } else {
+                enumBuilder.addEnumConstant(name)
+            }
         }
 
         var companionBuilder: TypeSpec.Builder? = null
