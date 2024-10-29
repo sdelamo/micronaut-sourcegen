@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen;
 
+import com.github.javaparser.utils.Pair;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
@@ -65,6 +66,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
+
+import static io.micronaut.sourcegen.javapoet.TypeSpec.anonymousClassBuilder;
 
 /**
  * The Java source generator.
@@ -154,8 +157,12 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             enumBuilder.addAnnotation(asAnnotationSpec(annotation));
         }
 
-        for (String enumConstant : enumDef.getEnumConstants()) {
-            enumBuilder.addEnumConstant(enumConstant);
+        for (Pair<String,Object> enumConstant : enumDef.getEnumConstants()) {
+            if (enumConstant.b != null) {
+                enumBuilder.addEnumConstant(enumConstant.a, anonymousClassBuilder(enumConstant.b.toString()).build());
+            } else {
+                enumBuilder.addEnumConstant(enumConstant.a);
+            }
         }
 
         for (MethodDef method : enumDef.getMethods()) {
