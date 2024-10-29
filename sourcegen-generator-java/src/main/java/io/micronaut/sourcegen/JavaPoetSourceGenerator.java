@@ -15,7 +15,6 @@
  */
 package io.micronaut.sourcegen;
 
-import com.github.javaparser.utils.Pair;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
@@ -49,6 +48,7 @@ import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.InterfaceDef;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ObjectDef;
+import io.micronaut.sourcegen.model.ParameterDef;
 import io.micronaut.sourcegen.model.PropertyDef;
 import io.micronaut.sourcegen.model.RecordDef;
 import io.micronaut.sourcegen.model.StatementDef;
@@ -59,6 +59,7 @@ import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -157,12 +158,42 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             enumBuilder.addAnnotation(asAnnotationSpec(annotation));
         }
 
-        for (Pair<String,Object> enumConstant : enumDef.getEnumConstants()) {
-            if (enumConstant.b != null) {
-                enumBuilder.addEnumConstant(enumConstant.a, anonymousClassBuilder(enumConstant.b.toString()).build());
+        enumDef.getEnumConstants().forEach((name, exp) -> {
+            if (exp != null) {
+                enumBuilder.addEnumConstant(name, anonymousClassBuilder(renderExpression(null, null, exp)).build());
             } else {
-                enumBuilder.addEnumConstant(enumConstant.a);
+                enumBuilder.addEnumConstant(name);
             }
+        });
+
+        List<ParameterDef> constructorParameters = new ArrayList<>();
+        for (PropertyDef property : enumDef.getProperties()) {
+            TypeName propertyType = asType(property.getType(), enumDef);
+            String propertyName = property.getName();
+            FieldSpec.Builder fieldBuilder = FieldSpec.builder(
+                propertyType,
+                propertyName
+            ).addModifiers(Modifier.PRIVATE, Modifier.FINAL);
+            for (AnnotationDef annotation : property.getAnnotations()) {
+                fieldBuilder.addAnnotation(
+                    asAnnotationSpec(annotation)
+                );
+            }
+            property.getJavadoc().forEach(fieldBuilder::addJavadoc);
+            enumBuilder.addField(
+                fieldBuilder
+                    .build()
+            );
+
+            // for all properties constructor
+            constructorParameters.add(ParameterDef.of(property.getName(), property.getType()));
+        }
+
+        if (!enumDef.getProperties().isEmpty()) {
+            // add all property constructor automatically
+            enumBuilder.addMethod(
+                asMethodSpec(enumDef,
+                    MethodDef.constructor(ClassTypeDef.of(enumDef.getSimpleName()), constructorParameters, Modifier.PUBLIC)));
         }
 
         for (MethodDef method : enumDef.getMethods()) {
@@ -874,8 +905,12 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 if (!classDef.hasField(field.name())) {
                     throw new IllegalStateException("Field " + field.name() + " is not available in [" + classDef + "]:" + classDef.getFields());
                 }
+            } else if (objectDef instanceof EnumDef enumDef) {
+                if (!enumDef.hasProperty(field.name())) {
+                    throw new IllegalStateException("Property " + field.name() + " is not available in [" + enumDef + "]:" + enumDef.getProperties());
+                }
             } else {
-                throw new IllegalStateException("Field access no supported on the object definition: " + objectDef);
+                throw new IllegalStateException("Field access not supported on the object definition: " + objectDef);
             }
             return CodeBlock.of(renderExpression(objectDef, methodDef, field.instance()) + "." + field.name());
         }
