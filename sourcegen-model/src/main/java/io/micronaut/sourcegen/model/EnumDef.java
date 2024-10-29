@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.model;
 
+import com.github.javaparser.utils.Pair;
 import io.micronaut.core.annotation.Experimental;
 
 import javax.lang.model.element.Modifier;
@@ -31,14 +32,14 @@ import java.util.List;
 @Experimental
 public final class EnumDef extends ObjectDef {
 
-    private final List<String> enumConstants;
+    private final List<Pair<String,Object>> enumConstants;
 
     private EnumDef(String name,
                     EnumSet<Modifier> modifiers,
                     List<MethodDef> methods,
                     List<AnnotationDef> annotations,
                     List<String> javadoc,
-                    List<String> enumConstants,
+                    List<Pair<String,Object>> enumConstants,
                     List<TypeDef> superinterfaces) {
         super(name, modifiers, annotations, javadoc, methods, superinterfaces);
         this.enumConstants = enumConstants;
@@ -48,7 +49,7 @@ public final class EnumDef extends ObjectDef {
         return new EnumDefBuilder(name);
     }
 
-    public List<String> getEnumConstants() {
+    public List<Pair<String,Object>> getEnumConstants() {
         return enumConstants;
     }
 
@@ -61,14 +62,19 @@ public final class EnumDef extends ObjectDef {
     @Experimental
     public static final class EnumDefBuilder extends ObjectDefBuilder<EnumDefBuilder> {
 
-        private final List<String> enumConstants = new ArrayList<>();
+        private final List<Pair<String,Object>> enumConstants = new ArrayList<>();
 
         private EnumDefBuilder(String name) {
             super(name);
         }
 
         public EnumDefBuilder addEnumConstant(String name) {
-            enumConstants.add(name);
+            enumConstants.add(new Pair<>(name,null));
+            return this;
+        }
+
+        public EnumDefBuilder addEnumConstant(String name, Object value) {
+            enumConstants.add(new Pair<>(name,value));
             return this;
         }
 

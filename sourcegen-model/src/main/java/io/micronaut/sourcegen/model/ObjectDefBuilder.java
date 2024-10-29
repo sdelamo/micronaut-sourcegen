@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.model;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Experimental;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public sealed class ObjectDefBuilder<ThisType>
                 RecordDef.RecordDefBuilder, EnumDef.EnumDefBuilder {
 
     protected final List<MethodDef> methods = new ArrayList<>();
+    protected final List<PropertyDef> properties = new ArrayList<>();
     protected final List<TypeDef> superinterfaces = new ArrayList<>();
 
     protected ObjectDefBuilder(String name) {
@@ -42,6 +44,11 @@ public sealed class ObjectDefBuilder<ThisType>
 
     public final ThisType addMethod(MethodDef method) {
         methods.add(method);
+        return thisInstance;
+    }
+
+    public final ThisType addProperty(PropertyDef property) {
+        properties.add(property);
         return thisInstance;
     }
 

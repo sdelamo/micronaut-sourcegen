@@ -31,7 +31,6 @@ import java.util.List;
 @Experimental
 public final class RecordDef extends ObjectDef {
 
-    private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
 
     private RecordDef(String name,
@@ -42,17 +41,12 @@ public final class RecordDef extends ObjectDef {
                       List<String> javadoc,
                       List<TypeDef.TypeVariable> typeVariables,
                       List<TypeDef> superinterfaces) {
-        super(name, modifiers, annotations, javadoc, methods, superinterfaces);
-        this.properties = properties;
+        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces);
         this.typeVariables = typeVariables;
     }
 
     public static RecordDefBuilder builder(String name) {
         return new RecordDefBuilder(name);
-    }
-
-    public List<PropertyDef> getProperties() {
-        return properties;
     }
 
     public List<TypeDef.TypeVariable> getTypeVariables() {
@@ -68,16 +62,10 @@ public final class RecordDef extends ObjectDef {
     @Experimental
     public static final class RecordDefBuilder extends ObjectDefBuilder<RecordDefBuilder> {
 
-        private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
 
         private RecordDefBuilder(String name) {
             super(name);
-        }
-
-        public RecordDefBuilder addProperty(PropertyDef property) {
-            properties.add(property);
-            return this;
         }
 
         public RecordDefBuilder addTypeVariable(TypeDef.TypeVariable typeVariable) {
