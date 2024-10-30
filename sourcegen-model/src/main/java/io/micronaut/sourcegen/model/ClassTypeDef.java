@@ -342,4 +342,48 @@ public sealed interface ClassTypeDef extends TypeDef {
         }
     }
 
+    /**
+     * A combined type for representing a ClassTypeDef with annotations.
+     *
+     * @param typeDef       The raw type definition
+     * @param annotations   List of annotations to associate
+     * @author Elif Kurtay
+     * @since 1.4
+     */
+    @Experimental
+    record AnnotatedClassTypeDef(ClassTypeDef typeDef, List<AnnotationDef> annotations) implements ClassTypeDef {
+        public List<AnnotationDef> getAnnotations() {
+            return annotations;
+        }
+
+        public TypeDef getType() {
+            return typeDef;
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return typeDef.isPrimitive();
+        }
+
+        @Override
+        public boolean isArray() {
+            return typeDef.isArray();
+        }
+
+        @Override
+        public String getName() {
+            return typeDef.getName();
+        }
+
+        @Override
+        public boolean isNullable() {
+            return typeDef.isNullable();
+        }
+
+        @Override
+        public ClassTypeDef makeNullable() {
+            return typeDef.makeNullable();
+        }
+    }
+
 }
