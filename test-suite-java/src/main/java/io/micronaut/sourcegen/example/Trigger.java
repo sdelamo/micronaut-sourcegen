@@ -18,6 +18,7 @@ package io.micronaut.sourcegen.example;
 
 import io.micronaut.sourcegen.custom.example.GenerateArray;
 import io.micronaut.sourcegen.custom.example.GenerateIfsPredicate;
+import io.micronaut.sourcegen.custom.example.GenerateInnerTypes;
 import io.micronaut.sourcegen.custom.example.GenerateMyBean1;
 import io.micronaut.sourcegen.custom.example.GenerateMyBean2;
 import io.micronaut.sourcegen.custom.example.GenerateMyBean3;
@@ -41,6 +42,7 @@ import java.util.List;
 @GenerateIfsPredicate
 @GenerateSwitch
 @GenerateArray
+@GenerateInnerTypes
 public class Trigger {
     public List<String> copyAddresses;
 }
