@@ -3,10 +3,13 @@ package io.micronaut.sourcegen.javapoet.write;
 import io.micronaut.sourcegen.JavaPoetSourceGenerator;
 import io.micronaut.sourcegen.model.EnumDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.PropertyDef;
+import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import org.junit.Test;
 
+import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.regex.Matcher;
@@ -83,6 +86,50 @@ public class EnumWriteTest {
     }
 
     @Test
+    public void writeComplexEnumConstant3() throws IOException {
+        EnumDef enumDef = EnumDef.builder("test.Status")
+            .addEnumConstant("active", ExpressionDef.constant(2))
+            .addEnumConstant("in progress", ExpressionDef.constant(1))
+            .addEnumConstant("deleted", ExpressionDef.constant(0))
+            .build();
+        var result = writeEnum(enumDef);
+
+        var expected = """
+        package test;
+
+        enum Status {
+
+          ACTIVE(2),
+          IN_PROGRESS(1),
+          DELETED(0)
+        }
+        """;
+        assertEquals(expected.strip(), result.strip());
+    }
+
+    @Test
+    public void writeComplexEnumConstant4() throws IOException {
+        EnumDef enumDef = EnumDef.builder("test.Status")
+            .addEnumConstant("active_by heart")
+            .addEnumConstant("9 Jump in progress")
+            .addEnumConstant("isItEven deleted")
+            .build();
+        var result = writeEnum(enumDef);
+
+        var expected = """
+        package test;
+
+        enum Status {
+
+          ACTIVE_BY_HEART("active_by heart"),
+          JUMP_IN_PROGRESS("9 Jump in progress"),
+          IS_IT_EVEN_DELETED("isItEven deleted")
+        }
+        """;
+        assertEquals(expected.strip(), result.strip());
+    }
+
+    @Test
     public void writeComplexEnumWithProperty() throws IOException {
         EnumDef enumDef = EnumDef.builder("test.Status")
             .addEnumConstant("active")
@@ -107,6 +154,46 @@ public class EnumWriteTest {
 
           public Status(String value) {
             this.value = value;
+          }
+        }
+        """;
+        assertEquals(expected.strip(), result.strip());
+    }
+
+    @Test
+    public void writeComplexEnumWithPropertyMethod() throws IOException {
+        EnumDef enumDef = EnumDef.builder("test.Status")
+            .addEnumConstant("active")
+            .addEnumConstant("in-progress")
+            .addEnumConstant("deleted")
+            .addProperty(PropertyDef.builder("value").ofType(TypeDef.STRING).build())
+            .addMethod(MethodDef.builder("getValue")
+                .returns(TypeDef.STRING)
+                .addModifiers(Modifier.PUBLIC)
+                .addStatement(new StatementDef.Return(ExpressionDef.constant("value")))
+                .build())
+            .build();
+        var result = writeEnum(enumDef);
+
+        var expected = """
+        package test;
+
+        import java.lang.String;
+
+        enum Status {
+
+          ACTIVE("active"),
+          IN_PROGRESS("in-progress"),
+          DELETED("deleted");
+
+          private final String value;
+
+          public Status(String value) {
+            this.value = value;
+          }
+
+          public String getValue() {
+            return "value";
           }
         }
         """;
