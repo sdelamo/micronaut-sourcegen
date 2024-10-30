@@ -52,14 +52,21 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
     /**
      * Define a type with annotations
      *
-     * @param annotations The length of the array
+     * @param annotations the annotation definitions to be added
      * @return The AnnotatedTypeDef
-     * @since 1.3
+     * @since 1.4
      */
     default AnnotatedTypeDef annotated(AnnotationDef... annotations) {
         return new AnnotatedTypeDef(this, List.of(annotations));
     }
 
+    /**
+     * Define a type with annotations
+     *
+     * @param annotations The list of the AnnotationDef
+     * @return The AnnotatedTypeDef
+     * @since 1.4
+     */
     default AnnotatedTypeDef annotated(List<AnnotationDef> annotations) {
         return new AnnotatedTypeDef(this, annotations);
     }
@@ -468,29 +475,16 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
     /**
      * A combined type for representing a TypeDef with annotations.
      *
+     * @param typeDef       The raw type definition
+     * @param annotations   List of annotations to associate
      * @author Elif Kurtay
-     * @since 1.3
+     * @since 1.4
      */
     @Experimental
-    final class AnnotatedTypeDef implements TypeDef {
-        TypeDef typeDef;
-        List<AnnotationDef> annotations;
-
-        public AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations) {
-            this.typeDef = typeDef;
-            this.annotations = annotations;
-        }
-
-        public void addAnnotation(AnnotationDef annotation) {
-            if (annotations != null) {
-                annotations.add(annotation);
-            } else {
-                annotations = new ArrayList<>(List.of(annotation));
-            }
-        }
+    record AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations)  implements TypeDef {
 
         public List<AnnotationDef> getAnnotations() {
-            return this.annotations;
+            return annotations;
         }
 
         public TypeDef getType() {
