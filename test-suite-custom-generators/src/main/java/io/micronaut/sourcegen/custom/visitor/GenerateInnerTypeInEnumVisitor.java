@@ -102,7 +102,7 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
 
         // inner class
         ClassDef innerClass = ClassDef.builder("InnerClass")
-            .addModifiers(Modifier.PUBLIC)
+            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .addField(FieldDef.builder("name").ofType(TypeDef.STRING).build())
             .addAllFieldsConstructor()
             .addMethod(

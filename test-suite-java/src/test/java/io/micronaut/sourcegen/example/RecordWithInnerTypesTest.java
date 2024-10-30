@@ -20,10 +20,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class EnumWithInnerTypesTest {
+public class RecordWithInnerTypesTest {
     @Test
     public void initialTest() {
-        assertEquals(3, MyEnumWithInnerTypes.values().length);
+        assertEquals(3, RecordWithInnerTypes.values().length);
         assertEquals("A", MyEnumWithInnerTypes.A.myName());
         assertEquals("B", MyEnumWithInnerTypes.B.myName());
         assertEquals("C", MyEnumWithInnerTypes.C.myName());
