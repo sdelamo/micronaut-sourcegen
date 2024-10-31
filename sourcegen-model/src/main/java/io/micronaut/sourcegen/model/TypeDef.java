@@ -49,7 +49,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
     TypeDef THIS = of(ThisType.class);
 
     /**
-     * Define a type with annotations
+     * Define a type with annotations.
      *
      * @param annotations the annotation definitions to be added
      * @return The AnnotatedTypeDef
@@ -60,7 +60,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
     }
 
     /**
-     * Define a type with annotations
+     * Define a type with annotations.
      *
      * @param annotations The list of the AnnotationDef
      * @return The AnnotatedTypeDef
