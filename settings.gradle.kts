@@ -28,6 +28,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 configure<io.micronaut.build.MicronautBuildSettingsExtension> {
     importMicronautCatalog()
+    importMicronautCatalog("micronaut-validation")
 }
 
 dependencyResolutionManagement {
