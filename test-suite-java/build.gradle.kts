@@ -6,16 +6,15 @@ dependencies {
     annotationProcessor(mn.micronaut.inject.java)
     annotationProcessor(projects.sourcegenGeneratorJava)
     annotationProcessor(projects.testSuiteCustomGenerators)
+    annotationProcessor(mnValidation.micronaut.validation.processor)
 
     implementation(projects.sourcegenAnnotations)
     implementation(projects.testSuiteCustomAnnotations)
-    implementation(mnValidation.validation)
+    implementation(mnValidation.micronaut.validation)
+
     testImplementation(mnTest.micronaut.test.junit5)
     testImplementation(libs.junit.jupiter.engine)
-    testAnnotationProcessor(mn.micronaut.inject.java)
-
-    testAnnotationProcessor(mnValidation.micronaut.validation.processor)
-    testImplementation(mnValidation.micronaut.validation)
+    testAnnotationProcessor(mn.micronaut.inject.java.test)
 }
 //
 //tasks {
