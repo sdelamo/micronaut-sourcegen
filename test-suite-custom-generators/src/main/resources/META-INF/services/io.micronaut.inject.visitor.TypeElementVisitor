@@ -12,5 +12,7 @@ io.micronaut.sourcegen.custom.visitor.GenerateIfsPredicateVisitor
 io.micronaut.sourcegen.custom.visitor.GenerateSwitchVisitor
 io.micronaut.sourcegen.custom.visitor.GenerateArrayVisitor
 io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor
+io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInRecordVisitor
+
 
 

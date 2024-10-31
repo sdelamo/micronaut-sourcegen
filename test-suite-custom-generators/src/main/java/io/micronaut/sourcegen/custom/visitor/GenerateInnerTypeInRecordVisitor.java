@@ -21,25 +21,17 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
-import io.micronaut.sourcegen.annotations.Builder;
 import io.micronaut.sourcegen.custom.example.GenerateInnerTypes;
 import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
-import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.EnumDef;
-import io.micronaut.sourcegen.model.ExpressionDef;
-import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.InterfaceDef;
-import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.PropertyDef;
 import io.micronaut.sourcegen.model.RecordDef;
-import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
-import io.micronaut.sourcegen.model.VariableDef;
 
 import javax.lang.model.element.Modifier;
-import java.util.List;
 
 import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerClassDef;
 import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerEnumDef;
@@ -61,20 +53,20 @@ public final class GenerateInnerTypeInRecordVisitor implements TypeElementVisito
             return;
         }
 
-        EnumDef enumDef = getEnumDef(element);
+        RecordDef objectDef = getRecordDef(element);
 
-        context.visitGeneratedSourceFile(enumDef.getPackageName(), enumDef.getSimpleName(), element)
+        context.visitGeneratedSourceFile(objectDef.getPackageName(), objectDef.getSimpleName(), element)
             .ifPresent(generatedFile -> {
                 try {
-                    generatedFile.write(writer -> sourceGenerator.write(enumDef, writer));
+                    generatedFile.write(writer -> sourceGenerator.write(objectDef, writer));
                 } catch (Exception e) {
                     throw new ProcessingException(element, e.getMessage(), e);
                 }
             });
     }
 
-    private static EnumDef getEnumDef(ClassElement element) {
-        String enumClassName = element.getPackageName() + ".RecordWithInnerTypes";
+    private static RecordDef getRecordDef(ClassElement element) {
+        String className = element.getPackageName() + ".RecordWithInnerTypes";
 
         EnumDef innerEnum = getInnerEnumDef();
 
@@ -85,27 +77,23 @@ public final class GenerateInnerTypeInRecordVisitor implements TypeElementVisito
         InterfaceDef innerInterface = getInnerInterfaceDef();
 
         //outer enum
-        return EnumDef.builder(enumClassName)
+        return RecordDef.builder(className)
             .addModifiers(Modifier.PUBLIC)
-            .addEnumConstant("A")
-            .addEnumConstant("B")
-            .addEnumConstant("C")
+            .addProperty(
+                PropertyDef.builder("id")
+                    .addModifiers(Modifier.PUBLIC)
+                    .ofType(TypeDef.primitive(int.class))
+                    .build()
+            ).addProperty(
+                PropertyDef.builder("name")
+                    .addModifiers(Modifier.PUBLIC)
+                    .ofType(TypeDef.of(String.class))
+                    .build()
+            )
             .addInnerType(innerEnum)
             .addInnerType(innerRecord)
             .addInnerType(innerClass)
             .addInnerType(innerInterface)
-            .addMethod(MethodDef.builder("myName")
-                .addModifiers(Modifier.PUBLIC)
-                .addStatement(new StatementDef.Return(
-                    ExpressionDef.invoke(
-                        new VariableDef.This(ClassTypeDef.of(enumClassName)),
-                        "toString",
-                        List.of(),
-                        TypeDef.of(String.class)
-                    )
-                ))
-                .returns(String.class)
-                .build())
             .build();
     }
 }

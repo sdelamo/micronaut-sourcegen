@@ -23,10 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class RecordWithInnerTypesTest {
     @Test
     public void initialTest() {
-        assertEquals(3, RecordWithInnerTypes.values().length);
-        assertEquals("A", RecordWithInnerTypes.A.myName());
-        assertEquals("B", RecordWithInnerTypes.B.myName());
-        assertEquals("C", RecordWithInnerTypes.C.myName());
+        RecordWithInnerTypes myRecord = new RecordWithInnerTypes(0, "name");
+        assertEquals(0, myRecord.id());
+        assertEquals("name", myRecord.name());
     }
 
     @Test
