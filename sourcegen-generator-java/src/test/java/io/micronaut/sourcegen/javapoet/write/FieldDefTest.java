@@ -42,21 +42,22 @@ public class FieldDefTest extends AbstractWriteTest {
 
 
     @Test public void annotatedGenericAndField() throws Exception {
-        PropertyDef.PropertyDefBuilder propertyDef = PropertyDef.builder("numbers");
         var MIN_ANN = AnnotationDef.builder(ClassTypeDef.of("jakarta.validation.constraints.Min"))
             .addMember("value", 1).build();
         var MAX_ANN = AnnotationDef.builder(ClassTypeDef.of("jakarta.validation.constraints.Max"))
             .addMember("value", 10).build();
-        var NOTNULL_ANN = AnnotationDef.builder(ClassTypeDef.of("jakarta.validation.constraints.NotNull")).build();
+        var NOTNULL_ANN = AnnotationDef.builder(ClassTypeDef.of("jakarta.validation.constraints.NotNull"))
+            .build();
+
         TypeDef innerType = TypeDef.parameterized(ClassTypeDef.of(List.class),
             TypeDef.Primitive.FLOAT.wrapperType().annotated(MIN_ANN, MAX_ANN)).annotated(NOTNULL_ANN);
-        propertyDef.ofType(innerType);
+        PropertyDef propertyDef = PropertyDef.builder("numbers").ofType(innerType).build();
 
-        RecordDef.RecordDefBuilder builder = RecordDef.builder("Record").addProperty(propertyDef.build());
+        RecordDef recordDef = RecordDef.builder("Record").addProperty(propertyDef).build();
         JavaPoetSourceGenerator generator = new JavaPoetSourceGenerator();
         String result;
         try (StringWriter writer = new StringWriter()) {
-            generator.write(builder.build(), writer);
+            generator.write(recordDef, writer);
             result = writer.toString();
         }
 
@@ -73,15 +74,21 @@ public class FieldDefTest extends AbstractWriteTest {
     }
 
     @Test public void annotatedGenericField() throws Exception {
-        PropertyDef.PropertyDefBuilder propertyDef = PropertyDef.builder("numbers");
-        var MIN_ANN = AnnotationDef.builder(ClassTypeDef.of("jakarta.validation.constraints.Min")).addMember("value", 1).build();
-        propertyDef.ofType(TypeDef.parameterized(ClassTypeDef.of(List.class), TypeDef.Primitive.FLOAT.wrapperType().annotated(MIN_ANN)));
+        var MIN_ANN = AnnotationDef
+            .builder(ClassTypeDef.of("jakarta.validation.constraints.Min"))
+            .addMember("value", 1)
+            .build();
+        PropertyDef propertyDef = PropertyDef.builder("numbers")
+            .ofType(TypeDef.parameterized(
+                ClassTypeDef.of(List.class),
+                TypeDef.Primitive.FLOAT.wrapperType().annotated(MIN_ANN)))
+            .build();
 
-        RecordDef.RecordDefBuilder builder = RecordDef.builder("Record").addProperty(propertyDef.build());
+        RecordDef recordDef = RecordDef.builder("Record").addProperty(propertyDef).build();
         JavaPoetSourceGenerator generator = new JavaPoetSourceGenerator();
         String result;
         try (StringWriter writer = new StringWriter()) {
-            generator.write(builder.build(), writer);
+            generator.write(recordDef, writer);
             result = writer.toString();
         }
 
@@ -95,16 +102,20 @@ public class FieldDefTest extends AbstractWriteTest {
             "}\n");
     }
 
-    @Test public void annotatedField() throws Exception {
-        PropertyDef.PropertyDefBuilder propertyDef = PropertyDef.builder("numbers");
-        var MIN_ANN = AnnotationDef.builder(ClassTypeDef.of("jakarta.validation.constraints.Min")).addMember("value", 1).build();
-        propertyDef.ofType(TypeDef.Primitive.FLOAT.wrapperType().annotated(MIN_ANN));
+    @Test public void annotatedClassField() throws Exception {
+        var MIN_ANN = AnnotationDef
+            .builder(ClassTypeDef.of("jakarta.validation.constraints.Min"))
+            .addMember("value", 1)
+            .build();
+        PropertyDef propertyDef = PropertyDef.builder("numbers")
+            .ofType(TypeDef.Primitive.FLOAT.wrapperType().annotatedClass(MIN_ANN))
+            .build();
 
-        RecordDef.RecordDefBuilder builder = RecordDef.builder("Record").addProperty(propertyDef.build());
+        RecordDef recordDef = RecordDef.builder("Record").addProperty(propertyDef).build();
         JavaPoetSourceGenerator generator = new JavaPoetSourceGenerator();
         String result;
         try (StringWriter writer = new StringWriter()) {
-            generator.write(builder.build(), writer);
+            generator.write(recordDef, writer);
             result = writer.toString();
         }
 
