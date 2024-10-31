@@ -15,37 +15,43 @@
  */
 package io.micronaut.sourcegen.example;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
+@MicronautTest
 public class AnnotatedTypeTest {
 
-    private Validator validator;
+    @Inject
+    Validator validator;
 
     @Test
     public void testSuccess() {
-        AnnotatedProperty annotatedProperty = new AnnotatedProperty(List.of(3f, 4f, 5f));
-        List<Float> numbers = List.of(3f, 4f, 5f);
+        AnnotatedProperty annotatedProperty = new AnnotatedProperty(List.of(3, 4, 5));
+        List<Integer> numbers = List.of(3, 4, 5);
         assertEquals(numbers, annotatedProperty.numbers());
     }
 
     @Test
     public void testException() {
-        validator = Validation.buildDefaultValidatorFactory().getValidator();
-
         AnnotatedProperty annotatedProperty = new AnnotatedProperty(null);
         Set<ConstraintViolation<AnnotatedProperty>> violations = validator.validate(annotatedProperty);
-        assertEquals(violations.size(), 3);
+        assertEquals(1, violations.size());
 
         annotatedProperty = new AnnotatedProperty(List.of());
         violations = validator.validate(annotatedProperty);
-        assertEquals(violations.size(), 2);
+        assertEquals(0, violations.size());
 
-        annotatedProperty = new AnnotatedProperty(List.of(100f));
+        annotatedProperty = new AnnotatedProperty(List.of(100, -10));
         violations = validator.validate(annotatedProperty);
-        assertEquals(violations.size(), 1);
+        assertEquals(2, violations.size());
     }
 }

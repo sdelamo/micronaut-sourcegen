@@ -16,6 +16,7 @@
 package io.micronaut.sourcegen.custom.visitor;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
@@ -55,10 +56,12 @@ public final class GenerateAnnotatedTypeVisitor implements TypeElementVisitor<Ge
             .build();
 
         TypeDef innerType = TypeDef.parameterized(ClassTypeDef.of(List.class),
-            TypeDef.Primitive.FLOAT.wrapperType().annotated(MIN_ANN, MAX_ANN)).annotated(NOTNULL_ANN);
+            TypeDef.Primitive.INT.wrapperType().annotated(MIN_ANN, MAX_ANN)).annotated(NOTNULL_ANN);
         PropertyDef propertyDef = PropertyDef.builder("numbers").ofType(innerType).build();
 
-        RecordDef recordDef = RecordDef.builder(element.getPackageName() + ".AnnotatedProperty").addProperty(propertyDef).build();
+        RecordDef recordDef = RecordDef.builder(element.getPackageName() + ".AnnotatedProperty")
+                .addAnnotation(Introspected.class)
+                .addProperty(propertyDef).build();
 
         context.visitGeneratedSourceFile(recordDef.getPackageName(), recordDef.getSimpleName(), element)
             .ifPresent(generatedFile -> {
