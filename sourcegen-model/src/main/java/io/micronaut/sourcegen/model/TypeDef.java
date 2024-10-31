@@ -22,7 +22,6 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.GenericPlaceholderElement;
 import io.micronaut.inject.ast.WildcardElement;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -487,7 +486,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
             return annotations;
         }
 
-        public TypeDef getType() {
+        public TypeDef getTypeDef() {
             return typeDef;
         }
 

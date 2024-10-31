@@ -192,6 +192,28 @@ public sealed interface ClassTypeDef extends TypeDef {
     }
 
     /**
+     * Define a ClassTypeDef with annotations
+     *
+     * @param annotations the annotation definitions to be added
+     * @return The AnnotatedClassTypeDef
+     * @since 1.4
+     */
+    default AnnotatedClassTypeDef annotatedClass(AnnotationDef... annotations) {
+        return new AnnotatedClassTypeDef(this, List.of(annotations));
+    }
+
+    /**
+     * Define a ClassTypeDef with annotations
+     *
+     * @param annotations The list of the AnnotationDef
+     * @return The AnnotatedClassTypeDef
+     * @since 1.4
+     */
+    default AnnotatedClassTypeDef annotatedClass(List<AnnotationDef> annotations) {
+        return new AnnotatedClassTypeDef(this, annotations);
+    }
+
+    /**
      * The class type.
      *
      * @param type     The type
@@ -356,18 +378,8 @@ public sealed interface ClassTypeDef extends TypeDef {
             return annotations;
         }
 
-        public TypeDef getType() {
+        public ClassTypeDef getType() {
             return typeDef;
-        }
-
-        @Override
-        public boolean isPrimitive() {
-            return typeDef.isPrimitive();
-        }
-
-        @Override
-        public boolean isArray() {
-            return typeDef.isArray();
         }
 
         @Override

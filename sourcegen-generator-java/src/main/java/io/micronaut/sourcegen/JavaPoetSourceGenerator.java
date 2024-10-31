@@ -375,6 +375,10 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                     throw new IllegalStateException("Unrecognized primitive name: " + primitive.name());
             };
         }
+        if (typeDef instanceof ClassTypeDef.AnnotatedClassTypeDef annotatedType) {
+            var annotationsSpecs = annotatedType.getAnnotations().stream().map(this::asAnnotationSpec).toList();
+            return asType(annotatedType.getType(), objectDef).annotated(annotationsSpecs);
+        }
         if (typeDef instanceof ClassTypeDef classType) {
             return ClassName.bestGuess(classType.getName());
         }
@@ -399,7 +403,7 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         }
         if (typeDef instanceof TypeDef.AnnotatedTypeDef annotatedType) {
             var annotationsSpecs = annotatedType.getAnnotations().stream().map(this::asAnnotationSpec).toList();
-            return asType(annotatedType.getType(), objectDef).annotated(annotationsSpecs);
+            return asType(annotatedType.getTypeDef(), objectDef).annotated(annotationsSpecs);
         }
         throw new IllegalStateException("Unrecognized type definition " + typeDef);
     }
