@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.example
 
+import io.micronaut.sourcegen.custom.example.GenerateAnnotatedType
 import io.micronaut.sourcegen.custom.example.GenerateArray
 import io.micronaut.sourcegen.custom.example.GenerateIfsPredicate
 import io.micronaut.sourcegen.custom.example.GenerateMyBean1
@@ -36,4 +37,5 @@ import io.micronaut.sourcegen.custom.example.GenerateSwitch
 @GenerateIfsPredicate
 @GenerateSwitch
 @GenerateArray
+@GenerateAnnotatedType
 class Trigger
