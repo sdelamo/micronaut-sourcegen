@@ -24,27 +24,27 @@ public class RecordWithInnerTypesTest {
     @Test
     public void initialTest() {
         assertEquals(3, RecordWithInnerTypes.values().length);
-        assertEquals("A", MyEnumWithInnerTypes.A.myName());
-        assertEquals("B", MyEnumWithInnerTypes.B.myName());
-        assertEquals("C", MyEnumWithInnerTypes.C.myName());
+        assertEquals("A", RecordWithInnerTypes.A.myName());
+        assertEquals("B", RecordWithInnerTypes.B.myName());
+        assertEquals("C", RecordWithInnerTypes.C.myName());
     }
 
     @Test
     public void innerEnumTest() {
-        assertEquals(2, MyEnumWithInnerTypes.InnerEnum.values().length);
-        assertEquals("SINGLE", MyEnumWithInnerTypes.InnerEnum.SINGLE.myName());
-        assertEquals("MARRIED", MyEnumWithInnerTypes.InnerEnum.MARRIED.myName());
+        assertEquals(2, RecordWithInnerTypes.InnerEnum.values().length);
+        assertEquals("SINGLE", RecordWithInnerTypes.InnerEnum.SINGLE.myName());
+        assertEquals("MARRIED", RecordWithInnerTypes.InnerEnum.MARRIED.myName());
     }
 
     @Test
     public void innerRecordTest() {
-        MyEnumWithInnerTypes.InnerRecord innerRecord = MyEnumWithInnerTypes$InnerRecordBuilder.builder().id(3).build();
+        RecordWithInnerTypes.InnerRecord innerRecord = RecordWithInnerTypes$InnerRecordBuilder.builder().id(3).build();
         assertEquals(3, innerRecord.id());
     }
 
     @Test
     public void innerClassTest() {
-        MyEnumWithInnerTypes.InnerClass innerClass = new MyEnumWithInnerTypes.InnerClass("name");
+        RecordWithInnerTypes.InnerClass innerClass = new RecordWithInnerTypes.InnerClass("name");
         assertEquals("name", innerClass.getName());
     }
 
@@ -56,7 +56,7 @@ public class RecordWithInnerTypesTest {
         Assertions.assertEquals("abc", myInstance.myString);
     }
 
-    static class MyInstance implements MyEnumWithInnerTypes.InnerInterface {
+    static class MyInstance implements RecordWithInnerTypes.InnerInterface {
 
         String myString;
 

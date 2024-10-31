@@ -41,8 +41,13 @@ import io.micronaut.sourcegen.model.VariableDef;
 import javax.lang.model.element.Modifier;
 import java.util.List;
 
+import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerClassDef;
+import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerEnumDef;
+import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerInterfaceDef;
+import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerRecordDef;
+
 @Internal
-public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<GenerateInnerTypes, Object> {
+public final class GenerateInnerTypeInRecordVisitor implements TypeElementVisitor<GenerateInnerTypes, Object> {
 
     @Override
     public @NonNull VisitorKind getVisitorKind() {
@@ -69,7 +74,7 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
     }
 
     private static EnumDef getEnumDef(ClassElement element) {
-        String enumClassName = element.getPackageName() + ".MyEnumWithInnerTypes";
+        String enumClassName = element.getPackageName() + ".RecordWithInnerTypes";
 
         EnumDef innerEnum = getInnerEnumDef();
 
@@ -102,74 +107,5 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
                 .returns(String.class)
                 .build())
             .build();
-    }
-
-    public static InterfaceDef getInnerInterfaceDef() {
-        InterfaceDef innerInterface = InterfaceDef.builder("InnerInterface")
-            .addModifiers(Modifier.PUBLIC)
-            .addMethod(MethodDef.builder("findLong")
-                .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
-                .returns(Long.class)
-                .build())
-            .addMethod(MethodDef.builder("saveString")
-                .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
-                .addParameter("myString", String.class)
-                .returns(TypeDef.VOID)
-                .build())
-            .build();
-        return innerInterface;
-    }
-
-    public static ClassDef getInnerClassDef() {
-        ClassDef innerClass = ClassDef.builder("InnerClass")
-            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-            .addField(FieldDef.builder("name").ofType(TypeDef.STRING).build())
-            .addAllFieldsConstructor()
-            .addMethod(
-                MethodDef.builder("getName")
-                .addModifiers(Modifier.PUBLIC)
-                .addStatement(new StatementDef.Return(
-                    new VariableDef.Field(
-                        new VariableDef.This(ClassTypeDef.of("InnerClass")),
-                        "name",
-                        TypeDef.of(String.class)
-                    )
-                ))
-                .returns(String.class)
-                .build())
-            .build();
-        return innerClass;
-    }
-
-    public static RecordDef getInnerRecordDef() {
-        RecordDef innerRecord = RecordDef.builder("InnerRecord")
-            .addModifiers(Modifier.PUBLIC)
-            .addAnnotation(Builder.class)
-            .addProperty(PropertyDef
-                .builder("id")
-                .ofType(TypeDef.Primitive.INT)
-                .build())
-            .build();
-        return innerRecord;
-    }
-
-    public static EnumDef getInnerEnumDef() {
-        EnumDef innerEnum = EnumDef.builder("InnerEnum")
-            .addEnumConstant("SINGLE")
-            .addEnumConstant("MARRIED")
-            .addMethod(MethodDef.builder("myName")
-                .addModifiers(Modifier.PUBLIC)
-                .addStatement(new StatementDef.Return(
-                    ExpressionDef.invoke(
-                        new VariableDef.This(ClassTypeDef.of("InnerEnum")),
-                        "toString",
-                        List.of(),
-                        TypeDef.of(String.class)
-                    )
-                ))
-                .returns(String.class)
-                .build())
-            .build();
-        return innerEnum;
     }
 }
