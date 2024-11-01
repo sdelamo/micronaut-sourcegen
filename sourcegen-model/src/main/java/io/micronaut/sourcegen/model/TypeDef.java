@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * @since 1.0
  */
 @Experimental
-public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
+public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedType, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
 
     TypeDef VOID = primitive("void");
 
@@ -55,8 +55,8 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
      * @return The AnnotatedTypeDef
      * @since 1.4
      */
-    default AnnotatedTypeDef annotated(AnnotationDef... annotations) {
-        return new AnnotatedTypeDef(this, List.of(annotations));
+    default AnnotatedType annotated(AnnotationDef... annotations) {
+        return annotated(List.of(annotations));
     }
 
     /**
@@ -66,7 +66,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
      * @return The AnnotatedTypeDef
      * @since 1.4
      */
-    default AnnotatedTypeDef annotated(List<AnnotationDef> annotations) {
+    default AnnotatedType annotated(List<AnnotationDef> annotations) {
         return new AnnotatedTypeDef(this, annotations);
     }
 
@@ -292,14 +292,14 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
      * @return Is primitive type
      */
     default boolean isPrimitive() {
-        return this instanceof TypeDef.Primitive;
+        return this instanceof Primitive;
     }
 
     /**
      * @return Is Array type
      */
     default boolean isArray() {
-        return this instanceof TypeDef.Array;
+        return this instanceof Array;
     }
 
     /**
@@ -319,14 +319,14 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
     @Experimental
     record Primitive(String name) implements TypeDef {
 
-        public static final TypeDef.Primitive INT = primitive(int.class);
-        public static final TypeDef.Primitive BOOLEAN = primitive(boolean.class);
-        public static final TypeDef.Primitive LONG = primitive(long.class);
-        public static final TypeDef.Primitive CHAR = primitive(char.class);
-        public static final TypeDef.Primitive BYTE = primitive(byte.class);
-        public static final TypeDef.Primitive SHORT = primitive(short.class);
-        public static final TypeDef.Primitive DOUBLE = primitive(double.class);
-        public static final TypeDef.Primitive FLOAT = primitive(float.class);
+        public static final Primitive INT = primitive(int.class);
+        public static final Primitive BOOLEAN = primitive(boolean.class);
+        public static final Primitive LONG = primitive(long.class);
+        public static final Primitive CHAR = primitive(char.class);
+        public static final Primitive BYTE = primitive(byte.class);
+        public static final Primitive SHORT = primitive(short.class);
+        public static final Primitive DOUBLE = primitive(double.class);
+        public static final Primitive FLOAT = primitive(float.class);
 
         @Override
         public boolean isPrimitive() {
@@ -383,7 +383,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
          * @since 1.3
          */
         @Experimental
-        public record PrimitiveInstance(TypeDef.Primitive type,
+        public record PrimitiveInstance(Primitive type,
                                         ExpressionDef value) implements ExpressionDef {
         }
     }
@@ -472,6 +472,16 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
     }
 
     /**
+     * A combined type interface for representing a Type with annotations.
+     *
+     * @author Elif Kurtay
+     * @since 1.4
+     */
+    @Experimental
+    sealed interface AnnotatedType extends TypeDef permits ClassTypeDef.AnnotatedClassTypeDef, AnnotatedTypeDef {
+    }
+
+    /**
      * A combined type for representing a TypeDef with annotations.
      *
      * @param typeDef       The raw type definition
@@ -480,24 +490,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedTypeDef, 
      * @since 1.4
      */
     @Experimental
-    record AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations)  implements TypeDef {
+    record AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations) implements AnnotatedType {
 
-        public List<AnnotationDef> getAnnotations() {
-            return annotations;
-        }
-
-        public TypeDef getTypeDef() {
-            return typeDef;
-        }
-
-        @Override
-        public boolean isPrimitive() {
-            return typeDef.isPrimitive();
-        }
-
-        @Override
-        public boolean isArray() {
-            return typeDef.isArray();
-        }
     }
 }

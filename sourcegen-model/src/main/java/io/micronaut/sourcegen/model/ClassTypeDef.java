@@ -198,8 +198,9 @@ public sealed interface ClassTypeDef extends TypeDef {
      * @return The AnnotatedClassTypeDef
      * @since 1.4
      */
-    default AnnotatedClassTypeDef annotatedClass(AnnotationDef... annotations) {
-        return new AnnotatedClassTypeDef(this, List.of(annotations));
+    @Override
+    default AnnotatedClassTypeDef annotated(AnnotationDef... annotations) {
+        return annotated(List.of(annotations));
     }
 
     /**
@@ -209,7 +210,8 @@ public sealed interface ClassTypeDef extends TypeDef {
      * @return The AnnotatedClassTypeDef
      * @since 1.4
      */
-    default AnnotatedClassTypeDef annotatedClass(List<AnnotationDef> annotations) {
+    @Override
+    default AnnotatedClassTypeDef annotated(List<AnnotationDef> annotations) {
         return new AnnotatedClassTypeDef(this, annotations);
     }
 
@@ -373,29 +375,8 @@ public sealed interface ClassTypeDef extends TypeDef {
      * @since 1.4
      */
     @Experimental
-    record AnnotatedClassTypeDef(ClassTypeDef typeDef, List<AnnotationDef> annotations) implements ClassTypeDef {
-        public List<AnnotationDef> getAnnotations() {
-            return annotations;
-        }
-
-        public ClassTypeDef getType() {
-            return typeDef;
-        }
-
-        @Override
-        public String getName() {
-            return typeDef.getName();
-        }
-
-        @Override
-        public boolean isNullable() {
-            return typeDef.isNullable();
-        }
-
-        @Override
-        public ClassTypeDef makeNullable() {
-            return typeDef.makeNullable();
-        }
+    record AnnotatedClassTypeDef(ClassTypeDef typeDef,
+                                 List<AnnotationDef> annotations) implements AnnotatedType {
     }
 
 }

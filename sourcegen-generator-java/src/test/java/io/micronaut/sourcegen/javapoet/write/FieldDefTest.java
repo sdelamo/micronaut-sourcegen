@@ -108,7 +108,7 @@ public class FieldDefTest extends AbstractWriteTest {
             .addMember("value", 1)
             .build();
         PropertyDef propertyDef = PropertyDef.builder("numbers")
-            .ofType(TypeDef.Primitive.FLOAT.wrapperType().annotatedClass(MIN_ANN))
+            .ofType(TypeDef.Primitive.FLOAT.wrapperType().annotated(MIN_ANN))
             .build();
 
         RecordDef recordDef = RecordDef.builder("Record").addProperty(propertyDef).build();

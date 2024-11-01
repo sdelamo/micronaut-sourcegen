@@ -55,10 +55,12 @@ public final class GenerateAnnotatedTypeVisitor implements TypeElementVisitor<Ge
         var NOTNULL_ANN = AnnotationDef.builder(ClassTypeDef.of("jakarta.validation.constraints.NotNull"))
             .build();
 
-        TypeDef innerType = TypeDef.parameterized(ClassTypeDef.of(List.class),
-            TypeDef.Primitive.INT.wrapperType().annotated(MIN_ANN, MAX_ANN)).annotated(NOTNULL_ANN);
-        PropertyDef propertyDef = PropertyDef.builder("numbers").ofType(innerType).build();
+        TypeDef innerType = TypeDef.parameterized(
+            ClassTypeDef.of(List.class),
+            TypeDef.Primitive.INT.wrapperType().annotated(MIN_ANN, MAX_ANN))
+            .annotated(NOTNULL_ANN);
 
+        PropertyDef propertyDef = PropertyDef.builder("numbers").ofType(innerType).build();
         RecordDef recordDef = RecordDef.builder(element.getPackageName() + ".AnnotatedProperty")
                 .addAnnotation(Introspected.class)
                 .addProperty(propertyDef).build();
