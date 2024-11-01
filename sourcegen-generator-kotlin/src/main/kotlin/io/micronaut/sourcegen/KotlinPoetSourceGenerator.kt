@@ -17,20 +17,8 @@
 
 package io.micronaut.sourcegen
 
-import com.squareup.kotlinpoet.AnnotationSpec
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.TypeVariableName
-import com.squareup.kotlinpoet.UNIT
-import com.squareup.kotlinpoet.WildcardTypeName
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import com.squareup.kotlinpoet.javapoet.toKClassName
 import com.squareup.kotlinpoet.javapoet.toKTypeName
@@ -39,25 +27,11 @@ import io.micronaut.core.annotation.Nullable
 import io.micronaut.core.reflect.ClassUtils
 import io.micronaut.inject.visitor.VisitorContext
 import io.micronaut.sourcegen.generator.SourceGenerator
-import io.micronaut.sourcegen.model.AnnotationDef
-import io.micronaut.sourcegen.model.ClassDef
-import io.micronaut.sourcegen.model.ClassTypeDef
-import io.micronaut.sourcegen.model.EnumDef
-import io.micronaut.sourcegen.model.ExpressionDef
+import io.micronaut.sourcegen.model.*
 import io.micronaut.sourcegen.model.ExpressionDef.*
-import io.micronaut.sourcegen.model.FieldDef
-import io.micronaut.sourcegen.model.InterfaceDef
-import io.micronaut.sourcegen.model.MethodDef
-import io.micronaut.sourcegen.model.ObjectDef
-import io.micronaut.sourcegen.model.ParameterDef
-import io.micronaut.sourcegen.model.PropertyDef
-import io.micronaut.sourcegen.model.RecordDef
-import io.micronaut.sourcegen.model.StatementDef
 import io.micronaut.sourcegen.model.StatementDef.Assign
 import io.micronaut.sourcegen.model.StatementDef.DefineAndAssign
-import io.micronaut.sourcegen.model.TypeDef
 import io.micronaut.sourcegen.model.TypeDef.Primitive.PrimitiveInstance
-import io.micronaut.sourcegen.model.VariableDef
 import java.io.IOException
 import java.io.Writer
 import java.lang.reflect.Array
@@ -103,6 +77,14 @@ class KotlinPoetSourceGenerator : SourceGenerator {
 
     @Throws(IOException::class)
     private fun writeInterface(writer: Writer, interfaceDef: InterfaceDef) {
+        val interfaceBuilder = getInterfaceBuilder(interfaceDef)
+        FileSpec.builder(interfaceDef.packageName, interfaceDef.simpleName + ".kt")
+            .addType(interfaceBuilder.build())
+            .build()
+            .writeTo(writer)
+    }
+
+    private fun getInterfaceBuilder(interfaceDef: InterfaceDef): TypeSpec.Builder {
         val interfaceBuilder = TypeSpec.interfaceBuilder(interfaceDef.simpleName)
         interfaceBuilder.addModifiers(asKModifiers(interfaceDef.modifiers))
         interfaceDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> asTypeVariable(tv, interfaceDef) }
@@ -162,14 +144,20 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         if (companionBuilder != null) {
             interfaceBuilder.addType(companionBuilder.build())
         }
-        FileSpec.builder(interfaceDef.packageName, interfaceDef.simpleName + ".kt")
-            .addType(interfaceBuilder.build())
-            .build()
-            .writeTo(writer)
+        addInnerTypes(interfaceDef.innerTypes, interfaceBuilder, isInterface = true)
+        return interfaceBuilder
     }
 
     @Throws(IOException::class)
     private fun writeClass(writer: Writer, classDef: ClassDef) {
+        val classBuilder = getClassBuilder(classDef)
+        FileSpec.builder(classDef.packageName, classDef.simpleName + ".kt")
+            .addType(classBuilder.build())
+            .build()
+            .writeTo(writer)
+    }
+
+    private fun getClassBuilder(classDef: ClassDef): TypeSpec.Builder {
         val classBuilder = TypeSpec.classBuilder(classDef.simpleName)
         classBuilder.addModifiers(asKModifiers(classDef.modifiers))
         classDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> asTypeVariable(tv, classDef) }
@@ -267,14 +255,20 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         if (companionBuilder != null) {
             classBuilder.addType(companionBuilder.build())
         }
-        FileSpec.builder(classDef.packageName, classDef.simpleName + ".kt")
+        addInnerTypes(classDef.innerTypes, classBuilder)
+        return classBuilder
+    }
+
+    @Throws(IOException::class)
+    private fun writeRecordDef(writer: Writer, recordDef: RecordDef) {
+        val classBuilder = getRecordBuilder(recordDef)
+        FileSpec.builder(recordDef.packageName, recordDef.simpleName + ".kt")
             .addType(classBuilder.build())
             .build()
             .writeTo(writer)
     }
 
-    @Throws(IOException::class)
-    private fun writeRecordDef(writer: Writer, recordDef: RecordDef) {
+    private fun getRecordBuilder(recordDef: RecordDef): TypeSpec.Builder {
         val classBuilder = TypeSpec.classBuilder(recordDef.simpleName)
         classBuilder.addModifiers(KModifier.DATA)
         classBuilder.addModifiers(asKModifiers(recordDef.modifiers))
@@ -338,14 +332,20 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         if (companionBuilder != null) {
             classBuilder.addType(companionBuilder.build())
         }
-        FileSpec.builder(recordDef.packageName, recordDef.simpleName + ".kt")
-            .addType(classBuilder.build())
-            .build()
-            .writeTo(writer)
+        addInnerTypes(recordDef.innerTypes, classBuilder)
+        return classBuilder
     }
 
     @Throws(IOException::class)
     private fun writeEnumDef(writer: Writer, enumDef: EnumDef) {
+        val enumBuilder = getEnumBuilder(enumDef)
+        FileSpec.builder(enumDef.packageName, enumDef.simpleName + ".kt")
+            .addType(enumBuilder.build())
+            .build()
+            .writeTo(writer)
+    }
+
+    private fun getEnumBuilder(enumDef: EnumDef): TypeSpec.Builder {
         val enumBuilder = TypeSpec.enumBuilder(enumDef.simpleName)
         enumBuilder.addModifiers(asKModifiers(enumDef.modifiers))
         enumDef.superinterfaces.stream().map { typeDef: TypeDef -> asType(typeDef, enumDef) }
@@ -378,10 +378,39 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         if (companionBuilder != null) {
             enumBuilder.addType(companionBuilder.build())
         }
-        FileSpec.builder(enumDef.packageName, enumDef.simpleName + ".kt")
-            .addType(enumBuilder.build())
-            .build()
-            .writeTo(writer)
+        addInnerTypes(enumDef.innerTypes, enumBuilder)
+        return enumBuilder
+    }
+
+    fun addInnerTypes(objectDefs: List<ObjectDef>, classBuilder: TypeSpec.Builder, isInterface: Boolean = false) {
+        for (objectDef in objectDefs) {
+            var innerBuilder: TypeSpec.Builder
+            when (objectDef) {
+                is ClassDef -> {
+                    innerBuilder = getClassBuilder(objectDef)
+                }
+
+                is RecordDef -> {
+                    innerBuilder = getRecordBuilder(objectDef)
+                }
+
+                is InterfaceDef -> {
+                    innerBuilder = getInterfaceBuilder(objectDef)
+                }
+
+                is EnumDef -> {
+                    innerBuilder = getEnumBuilder(objectDef)
+                }
+
+                else -> {
+                    throw IllegalStateException("Unknown object definition: $objectDef")
+                }
+            }
+            if (isInterface) {
+                innerBuilder.addModifiers(KModifier.PUBLIC)
+            }
+            classBuilder.addType(innerBuilder.build())
+        }
     }
 
     private fun buildProperty(

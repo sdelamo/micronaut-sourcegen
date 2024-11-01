@@ -39,8 +39,9 @@ public final class EnumDef extends ObjectDef {
                     List<AnnotationDef> annotations,
                     List<String> javadoc,
                     List<String> enumConstants,
-                    List<TypeDef> superinterfaces) {
-        super(name, modifiers, annotations, javadoc, methods, superinterfaces);
+                    List<TypeDef> superinterfaces,
+                    List<ObjectDef> innerTypes) {
+        super(name, modifiers, annotations, javadoc, methods, superinterfaces, innerTypes);
         this.enumConstants = enumConstants;
     }
 
@@ -73,7 +74,7 @@ public final class EnumDef extends ObjectDef {
         }
 
         public EnumDef build() {
-            return new EnumDef(name, modifiers, methods, annotations, javadoc, enumConstants, superinterfaces);
+            return new EnumDef(name, modifiers, methods, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
         }
 
     }

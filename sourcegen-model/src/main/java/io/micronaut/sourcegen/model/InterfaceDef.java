@@ -41,8 +41,9 @@ public final class InterfaceDef extends ObjectDef {
                          List<AnnotationDef> annotations,
                          List<String> javadoc,
                          List<TypeDef.TypeVariable> typeVariables,
-                         List<TypeDef> superinterfaces) {
-        super(name, modifiers, annotations, javadoc, methods, superinterfaces);
+                         List<TypeDef> superinterfaces,
+                         List<ObjectDef> innerTypes) {
+        super(name, modifiers, annotations, javadoc, methods, superinterfaces, innerTypes);
         this.properties = properties;
         this.typeVariables = typeVariables;
     }
@@ -86,7 +87,7 @@ public final class InterfaceDef extends ObjectDef {
         }
 
         public InterfaceDef build() {
-            return new InterfaceDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces);
+            return new InterfaceDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
         }
 
     }
