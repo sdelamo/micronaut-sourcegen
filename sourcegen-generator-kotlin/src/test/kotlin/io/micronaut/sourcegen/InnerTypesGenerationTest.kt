@@ -378,7 +378,7 @@ class InnerTypesGenerationTest {
             package test
 
             public interface StatusInterface {
-              public final enum class Status {
+              public enum class Status {
                 SINGLE,
                 MARRIED,
               }
@@ -402,7 +402,7 @@ class InnerTypesGenerationTest {
             import kotlin.Int
 
             public interface RecordInterface {
-              public final data class Record public constructor(
+              public data class Record public constructor(
                 public final val id: Int,
               )
             }
@@ -423,7 +423,7 @@ class InnerTypesGenerationTest {
             package test
 
             public interface InnerInterface {
-              public final class Inner
+              public class Inner
             }
             """.trimIndent()
         val innerClassBuilder = ClassDef.builder("Inner")
@@ -440,7 +440,7 @@ class InnerTypesGenerationTest {
             package test
 
             public interface InnerInterface {
-              public final interface Inner
+              public interface Inner
             }
             """.trimIndent()
         val interfaceBuilder = InterfaceDef.builder("Inner")

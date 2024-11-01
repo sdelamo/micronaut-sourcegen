@@ -407,7 +407,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 }
             }
             if (isInterface) {
-                innerBuilder.addModifiers(KModifier.PUBLIC, KModifier.FINAL)
+                innerBuilder.addModifiers(KModifier.PUBLIC)
             }
             classBuilder.addType(innerBuilder.build())
         }

@@ -54,7 +54,7 @@ public final class GenerateInnerTypeInInterfaceVisitor implements TypeElementVis
             return;
         }
 
-        InterfaceDef objectDef = getInterfaceDef(element);
+        InterfaceDef objectDef = getInterfaceDef(element, context.getLanguage());
 
         context.visitGeneratedSourceFile(objectDef.getPackageName(), objectDef.getSimpleName(), element)
             .ifPresent(generatedFile -> {
@@ -66,14 +66,14 @@ public final class GenerateInnerTypeInInterfaceVisitor implements TypeElementVis
             });
     }
 
-    private static InterfaceDef getInterfaceDef(ClassElement element) {
+    private static InterfaceDef getInterfaceDef(ClassElement element, VisitorContext.Language language) {
         String className = element.getPackageName() + ".InterfaceWithInnerTypes";
 
         EnumDef innerEnum = getInnerEnumDef();
 
         RecordDef innerRecord = getInnerRecordDef();
 
-        ClassDef innerClass = getInnerClassDef();
+        ClassDef innerClass = getInnerClassDef(language);
 
         InterfaceDef innerInterface = getInnerInterfaceDef();
 

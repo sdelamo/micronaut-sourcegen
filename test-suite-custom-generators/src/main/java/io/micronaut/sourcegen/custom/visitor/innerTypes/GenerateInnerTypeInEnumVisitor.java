@@ -56,7 +56,7 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
             return;
         }
 
-        EnumDef enumDef = getEnumDef(element);
+        EnumDef enumDef = getEnumDef(element, context.getLanguage());
 
         context.visitGeneratedSourceFile(enumDef.getPackageName(), enumDef.getSimpleName(), element)
             .ifPresent(generatedFile -> {
@@ -68,14 +68,14 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
             });
     }
 
-    private static EnumDef getEnumDef(ClassElement element) {
+    private static EnumDef getEnumDef(ClassElement element, VisitorContext.Language language) {
         String enumClassName = element.getPackageName() + ".MyEnumWithInnerTypes";
 
         EnumDef innerEnum = getInnerEnumDef();
 
         RecordDef innerRecord = getInnerRecordDef();
 
-        ClassDef innerClass = getInnerClassDef();
+        ClassDef innerClass = getInnerClassDef(language);
 
         InterfaceDef innerInterface = getInnerInterfaceDef();
 
@@ -120,25 +120,28 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
         return innerInterface;
     }
 
-    public static ClassDef getInnerClassDef() {
-        ClassDef innerClass = ClassDef.builder("InnerClass")
-            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+    public static ClassDef getInnerClassDef(VisitorContext.Language language) {
+        ClassDef.ClassDefBuilder innerClass = ClassDef.builder("InnerClass")
+            .addModifiers(Modifier.PUBLIC)
             .addField(FieldDef.builder("name").ofType(TypeDef.STRING).build())
-            .addAllFieldsConstructor()
-            .addMethod(
-                MethodDef.builder("getName")
-                .addModifiers(Modifier.PUBLIC)
-                .addStatement(new StatementDef.Return(
-                    new VariableDef.Field(
-                        new VariableDef.This(ClassTypeDef.of("InnerClass")),
-                        "name",
-                        TypeDef.of(String.class)
-                    )
-                ))
-                .returns(String.class)
-                .build())
-            .build();
-        return innerClass;
+            .addAllFieldsConstructor();
+        if (language == VisitorContext.Language.JAVA) {
+            innerClass
+                .addModifiers(Modifier.STATIC)
+                .addMethod(
+                    MethodDef.builder("getName")
+                        .addModifiers(Modifier.PUBLIC)
+                        .addStatement(new StatementDef.Return(
+                            new VariableDef.Field(
+                                new VariableDef.This(ClassTypeDef.of("InnerClass")),
+                                "name",
+                                TypeDef.of(String.class)
+                            )
+                        ))
+                        .returns(String.class)
+                        .build());
+        }
+        return innerClass.build();
     }
 
     public static RecordDef getInnerRecordDef() {
