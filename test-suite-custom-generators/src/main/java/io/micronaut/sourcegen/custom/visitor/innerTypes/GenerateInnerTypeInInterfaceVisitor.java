@@ -82,7 +82,7 @@ public final class GenerateInnerTypeInInterfaceVisitor implements TypeElementVis
             .addModifiers(Modifier.PUBLIC)
             .addMethod(MethodDef.builder("hello")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .addStatement(new StatementDef.Return(ExpressionDef.trueValue()))
+                .addStatement(ExpressionDef.trueValue().returning())
                 .returns(Boolean.class)
                 .build())
             .addInnerType(innerEnum)

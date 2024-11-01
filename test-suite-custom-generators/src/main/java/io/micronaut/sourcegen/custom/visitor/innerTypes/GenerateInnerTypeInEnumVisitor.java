@@ -26,17 +26,13 @@ import io.micronaut.sourcegen.custom.example.GenerateInnerTypes;
 import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
-import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.EnumDef;
-import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.InterfaceDef;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.PropertyDef;
 import io.micronaut.sourcegen.model.RecordDef;
-import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
-import io.micronaut.sourcegen.model.VariableDef;
 
 import javax.lang.model.element.Modifier;
 import java.util.List;
@@ -91,16 +87,9 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
             .addInnerType(innerInterface)
             .addMethod(MethodDef.builder("myName")
                 .addModifiers(Modifier.PUBLIC)
-                .addStatement(new StatementDef.Return(
-                    ExpressionDef.invoke(
-                        new VariableDef.This(ClassTypeDef.of(enumClassName)),
-                        "toString",
-                        List.of(),
-                        TypeDef.of(String.class)
-                    )
-                ))
                 .returns(String.class)
-                .build())
+                .build((aThis, parameters) ->
+                        aThis.invoke("toString", TypeDef.STRING, List.of()).returning()))
             .build();
     }
 
@@ -128,18 +117,11 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
         if (language == VisitorContext.Language.JAVA) {
             innerClass
                 .addModifiers(Modifier.STATIC)
-                .addMethod(
-                    MethodDef.builder("getName")
-                        .addModifiers(Modifier.PUBLIC)
-                        .addStatement(new StatementDef.Return(
-                            new VariableDef.Field(
-                                new VariableDef.This(ClassTypeDef.of("InnerClass")),
-                                "name",
-                                TypeDef.of(String.class)
-                            )
-                        ))
-                        .returns(String.class)
-                        .build());
+                .addMethod(MethodDef.builder("getName")
+                    .addModifiers(Modifier.PUBLIC)
+                    .returns(String.class)
+                    .build((aThis, parameters) ->
+                            aThis.field("name", TypeDef.STRING).returning()));
         }
         return innerClass.build();
     }
@@ -161,17 +143,10 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
             .addEnumConstant("SINGLE")
             .addEnumConstant("MARRIED")
             .addMethod(MethodDef.builder("myName")
-                .addModifiers(Modifier.PUBLIC)
-                .addStatement(new StatementDef.Return(
-                    ExpressionDef.invoke(
-                        new VariableDef.This(ClassTypeDef.of("InnerEnum")),
-                        "toString",
-                        List.of(),
-                        TypeDef.of(String.class)
-                    )
-                ))
-                .returns(String.class)
-                .build())
+                    .addModifiers(Modifier.PUBLIC)
+                    .returns(String.class)
+                    .build((aThis, parameters) ->
+                            aThis.invoke("toString", TypeDef.STRING, List.of()).returning()))
             .build();
         return innerEnum;
     }

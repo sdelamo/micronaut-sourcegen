@@ -82,12 +82,12 @@ public final class GenerateInnerTypeInClassVisitor implements TypeElementVisitor
             .addProperty(
                 PropertyDef.builder("id")
                     .addModifiers(Modifier.PUBLIC)
-                    .ofType(TypeDef.primitive(int.class))
+                    .ofType(TypeDef.Primitive.INT)
                     .build()
             ).addProperty(
                 PropertyDef.builder("name")
                     .addModifiers(Modifier.PUBLIC)
-                    .ofType(TypeDef.of(String.class))
+                    .ofType(TypeDef.STRING)
                     .build()
             )
             .addInnerType(innerEnum)
