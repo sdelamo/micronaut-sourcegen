@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.custom.visitor;
+package io.micronaut.sourcegen.custom.visitor.innerTypes;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -33,10 +33,10 @@ import io.micronaut.sourcegen.model.TypeDef;
 
 import javax.lang.model.element.Modifier;
 
-import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerClassDef;
-import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerEnumDef;
-import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerInterfaceDef;
-import static io.micronaut.sourcegen.custom.visitor.GenerateInnerTypeInEnumVisitor.getInnerRecordDef;
+import static io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInEnumVisitor.getInnerClassDef;
+import static io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInEnumVisitor.getInnerEnumDef;
+import static io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInEnumVisitor.getInnerInterfaceDef;
+import static io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInEnumVisitor.getInnerRecordDef;
 
 @Internal
 public final class GenerateInnerTypeInRecordVisitor implements TypeElementVisitor<GenerateInnerTypes, Object> {
@@ -76,7 +76,7 @@ public final class GenerateInnerTypeInRecordVisitor implements TypeElementVisito
 
         InterfaceDef innerInterface = getInnerInterfaceDef();
 
-        //outer enum
+        //outer
         return RecordDef.builder(className)
             .addModifiers(Modifier.PUBLIC)
             .addProperty(
