@@ -1,13 +1,12 @@
-package io.micronaut.sourcegen.example
+package io.micronaut.sourcegen
 
-import io.micronaut.sourcegen.KotlinPoetSourceGenerator
 import io.micronaut.sourcegen.model.*
 import io.micronaut.sourcegen.model.ClassDef.ClassDefBuilder
 import io.micronaut.sourcegen.model.EnumDef.EnumDefBuilder
 import io.micronaut.sourcegen.model.InterfaceDef.InterfaceDefBuilder
 import io.micronaut.sourcegen.model.RecordDef.RecordDefBuilder
 import org.junit.Assert
-import org.junit.jupiter.api.Test
+import org.junit.Test
 import java.io.IOException
 import java.io.StringWriter
 import java.util.regex.Pattern
