@@ -2,6 +2,7 @@
 micronaut = "4.7.1"
 micronaut-docs = "2.0.0"
 micronaut-test = "4.1.0"
+micronaut-validation = "4.7.0"
 managed-kotlinpoet = "2.0.0"
 google-truth = "1.4.4"
 google-compile-testing = "0.21.0"
@@ -12,6 +13,7 @@ ksp = '1.9.24-1.0.20'
 [libraries]
 # Core
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
+micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
 
 managed-kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "managed-kotlinpoet" }
 managed-kotlinpoet-javapoet = { module = "com.squareup:kotlinpoet-javapoet", version.ref = "managed-kotlinpoet" }

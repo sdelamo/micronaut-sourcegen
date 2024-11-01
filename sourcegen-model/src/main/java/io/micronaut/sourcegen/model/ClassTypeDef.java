@@ -192,6 +192,30 @@ public sealed interface ClassTypeDef extends TypeDef {
     }
 
     /**
+     * Define a ClassTypeDef with annotations.
+     *
+     * @param annotations the annotation definitions to be added
+     * @return The AnnotatedClassTypeDef
+     * @since 1.4
+     */
+    @Override
+    default AnnotatedClassTypeDef annotated(AnnotationDef... annotations) {
+        return annotated(List.of(annotations));
+    }
+
+    /**
+     * Define a ClassTypeDef with annotations.
+     *
+     * @param annotations The list of the AnnotationDef
+     * @return The AnnotatedClassTypeDef
+     * @since 1.4
+     */
+    @Override
+    default AnnotatedClassTypeDef annotated(List<AnnotationDef> annotations) {
+        return new AnnotatedClassTypeDef(this, annotations);
+    }
+
+    /**
      * The class type.
      *
      * @param type     The type
@@ -340,6 +364,19 @@ public sealed interface ClassTypeDef extends TypeDef {
         public ClassTypeDef makeNullable() {
             return new Parameterized(rawType.makeNullable(), typeArguments);
         }
+    }
+
+    /**
+     * A combined type for representing a ClassTypeDef with annotations.
+     *
+     * @param typeDef       The raw type definition
+     * @param annotations   List of annotations to associate
+     * @author Elif Kurtay
+     * @since 1.4
+     */
+    @Experimental
+    record AnnotatedClassTypeDef(ClassTypeDef typeDef,
+                                 List<AnnotationDef> annotations) implements Annotated {
     }
 
 }

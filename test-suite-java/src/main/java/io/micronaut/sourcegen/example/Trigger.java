@@ -16,6 +16,7 @@
 package io.micronaut.sourcegen.example;
 
 
+import io.micronaut.sourcegen.custom.example.GenerateAnnotatedType;
 import io.micronaut.sourcegen.custom.example.GenerateArray;
 import io.micronaut.sourcegen.custom.example.GenerateIfsPredicate;
 import io.micronaut.sourcegen.custom.example.GenerateMyBean1;
@@ -41,6 +42,7 @@ import java.util.List;
 @GenerateIfsPredicate
 @GenerateSwitch
 @GenerateArray
+@GenerateAnnotatedType
 public class Trigger {
     public List<String> copyAddresses;
 }

@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * @since 1.0
  */
 @Experimental
-public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
+public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
 
     TypeDef VOID = primitive("void");
 
@@ -47,6 +47,28 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
      * A simple type representing a special this-type, in context of a class def, method or field the type will be replaced by the current type.
      */
     TypeDef THIS = of(ThisType.class);
+
+    /**
+     * Define a type with annotations.
+     *
+     * @param annotations the annotation definitions to be added
+     * @return The AnnotatedTypeDef
+     * @since 1.4
+     */
+    default Annotated annotated(AnnotationDef... annotations) {
+        return annotated(List.of(annotations));
+    }
+
+    /**
+     * Define a type with annotations.
+     *
+     * @param annotations The list of the AnnotationDef
+     * @return The AnnotatedTypeDef
+     * @since 1.4
+     */
+    default Annotated annotated(List<AnnotationDef> annotations) {
+        return new AnnotatedTypeDef(this, annotations);
+    }
 
     /**
      * Instantiate an array of this class.
@@ -270,14 +292,14 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
      * @return Is primitive type
      */
     default boolean isPrimitive() {
-        return this instanceof TypeDef.Primitive;
+        return this instanceof Primitive;
     }
 
     /**
      * @return Is Array type
      */
     default boolean isArray() {
-        return this instanceof TypeDef.Array;
+        return this instanceof Array;
     }
 
     /**
@@ -297,14 +319,14 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
     @Experimental
     record Primitive(String name) implements TypeDef {
 
-        public static final TypeDef.Primitive INT = primitive(int.class);
-        public static final TypeDef.Primitive BOOLEAN = primitive(boolean.class);
-        public static final TypeDef.Primitive LONG = primitive(long.class);
-        public static final TypeDef.Primitive CHAR = primitive(char.class);
-        public static final TypeDef.Primitive BYTE = primitive(byte.class);
-        public static final TypeDef.Primitive SHORT = primitive(short.class);
-        public static final TypeDef.Primitive DOUBLE = primitive(double.class);
-        public static final TypeDef.Primitive FLOAT = primitive(float.class);
+        public static final Primitive INT = primitive(int.class);
+        public static final Primitive BOOLEAN = primitive(boolean.class);
+        public static final Primitive LONG = primitive(long.class);
+        public static final Primitive CHAR = primitive(char.class);
+        public static final Primitive BYTE = primitive(byte.class);
+        public static final Primitive SHORT = primitive(short.class);
+        public static final Primitive DOUBLE = primitive(double.class);
+        public static final Primitive FLOAT = primitive(float.class);
 
         @Override
         public boolean isPrimitive() {
@@ -361,7 +383,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
          * @since 1.3
          */
         @Experimental
-        public record PrimitiveInstance(TypeDef.Primitive type,
+        public record PrimitiveInstance(Primitive type,
                                         ExpressionDef value) implements ExpressionDef {
         }
     }
@@ -447,5 +469,27 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
         public boolean isArray() {
             return true;
         }
+    }
+
+    /**
+     * A combined type interface for representing a Type with annotations.
+     *
+     * @author Elif Kurtay
+     * @since 1.4
+     */
+    @Experimental
+    sealed interface Annotated extends TypeDef permits ClassTypeDef.AnnotatedClassTypeDef, AnnotatedTypeDef {
+    }
+
+    /**
+     * A combined type for representing a TypeDef with annotations.
+     *
+     * @param typeDef       The raw type definition
+     * @param annotations   List of annotations to associate
+     * @author Elif Kurtay
+     * @since 1.4
+     */
+    @Experimental
+    record AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations) implements Annotated {
     }
 }
