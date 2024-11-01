@@ -192,7 +192,7 @@ public sealed interface ClassTypeDef extends TypeDef {
     }
 
     /**
-     * Define a ClassTypeDef with annotations
+     * Define a ClassTypeDef with annotations.
      *
      * @param annotations the annotation definitions to be added
      * @return The AnnotatedClassTypeDef
@@ -203,7 +203,7 @@ public sealed interface ClassTypeDef extends TypeDef {
     }
 
     /**
-     * Define a ClassTypeDef with annotations
+     * Define a ClassTypeDef with annotations.
      *
      * @param annotations The list of the AnnotationDef
      * @return The AnnotatedClassTypeDef
