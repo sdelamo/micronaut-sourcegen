@@ -56,9 +56,9 @@ public class EnumWriteTest {
 
         enum Status {
 
-          ACTIVE("active"),
-          IN_PROGRESS("in-progress"),
-          DELETED("deleted")
+          ACTIVE,
+          IN_PROGRESS,
+          DELETED
         }
         """;
         assertEquals(expected.strip(), result.strip());
@@ -122,9 +122,9 @@ public class EnumWriteTest {
 
         enum Status {
 
-          ACTIVE_BY_HEART("active_by heart"),
-          JUMP_IN_PROGRESS("9 Jump in progress"),
-          IS_IT_EVEN_DELETED("isItEven deleted")
+          ACTIVE_BY_HEART,
+          JUMP_IN_PROGRESS,
+          IS_IT_EVEN_DELETED
         }
         """;
         assertEquals(expected.strip(), result.strip());
@@ -147,9 +147,9 @@ public class EnumWriteTest {
 
         enum Status {
 
-          ACTIVE("active"),
-          IN_PROGRESS("in-progress"),
-          DELETED("deleted");
+          ACTIVE,
+          IN_PROGRESS,
+          DELETED;
 
           private final String value;
 
@@ -183,9 +183,9 @@ public class EnumWriteTest {
 
         enum Status {
 
-          ACTIVE("active"),
-          IN_PROGRESS("in-progress"),
-          DELETED("deleted");
+          ACTIVE,
+          IN_PROGRESS,
+          DELETED;
 
           private final String value;
 

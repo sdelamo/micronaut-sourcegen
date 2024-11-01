@@ -123,10 +123,7 @@ public final class EnumDef extends ObjectDef {
 
         public EnumDefBuilder addEnumConstant(String name) {
             String constName = getConstantName(name);
-            if (!constName.equals(name)) {
-                return addEnumConstant(constName, ExpressionDef.constant(name));
-            }
-            enumConstants.put(name, null);
+            enumConstants.put(constName, null);
             return this;
         }
 
