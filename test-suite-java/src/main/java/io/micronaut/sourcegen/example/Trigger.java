@@ -31,8 +31,8 @@ import java.util.List;
 @GenerateIfsPredicate
 @GenerateSwitch
 @GenerateArray
-@GenerateInnerTypes
 @GenerateAnnotatedType
+@GenerateInnerTypes
 public class Trigger {
     public List<String> copyAddresses;
 }

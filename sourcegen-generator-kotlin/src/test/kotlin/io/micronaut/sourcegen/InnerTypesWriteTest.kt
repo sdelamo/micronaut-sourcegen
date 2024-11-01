@@ -12,7 +12,7 @@ import java.io.StringWriter
 import java.util.regex.Pattern
 import javax.lang.model.element.Modifier
 
-class InnerTypesGenerationTest {
+class InnerTypesWriteTest {
     /**
      * Writes a class and returns all the contents of the class.
      */

@@ -27,6 +27,6 @@ import io.micronaut.sourcegen.custom.example.*
 @GenerateIfsPredicate
 @GenerateSwitch
 @GenerateArray
-@GenerateInnerTypes
 @GenerateAnnotatedType
+@GenerateInnerTypes
 class Trigger
