@@ -491,6 +491,5 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedType, Typ
      */
     @Experimental
     record AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations) implements AnnotatedType {
-
     }
 }
