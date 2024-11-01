@@ -274,7 +274,9 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 enumBuilder.addEnumConstant(
                     name,
                     TypeSpec.anonymousClassBuilder()
-                        .addInitializerBlock(renderExpressionCode(null, MethodDef.builder("").build(), exp))
+                        .addInitializerBlock(renderExpressionCode(null,
+                            MethodDef.builder("").returns(TypeDef.VOID).build(),
+                            exp))
                         .build()
                 )
             } else {
