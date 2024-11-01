@@ -601,7 +601,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 }
             } else if (typeDef is TypeDef.TypeVariable) {
                 return asTypeVariable(typeDef, objectDef)
-            } else if (typeDef is TypeDef.AnnotatedType && typeDef is TypeDef.AnnotatedTypeDef) {
+            } else if (typeDef is TypeDef.Annotated && typeDef is TypeDef.AnnotatedTypeDef) {
                 return asType(typeDef.typeDef, objectDef).copy(
                     typeDef.typeDef.isNullable,
                     typeDef.annotations.stream().map{ asAnnotationSpec(it) }.toList()

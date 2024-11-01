@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * @since 1.0
  */
 @Experimental
-public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedType, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
+public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
 
     TypeDef VOID = primitive("void");
 
@@ -55,7 +55,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedType, Typ
      * @return The AnnotatedTypeDef
      * @since 1.4
      */
-    default AnnotatedType annotated(AnnotationDef... annotations) {
+    default Annotated annotated(AnnotationDef... annotations) {
         return annotated(List.of(annotations));
     }
 
@@ -66,7 +66,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedType, Typ
      * @return The AnnotatedTypeDef
      * @since 1.4
      */
-    default AnnotatedType annotated(List<AnnotationDef> annotations) {
+    default Annotated annotated(List<AnnotationDef> annotations) {
         return new AnnotatedTypeDef(this, annotations);
     }
 
@@ -478,7 +478,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedType, Typ
      * @since 1.4
      */
     @Experimental
-    sealed interface AnnotatedType extends TypeDef permits ClassTypeDef.AnnotatedClassTypeDef, AnnotatedTypeDef {
+    sealed interface Annotated extends TypeDef permits ClassTypeDef.AnnotatedClassTypeDef, AnnotatedTypeDef {
     }
 
     /**
@@ -490,6 +490,6 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.AnnotatedType, Typ
      * @since 1.4
      */
     @Experimental
-    record AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations) implements AnnotatedType {
+    record AnnotatedTypeDef(TypeDef typeDef, List<AnnotationDef> annotations) implements Annotated {
     }
 }
