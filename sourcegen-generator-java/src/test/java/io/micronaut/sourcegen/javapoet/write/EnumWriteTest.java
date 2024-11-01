@@ -3,6 +3,7 @@ package io.micronaut.sourcegen.javapoet.write;
 import io.micronaut.sourcegen.JavaPoetSourceGenerator;
 import io.micronaut.sourcegen.model.EnumDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.PropertyDef;
 import io.micronaut.sourcegen.model.StatementDef;
@@ -152,8 +153,8 @@ public class EnumWriteTest {
 
           private final String value;
 
-          public Status(String value) {
-            this.value = value;
+          public String getValue() {
+            return this.value;
           }
         }
         """;
@@ -166,7 +167,7 @@ public class EnumWriteTest {
             .addEnumConstant("active")
             .addEnumConstant("in-progress")
             .addEnumConstant("deleted")
-            .addProperty(PropertyDef.builder("value").ofType(TypeDef.STRING).build())
+            .addField(FieldDef.builder("value").ofType(TypeDef.STRING).build())
             .addMethod(MethodDef.builder("getValue")
                 .returns(TypeDef.STRING)
                 .addModifiers(Modifier.PUBLIC)
@@ -187,10 +188,6 @@ public class EnumWriteTest {
           DELETED("deleted");
 
           private final String value;
-
-          public Status(String value) {
-            this.value = value;
-          }
 
           public String getValue() {
             return "value";

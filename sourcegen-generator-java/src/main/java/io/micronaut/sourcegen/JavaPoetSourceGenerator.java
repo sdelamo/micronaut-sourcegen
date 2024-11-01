@@ -48,7 +48,6 @@ import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.InterfaceDef;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ObjectDef;
-import io.micronaut.sourcegen.model.ParameterDef;
 import io.micronaut.sourcegen.model.PropertyDef;
 import io.micronaut.sourcegen.model.RecordDef;
 import io.micronaut.sourcegen.model.StatementDef;
@@ -59,7 +58,6 @@ import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -166,7 +164,6 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             }
         });
 
-        List<ParameterDef> constructorParameters = new ArrayList<>();
         for (PropertyDef property : enumDef.getProperties()) {
             TypeName propertyType = asType(property.getType(), enumDef);
             String propertyName = property.getName();
@@ -184,16 +181,39 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 fieldBuilder
                     .build()
             );
-
-            // for all properties constructor
-            constructorParameters.add(ParameterDef.of(property.getName(), property.getType()));
+            String capitalizedPropertyName = NameUtils.capitalize(propertyName);
+            enumBuilder.addMethod(MethodSpec.methodBuilder("get" + capitalizedPropertyName)
+                .addModifiers(property.getModifiersArray())
+                .addModifiers(Modifier.PUBLIC)
+                .returns(propertyType)
+                .addStatement("return this." + propertyName)
+                .build());
         }
 
-        if (!enumDef.getProperties().isEmpty()) {
-            // add all property constructor automatically
-            enumBuilder.addMethod(
-                asMethodSpec(enumDef,
-                    MethodDef.constructor(ClassTypeDef.of(enumDef.getSimpleName()), constructorParameters, Modifier.PUBLIC)));
+        for (FieldDef field : enumDef.getFields()) {
+            FieldSpec.Builder fieldBuilder = FieldSpec
+                .builder(
+                    asType(field.getType(), enumDef),
+                    field.getName())
+                .addModifiers(field.getModifiersArray())
+                .addModifiers(Modifier.PRIVATE, Modifier.FINAL);
+            field.getInitializer().ifPresent(init ->
+                fieldBuilder.initializer(renderExpression(
+                    null,
+                    null,
+                    init
+                ))
+            );
+            field.getJavadoc().forEach(fieldBuilder::addJavadoc);
+            for (AnnotationDef annotation : field.getAnnotations()) {
+                fieldBuilder.addAnnotation(
+                    asAnnotationSpec(annotation)
+                );
+            }
+            enumBuilder.addField(
+                fieldBuilder
+                    .build()
+            );
         }
 
         for (MethodDef method : enumDef.getMethods()) {
@@ -631,9 +651,9 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             if (memberElement instanceof MethodElement methodElement) {
                 return renderExpression(objectDef, methodDef, getPropertyValue.instance().invoke(methodElement));
             }
-            if (memberElement instanceof FieldElement fieldElement) {
+            // if (memberElement instanceof FieldElement fieldElement) {
                 // TODO: support field
-            }
+            // }
             throw new IllegalStateException("Unrecognized property read element: " + propertyElement);
         }
         if (expressionDef instanceof ExpressionDef.Condition condition) {
@@ -906,8 +926,8 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                     throw new IllegalStateException("Field " + field.name() + " is not available in [" + classDef + "]:" + classDef.getFields());
                 }
             } else if (objectDef instanceof EnumDef enumDef) {
-                if (!enumDef.hasProperty(field.name())) {
-                    throw new IllegalStateException("Property " + field.name() + " is not available in [" + enumDef + "]:" + enumDef.getProperties());
+                if (!enumDef.hasField(field.name())) {
+                    throw new IllegalStateException("Field " + field.name() + " is not available in [" + enumDef + "]:" + enumDef.getProperties());
                 }
             } else {
                 throw new IllegalStateException("Field access not supported on the object definition: " + objectDef);
