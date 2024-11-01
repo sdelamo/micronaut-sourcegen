@@ -28,4 +28,5 @@ import io.micronaut.sourcegen.custom.example.*
 @GenerateSwitch
 @GenerateArray
 @GenerateInnerTypes
+@GenerateAnnotatedType
 class Trigger
