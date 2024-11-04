@@ -136,7 +136,7 @@ public class EnumWriteTest {
             .addEnumConstant("active")
             .addEnumConstant("in-progress")
             .addEnumConstant("deleted")
-            .addProperty(PropertyDef.builder("value").ofType(TypeDef.STRING).build())
+            .addProperty(PropertyDef.builder("value").ofType(TypeDef.STRING).addModifiers(Modifier.PUBLIC).build())
             .build();
         var result = writeEnum(enumDef);
 
@@ -151,7 +151,7 @@ public class EnumWriteTest {
           IN_PROGRESS,
           DELETED;
 
-          private final String value;
+          private String value;
 
           public String getValue() {
             return this.value;
@@ -187,7 +187,7 @@ public class EnumWriteTest {
           IN_PROGRESS,
           DELETED;
 
-          private final String value;
+          String value;
 
           public String getValue() {
             return "value";

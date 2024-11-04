@@ -43,7 +43,6 @@ public final class InterfaceDef extends ObjectDef {
                          List<TypeDef> superinterfaces,
                          List<ObjectDef> innerTypes) {
         super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
-        this.properties = properties;
         this.typeVariables = typeVariables;
     }
 

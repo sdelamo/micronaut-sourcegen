@@ -130,37 +130,40 @@ class EnumWriteTest {
             .addEnumConstant("active")
             .addEnumConstant("in-progress")
             .addEnumConstant("deleted")
-            .addProperty(PropertyDef.builder("value").ofType(TypeDef.STRING).build())
+            .addProperty(PropertyDef.builder("strValue").ofType(TypeDef.STRING).build())
             .build()
-        val result = writeEnum(enumDef)
+        val generator = KotlinPoetSourceGenerator()
+        var result: String
+        StringWriter().use { writer ->
+            generator.write(enumDef, writer)
+            result = writer.toString()
+        }
 
         val expected = """
         package test
 
-        public enum class Status {
+        import kotlin.String
+
+        public enum class Status public constructor(
+          public var strValue: String,
+        ) {
           ACTIVE,
           IN_PROGRESS,
-          DELETED;
-
-          private final String value;
-
-          public String getValue() {
-            return this.value;
-          }
+          DELETED,
+          ;
         }
-
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())
     }
 
     @Test
     @Throws(IOException::class)
-    fun writeComplexEnumWithPropertyMethod() {
+    fun writeComplexEnumWithFieldMethod() {
         val enumDef = EnumDef.builder("test.Status")
             .addEnumConstant("active")
             .addEnumConstant("in-progress")
             .addEnumConstant("deleted")
-            .addField(FieldDef.builder("value").ofType(TypeDef.STRING).build())
+            .addField(FieldDef.builder("strValue").ofType(TypeDef.STRING).build())
             .addMethod(
                 MethodDef.builder("getValue")
                     .returns(TypeDef.STRING)
@@ -174,18 +177,20 @@ class EnumWriteTest {
         val expected = """
         package test
 
+        import kotlin.String
+
         public enum class Status {
           ACTIVE,
           IN_PROGRESS,
-          DELETED;
+          DELETED,
+          ;
 
-          private final String value;
+          public var strValue: String
 
-          public String getValue() {
-            return "value";
+          public fun getValue(): String {
+            return "value"
           }
         }
-
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())
     }
@@ -201,7 +206,7 @@ class EnumWriteTest {
         }
         // The regex will skip the imports and make sure it is a record
         val ENUM_REGEX = Pattern.compile(
-            "package [^;]+[^/]+" +
+            "package test([\\s\\S]+)\\s+" +
                     "public enum class " + enumDef.simpleName + " \\{\\s+" +
                     "([\\s\\S]+)\\s+}\\s+"
         )

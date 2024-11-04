@@ -291,12 +291,10 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             ((ClassDef) objectDef).getFields() :
             ((EnumDef) objectDef).getFields();
         for (FieldDef field : fields) {
-            FieldSpec.Builder fieldBuilder = FieldSpec
-                .builder(
+            FieldSpec.Builder fieldBuilder = FieldSpec.builder(
                     asType(field.getType(), objectDef),
-                    field.getName())
-                .addModifiers(field.getModifiersArray())
-                .addModifiers(Modifier.PRIVATE, Modifier.FINAL);
+                    field.getName()
+                ).addModifiers(field.getModifiersArray());
             field.getInitializer().ifPresent(init ->
                 fieldBuilder.initializer(renderExpression(
                     null,
@@ -324,7 +322,7 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             FieldSpec.Builder fieldBuilder = FieldSpec.builder(
                 propertyType,
                 propertyName
-            ).addModifiers(Modifier.PRIVATE, Modifier.FINAL);
+            ).addModifiers(Modifier.PRIVATE);
             for (AnnotationDef annotation : property.getAnnotations()) {
                 fieldBuilder.addAnnotation(
                     asAnnotationSpec(annotation)
@@ -338,7 +336,6 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             String capitalizedPropertyName = NameUtils.capitalize(propertyName);
             builder.addMethod(MethodSpec.methodBuilder("get" + capitalizedPropertyName)
                 .addModifiers(property.getModifiersArray())
-                .addModifiers(Modifier.PUBLIC)
                 .returns(propertyType)
                 .addStatement("return this." + propertyName)
                 .build());
