@@ -1210,6 +1210,8 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 checkNotNull(objectDef) { "Field 'this' is not available" }
                 if (objectDef is ClassDef) {
                     objectDef.getField(variableDef.name) // Check if exists
+                } else if (objectDef is EnumDef) {
+                    objectDef.getField(variableDef.name) // Check if exists
                 } else {
                     throw IllegalStateException("Field access no supported on the object definition: $objectDef")
                 }
