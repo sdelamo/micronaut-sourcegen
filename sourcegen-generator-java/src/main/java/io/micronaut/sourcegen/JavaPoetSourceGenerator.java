@@ -97,6 +97,12 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
     }
 
     private void writeInterface(Writer writer, InterfaceDef interfaceDef) throws IOException {
+        TypeSpec.Builder interfaceBuilder = getInterfaceBuilder(interfaceDef);
+        JavaFile javaFile = JavaFile.builder(interfaceDef.getPackageName(), interfaceBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getInterfaceBuilder(InterfaceDef interfaceDef) {
         TypeSpec.Builder interfaceBuilder = TypeSpec.interfaceBuilder(interfaceDef.getSimpleName());
         interfaceBuilder.addModifiers(interfaceDef.getModifiersArray());
         interfaceDef.getTypeVariables().stream().map(t -> asTypeVariable(t, interfaceDef)).forEach(interfaceBuilder::addTypeVariable);
@@ -136,16 +142,24 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
 //                    .addStatement("this." + propertyName + " = " + propertyName)
                 .build());
         }
+
+        addInnerTypes(interfaceDef.getInnerTypes(), interfaceBuilder, true);
+
         for (MethodDef method : interfaceDef.getMethods()) {
             interfaceBuilder.addMethod(
                 asMethodSpec(interfaceDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(interfaceDef.getPackageName(), interfaceBuilder.build()).build();
-        javaFile.writeTo(writer);
+        return interfaceBuilder;
     }
 
     private void writeEnum(Writer writer, EnumDef enumDef) throws IOException {
+        TypeSpec.Builder enumBuilder = getEnumBuilder(enumDef);
+        JavaFile javaFile = JavaFile.builder(enumDef.getPackageName(), enumBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getEnumBuilder(EnumDef enumDef) {
         TypeSpec.Builder enumBuilder = TypeSpec.enumBuilder(enumDef.getSimpleName());
         enumBuilder.addModifiers(enumDef.getModifiersArray());
         enumDef.getSuperinterfaces().stream().map(typeDef -> asType(typeDef, enumDef)).forEach(enumBuilder::addSuperinterface);
@@ -172,11 +186,17 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 asMethodSpec(enumDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(enumDef.getPackageName(), enumBuilder.build()).build();
-        javaFile.writeTo(writer);
+        addInnerTypes(enumDef.getInnerTypes(), enumBuilder, false);
+        return enumBuilder;
     }
 
     private void writeClass(Writer writer, ClassDef classDef) throws IOException {
+        TypeSpec.Builder classBuilder = getClassBuilder(classDef);
+        JavaFile javaFile = JavaFile.builder(classDef.getPackageName(), classBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getClassBuilder(ClassDef classDef) {
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(classDef.getSimpleName());
         classBuilder.addModifiers(classDef.getModifiersArray());
         classDef.getTypeVariables().stream().map(t -> asTypeVariable(t, classDef)).forEach(classBuilder::addTypeVariable);
@@ -194,16 +214,23 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
 
         buildFields(classDef, classBuilder);
 
+        addInnerTypes(classDef.getInnerTypes(), classBuilder, false);
+
         for (MethodDef method : classDef.getMethods()) {
             classBuilder.addMethod(
                 asMethodSpec(classDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(classDef.getPackageName(), classBuilder.build()).build();
-        javaFile.writeTo(writer);
+        return classBuilder;
     }
 
     private void writeRecord(Writer writer, RecordDef recordDef) throws IOException {
+        TypeSpec.Builder classBuilder = getRecordBuilder(recordDef);
+        JavaFile javaFile = JavaFile.builder(recordDef.getPackageName(), classBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getRecordBuilder(RecordDef recordDef) {
         TypeSpec.Builder classBuilder = TypeSpec.recordBuilder(recordDef.getSimpleName());
         classBuilder.addModifiers(recordDef.getModifiersArray());
         recordDef.getTypeVariables().stream().map(t -> asTypeVariable(t, recordDef)).forEach(classBuilder::addTypeVariable);
@@ -227,13 +254,36 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 componentBuilder.build()
             );
         }
+
+        addInnerTypes(recordDef.getInnerTypes(), classBuilder, false);
+
         for (MethodDef method : recordDef.getMethods()) {
             classBuilder.addMethod(
                 asMethodSpec(recordDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(recordDef.getPackageName(), classBuilder.build()).build();
-        javaFile.writeTo(writer);
+        return classBuilder;
+    }
+
+    private void addInnerTypes(List<ObjectDef> innerTypes, TypeSpec.Builder classBuilder, boolean isInterface) {
+        for (ObjectDef innerType : innerTypes) {
+            TypeSpec.Builder innerBuilder;
+            if (innerType instanceof ClassDef innerClassDef) {
+                innerBuilder = getClassBuilder(innerClassDef);
+            } else if (innerType instanceof InterfaceDef innerInterfaceDef) {
+                innerBuilder = getInterfaceBuilder(innerInterfaceDef);
+            } else if (innerType instanceof EnumDef innerEnumDef) {
+                innerBuilder = getEnumBuilder(innerEnumDef);
+            } else if (innerType instanceof RecordDef innerRecordDef) {
+                innerBuilder = getRecordBuilder(innerRecordDef);
+            } else {
+                throw new IllegalStateException("Unknown object definition: " + innerType);
+            }
+            if (isInterface) {
+                innerBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
+            }
+            classBuilder.addType(innerBuilder.build());
+        }
     }
 
     private void buildFields(ObjectDef objectDef, TypeSpec.Builder builder) {

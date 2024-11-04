@@ -49,8 +49,9 @@ public final class EnumDef extends ObjectDef {
                     List<AnnotationDef> annotations,
                     List<String> javadoc,
                     LinkedHashMap<String, ExpressionDef> enumConstants,
-                    List<TypeDef> superinterfaces) {
-        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces);
+                    List<TypeDef> superinterfaces,
+                    List<ObjectDef> innerTypes) {
+        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
         this.enumConstants = enumConstants;
     }
@@ -134,7 +135,7 @@ public final class EnumDef extends ObjectDef {
         }
 
         public EnumDef build() {
-            return new EnumDef(name, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces);
+            return new EnumDef(name, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
         }
 
         /**

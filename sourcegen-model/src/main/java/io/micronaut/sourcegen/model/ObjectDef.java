@@ -34,16 +34,19 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
     private final List<MethodDef> methods;
     private final List<PropertyDef> properties;
     private final List<TypeDef> superinterfaces;
+    private final List<ObjectDef> innerTypes;
 
     ObjectDef(
-        String name, Set<Modifier> modifiers, List<AnnotationDef> annotations,
-        List<String> javadoc, List<MethodDef> methods, List<PropertyDef> properties,
-        List<TypeDef> superinterfaces
+            String name, Set<Modifier> modifiers, List<AnnotationDef> annotations,
+            List<String> javadoc, List<MethodDef> methods,  List<PropertyDef> properties, 
+            List<TypeDef> superinterfaces,
+            List<ObjectDef> innerTypes
     ) {
         super(name, modifiers, annotations, javadoc);
         this.methods = methods;
         this.properties = properties;
         this.superinterfaces = superinterfaces;
+        this.innerTypes = innerTypes;
     }
 
     public final List<MethodDef> getMethods() {
@@ -64,6 +67,10 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
 
     public final String getSimpleName() {
         return NameUtils.getSimpleName(getName());
+    }
+
+    public final List<ObjectDef> getInnerTypes() {
+        return innerTypes;
     }
 
     /**
