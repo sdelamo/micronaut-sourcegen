@@ -48,8 +48,9 @@ public final class ClassDef extends ObjectDef {
                      List<String> javadoc,
                      List<TypeDef.TypeVariable> typeVariables,
                      List<TypeDef> superinterfaces,
-                     ClassTypeDef superclass) {
-        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces);
+                     ClassTypeDef superclass,
+                     List<ObjectDef> innerTypes) {
+        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
         this.typeVariables = typeVariables;
         this.superclass = superclass;
@@ -160,7 +161,7 @@ public final class ClassDef extends ObjectDef {
         }
 
         public ClassDef build() {
-            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass);
+            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes);
         }
 
         /**

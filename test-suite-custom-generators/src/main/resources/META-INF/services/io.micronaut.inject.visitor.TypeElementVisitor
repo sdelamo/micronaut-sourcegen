@@ -11,4 +11,8 @@ io.micronaut.sourcegen.custom.visitor.GenerateMyEnum1
 io.micronaut.sourcegen.custom.visitor.GenerateIfsPredicateVisitor
 io.micronaut.sourcegen.custom.visitor.GenerateSwitchVisitor
 io.micronaut.sourcegen.custom.visitor.GenerateArrayVisitor
+io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInEnumVisitor
+io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInRecordVisitor
+io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInClassVisitor
+io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInInterfaceVisitor
 io.micronaut.sourcegen.custom.visitor.GenerateAnnotatedTypeVisitor
