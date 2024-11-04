@@ -15,7 +15,6 @@
  */
 package io.micronaut.sourcegen.model;
 
-import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Experimental;
 
 import java.util.ArrayList;

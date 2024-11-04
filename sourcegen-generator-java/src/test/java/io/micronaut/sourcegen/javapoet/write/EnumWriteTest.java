@@ -49,6 +49,19 @@ public class EnumWriteTest {
             EnumDef.builder("test.Status").addEnumConstant("active").build());
         assertThrows(IllegalArgumentException.class, () ->
             EnumDef.builder("test.Status").addEnumConstant("9in progress", ExpressionDef.constant(1)).build());
+
+        EnumDef.EnumDefBuilder enumDefBuilder = EnumDef.builder("test.Status")
+            .addEnumConstant("ACTIVE", ExpressionDef.constant(2))
+            .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1))
+            .addEnumConstant("DELETED", ExpressionDef.constant(0));
+        assertThrows(IllegalStateException.class, enumDefBuilder::build);
+
+        enumDefBuilder.addNoFieldsConstructor(Modifier.PRIVATE);
+        assertThrows(IllegalStateException.class, enumDefBuilder::build);
+
+        enumDefBuilder.addField(FieldDef.builder("intValue").ofType(TypeDef.Primitive.INT).addModifiers(Modifier.PUBLIC).build())
+            .addAllFieldsConstructor(Modifier.PUBLIC);
+        assertThrows(IllegalStateException.class, enumDefBuilder::build);
     }
 
     @Test
@@ -57,6 +70,8 @@ public class EnumWriteTest {
             .addEnumConstant("ACTIVE", ExpressionDef.constant(2))
             .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1))
             .addEnumConstant("DELETED", ExpressionDef.constant(0))
+            .addField(FieldDef.builder("intValue").ofType(TypeDef.Primitive.INT).addModifiers(Modifier.PUBLIC).build())
+            .addAllFieldsConstructor(Modifier.PRIVATE)
             .build();
         var result = writeEnum(enumDef);
 
@@ -67,7 +82,13 @@ public class EnumWriteTest {
 
           ACTIVE(2),
           IN_PROGRESS(1),
-          DELETED(0)
+          DELETED(0);
+
+          public int intValue;
+
+          private Status(int intValue) {
+            this.intValue = intValue;
+          }
         }
         """;
         assertEquals(expected.strip(), result.strip());
@@ -79,6 +100,9 @@ public class EnumWriteTest {
             .addEnumConstant("ACTIVE", ExpressionDef.constant(2), ExpressionDef.trueValue())
             .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1), ExpressionDef.trueValue())
             .addEnumConstant("DELETED", ExpressionDef.constant(0), ExpressionDef.falseValue())
+            .addField(FieldDef.builder("intValue").ofType(TypeDef.Primitive.INT).addModifiers(Modifier.PUBLIC).build())
+            .addField(FieldDef.builder("boolValue").ofType(TypeDef.Primitive.BOOLEAN).addModifiers(Modifier.PUBLIC).build())
+            .addAllFieldsConstructor(Modifier.PRIVATE)
             .build();
         var result = writeEnum(enumDef);
 
@@ -89,7 +113,16 @@ public class EnumWriteTest {
 
           ACTIVE(2, true),
           IN_PROGRESS(1, true),
-          DELETED(0, false)
+          DELETED(0, false);
+
+          public int intValue;
+
+          public boolean boolValue;
+
+          private Status(int intValue, boolean boolValue) {
+            this.intValue = intValue;
+            this.boolValue = boolValue;
+          }
         }
         """;
         assertEquals(expected.strip(), result.strip());

@@ -49,18 +49,28 @@ class EnumWriteTest {
             .addEnumConstant("ACTIVE", ExpressionDef.constant(2))
             .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1))
             .addEnumConstant("DELETED", ExpressionDef.constant(0))
+            .addField(FieldDef.builder("intValue").ofType(TypeDef.Primitive.INT).addModifiers(Modifier.PUBLIC).build())
+            .addAllFieldsConstructor(Modifier.PRIVATE)
             .build()
         val result = writeEnum(enumDef)
 
         val expected = """
         package test
 
+        import kotlin.Int
+
         public enum class Status {
           ACTIVE(2),
           IN_PROGRESS(1),
           DELETED(0),
-        }
+          ;
 
+          public var intValue: Int
+
+          private constructor(intValue: Int) {
+            this. intValue = intValue
+          }
+        }
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())
     }
@@ -72,16 +82,32 @@ class EnumWriteTest {
             .addEnumConstant("ACTIVE", ExpressionDef.constant(2), ExpressionDef.trueValue())
             .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1), ExpressionDef.trueValue())
             .addEnumConstant("DELETED", ExpressionDef.constant(0), ExpressionDef.falseValue())
+            .addField(FieldDef.builder("intValue").ofType(TypeDef.Primitive.INT).addModifiers(Modifier.PUBLIC).build())
+            .addField(FieldDef.builder("boolValue").ofType(TypeDef.Primitive.BOOLEAN).addModifiers(Modifier.PUBLIC).build())
+            .addAllFieldsConstructor(Modifier.PRIVATE)
             .build()
         val result = writeEnum(enumDef)
 
         val expected = """
         package test
 
+        import kotlin.Boolean
+        import kotlin.Int
+
         public enum class Status {
           ACTIVE(2, true),
           IN_PROGRESS(1, true),
           DELETED(0, false),
+          ;
+
+          public var intValue: Int
+
+          public var boolValue: Boolean
+
+          private constructor(intValue: Int, boolValue: Boolean) {
+            this. intValue = intValue
+            this. boolValue = boolValue
+          }
         }
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())

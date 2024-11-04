@@ -24,8 +24,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static java.lang.String.join;
 
@@ -131,6 +134,34 @@ public final class EnumDef extends ObjectDef {
         }
 
         public EnumDef build() {
+            if (!enumConstants.isEmpty()) {
+                Set<Integer> valueCount = new HashSet<>();
+                for (Map.Entry<String, List<ExpressionDef>> entry : enumConstants.entrySet()) {
+                    if (entry.getValue() == null) {
+                        continue;
+                    }
+
+                    int constCount = entry.getValue().size();
+                    if (valueCount.contains(constCount)) {
+                        continue;
+                    } else {
+                        valueCount.add(constCount);
+                    }
+
+                    boolean hasConstructor = false;
+                    for (MethodDef methodDef: methods) {
+                        if (methodDef.isConstructor() && methodDef.getParameters().size() == constCount) {
+                            hasConstructor = true;
+                        }
+                        if (methodDef.isConstructor() && !methodDef.getModifiers().contains(Modifier.PRIVATE)) {
+                            throw new IllegalStateException("The constructor of enum: " + name + " has to be private.");
+                        }
+                    }
+                    if (!hasConstructor) {
+                        throw new IllegalStateException("Enum: " + name + " doesn't have a constructor for constant " + entry.getKey());
+                    }
+                }
+            }
             return new EnumDef(name, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
         }
 
