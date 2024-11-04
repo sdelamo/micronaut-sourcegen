@@ -24,12 +24,10 @@ import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.custom.example.GenerateMyEnum2;
 import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
-import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.EnumDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.MethodDef;
-import io.micronaut.sourcegen.model.ParameterDef;
 import io.micronaut.sourcegen.model.TypeDef;
 
 import javax.lang.model.element.Modifier;
@@ -47,7 +45,6 @@ public final class GenerateMyEnum2Visitor implements TypeElementVisitor<Generate
     public void visitClass(ClassElement element, VisitorContext context) {
         String enumClassName = element.getPackageName() + ".MyEnum2";
 
-        ClassTypeDef enumTypeDef = ClassTypeDef.of(enumClassName);
         EnumDef beanDef = EnumDef.builder(enumClassName)
             .addModifiers(Modifier.PUBLIC)
             .addEnumConstant("A", ExpressionDef.constant(0))
@@ -59,7 +56,7 @@ public final class GenerateMyEnum2Visitor implements TypeElementVisitor<Generate
                 .returns(TypeDef.STRING)
                 .build((aThis, parameters) ->
                     aThis.invoke("toString", TypeDef.STRING, List.of()).returning()))
-            .addConstructor(List.of(ParameterDef.of("myValue", TypeDef.Primitive.INT)), Modifier.PRIVATE)
+            .addAllFieldsConstructor(Modifier.PRIVATE)
             .build();
 
         SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
