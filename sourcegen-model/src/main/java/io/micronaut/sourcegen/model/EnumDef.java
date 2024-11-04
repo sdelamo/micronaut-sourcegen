@@ -94,11 +94,7 @@ public final class EnumDef extends ObjectDef {
 
     public boolean hasField(String name) {
         FieldDef property = findField(name);
-        if (property != null) {
-            return true;
-        }
-        // TODO: check outer classes
-        return false;
+        return property != null;
     }
 
     /**
@@ -197,15 +193,23 @@ public final class EnumDef extends ObjectDef {
 
             // Split into words
             String[] words = cleanedInput.split("\\s+");
+            try {
+                // Check if the input is acceptable
+                if (words.length == 0 || words[0].isEmpty()) {
+                    throw new IllegalArgumentException("The enum constant name is not an acceptable identifier name.");
+                }
+                for (int i = 0; i < words.length; i++) {
+                    words[i] = words[i].toUpperCase();
+                }
+                String constantName = join("_", words);
 
-            // Check if the input is acceptable
-            if (words.length == 0 || words[0].isEmpty()) {
-                throw new IllegalArgumentException("Property name is not an acceptable enum constant name");
+                if (!constantName.equals(input)) {
+                    throw new IllegalArgumentException("The enum constant name does not follow the conventions for constants, it should be changed accordingly.");
+                }
+                return constantName;
+            } catch (IllegalArgumentException e) {
+                throw e;
             }
-            for (int i = 0; i < words.length; i++) {
-                words[i] = words[i].toUpperCase();
-            }
-            return join("_", words);
         }
 
     }

@@ -33,30 +33,18 @@ class EnumWriteTest {
     }
 
     @Test
-    @Throws(IOException::class)
-    fun writeComplexEnumConstant() {
-        val enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active")
-            .addEnumConstant("in-progress")
-            .addEnumConstant("deleted")
-            .build()
-        val result = writeEnum(enumDef)
-
-        val expected = """
-        package test
-
-        public enum class Status {
-          ACTIVE,
-          IN_PROGRESS,
-          DELETED,
-        }
-        """.trimIndent()
-        Assert.assertEquals(expected.trim(), result.trim())
+    fun testExceptions() {
+        Assert.assertThrows(
+            IllegalArgumentException::class.java
+        ) { EnumDef.builder("test.Status").addEnumConstant("active").build() }
+        Assert.assertThrows(
+            IllegalArgumentException::class.java
+        ) { EnumDef.builder("test.Status").addEnumConstant("9in progress", ExpressionDef.constant(1)).build() }
     }
 
     @Test
     @Throws(IOException::class)
-    fun writeComplexEnumConstant2() {
+    fun writeComplexEnumConstant() {
         val enumDef = EnumDef.builder("test.Status")
             .addEnumConstant("ACTIVE", ExpressionDef.constant(2))
             .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1))
@@ -79,57 +67,11 @@ class EnumWriteTest {
 
     @Test
     @Throws(IOException::class)
-    fun writeComplexEnumConstant3() {
-        val enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active", ExpressionDef.constant(2))
-            .addEnumConstant("in progress", ExpressionDef.constant(1))
-            .addEnumConstant("deleted", ExpressionDef.constant(0))
-            .build()
-        val result = writeEnum(enumDef)
-
-        val expected = """
-        package test
-
-        public enum class Status {
-          ACTIVE(2),
-          IN_PROGRESS(1),
-          DELETED(0),
-        }
-
-        """.trimIndent()
-        Assert.assertEquals(expected.trim(), result.trim())
-    }
-
-    @Test
-    @Throws(IOException::class)
-    fun writeComplexEnumConstant4() {
-        val enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active_by heart")
-            .addEnumConstant("9 Jump in progress")
-            .addEnumConstant("isItEven deleted")
-            .build()
-        val result = writeEnum(enumDef)
-
-        val expected = """
-        package test
-
-        public enum class Status {
-          ACTIVE_BY_HEART,
-          JUMP_IN_PROGRESS,
-          IS_IT_EVEN_DELETED,
-        }
-
-        """.trimIndent()
-        Assert.assertEquals(expected.trim(), result.trim())
-    }
-
-    @Test
-    @Throws(IOException::class)
     fun writeComplexEnumWithProperty() {
         val enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active")
-            .addEnumConstant("in-progress")
-            .addEnumConstant("deleted")
+            .addEnumConstant("ACTIVE")
+            .addEnumConstant("IN_PROGRESS")
+            .addEnumConstant("DELETED")
             .addProperty(PropertyDef.builder("strValue").ofType(TypeDef.STRING).build())
             .build()
         val generator = KotlinPoetSourceGenerator()
@@ -160,9 +102,9 @@ class EnumWriteTest {
     @Throws(IOException::class)
     fun writeComplexEnumWithFieldMethod() {
         val enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active")
-            .addEnumConstant("in-progress")
-            .addEnumConstant("deleted")
+            .addEnumConstant("ACTIVE")
+            .addEnumConstant("IN_PROGRESS")
+            .addEnumConstant("DELETED")
             .addField(FieldDef.builder("strValue").ofType(TypeDef.STRING).build())
             .addMethod(
                 MethodDef.builder("getValue")

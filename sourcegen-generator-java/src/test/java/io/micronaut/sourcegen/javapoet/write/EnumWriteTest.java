@@ -17,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class EnumWriteTest {
@@ -43,11 +44,19 @@ public class EnumWriteTest {
     }
 
     @Test
+    public void testExceptions() {
+        assertThrows(IllegalArgumentException.class, () ->
+            EnumDef.builder("test.Status").addEnumConstant("active").build());
+        assertThrows(IllegalArgumentException.class, () ->
+            EnumDef.builder("test.Status").addEnumConstant("9in progress", ExpressionDef.constant(1)).build());
+    }
+
+    @Test
     public void writeComplexEnumConstant() throws IOException {
         EnumDef enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active")
-            .addEnumConstant("in-progress")
-            .addEnumConstant("deleted")
+            .addEnumConstant("ACTIVE", ExpressionDef.constant(2))
+            .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1))
+            .addEnumConstant("DELETED", ExpressionDef.constant(0))
             .build();
         var result = writeEnum(enumDef);
 
@@ -56,9 +65,9 @@ public class EnumWriteTest {
 
         enum Status {
 
-          ACTIVE,
-          IN_PROGRESS,
-          DELETED
+          ACTIVE(2),
+          IN_PROGRESS(1),
+          DELETED(0)
         }
         """;
         assertEquals(expected.strip(), result.strip());
@@ -87,55 +96,11 @@ public class EnumWriteTest {
     }
 
     @Test
-    public void writeComplexEnumConstant3() throws IOException {
-        EnumDef enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active", ExpressionDef.constant(2))
-            .addEnumConstant("in progress", ExpressionDef.constant(1))
-            .addEnumConstant("deleted", ExpressionDef.constant(0))
-            .build();
-        var result = writeEnum(enumDef);
-
-        var expected = """
-        package test;
-
-        enum Status {
-
-          ACTIVE(2),
-          IN_PROGRESS(1),
-          DELETED(0)
-        }
-        """;
-        assertEquals(expected.strip(), result.strip());
-    }
-
-    @Test
-    public void writeComplexEnumConstant4() throws IOException {
-        EnumDef enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active_by heart")
-            .addEnumConstant("9 Jump in progress")
-            .addEnumConstant("isItEven deleted")
-            .build();
-        var result = writeEnum(enumDef);
-
-        var expected = """
-        package test;
-
-        enum Status {
-
-          ACTIVE_BY_HEART,
-          JUMP_IN_PROGRESS,
-          IS_IT_EVEN_DELETED
-        }
-        """;
-        assertEquals(expected.strip(), result.strip());
-    }
-
-    @Test
     public void writeComplexEnumWithProperty() throws IOException {
         EnumDef enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active")
-            .addEnumConstant("in-progress")
-            .addEnumConstant("deleted")
+            .addEnumConstant("ACTIVE")
+            .addEnumConstant("IN_PROGRESS")
+            .addEnumConstant("DELETED")
             .addProperty(PropertyDef.builder("value").ofType(TypeDef.STRING).addModifiers(Modifier.PUBLIC).build())
             .build();
         var result = writeEnum(enumDef);
@@ -164,9 +129,9 @@ public class EnumWriteTest {
     @Test
     public void writeComplexEnumWithPropertyMethod() throws IOException {
         EnumDef enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("active")
-            .addEnumConstant("in-progress")
-            .addEnumConstant("deleted")
+            .addEnumConstant("ACTIVE")
+            .addEnumConstant("IN_PROGRESS")
+            .addEnumConstant("DELETED")
             .addField(FieldDef.builder("value").ofType(TypeDef.STRING).build())
             .addMethod(MethodDef.builder("getValue")
                 .returns(TypeDef.STRING)
