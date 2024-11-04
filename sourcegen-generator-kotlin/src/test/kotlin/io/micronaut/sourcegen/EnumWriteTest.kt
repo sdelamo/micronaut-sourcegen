@@ -67,6 +67,28 @@ class EnumWriteTest {
 
     @Test
     @Throws(IOException::class)
+    fun writeComplexEnumConstant2() {
+        val enumDef = EnumDef.builder("test.Status")
+            .addEnumConstant("ACTIVE", ExpressionDef.constant(2), ExpressionDef.trueValue())
+            .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1), ExpressionDef.trueValue())
+            .addEnumConstant("DELETED", ExpressionDef.constant(0), ExpressionDef.falseValue())
+            .build()
+        val result = writeEnum(enumDef)
+
+        val expected = """
+        package test
+
+        public enum class Status {
+          ACTIVE(2, true),
+          IN_PROGRESS(1, true),
+          DELETED(0, false),
+        }
+        """.trimIndent()
+        Assert.assertEquals(expected.trim(), result.trim())
+    }
+
+    @Test
+    @Throws(IOException::class)
     fun writeComplexEnumWithProperty() {
         val enumDef = EnumDef.builder("test.Status")
             .addEnumConstant("ACTIVE")

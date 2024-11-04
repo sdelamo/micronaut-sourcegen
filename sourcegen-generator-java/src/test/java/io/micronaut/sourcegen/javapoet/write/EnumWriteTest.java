@@ -76,9 +76,9 @@ public class EnumWriteTest {
     @Test
     public void writeComplexEnumConstant2() throws IOException {
         EnumDef enumDef = EnumDef.builder("test.Status")
-            .addEnumConstant("ACTIVE", ExpressionDef.constant(2))
-            .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1))
-            .addEnumConstant("DELETED", ExpressionDef.constant(0))
+            .addEnumConstant("ACTIVE", ExpressionDef.constant(2), ExpressionDef.trueValue())
+            .addEnumConstant("IN_PROGRESS", ExpressionDef.constant(1), ExpressionDef.trueValue())
+            .addEnumConstant("DELETED", ExpressionDef.constant(0), ExpressionDef.falseValue())
             .build();
         var result = writeEnum(enumDef);
 
@@ -87,9 +87,9 @@ public class EnumWriteTest {
 
         enum Status {
 
-          ACTIVE(2),
-          IN_PROGRESS(1),
-          DELETED(0)
+          ACTIVE(2, true),
+          IN_PROGRESS(1, true),
+          DELETED(0, false)
         }
         """;
         assertEquals(expected.strip(), result.strip());

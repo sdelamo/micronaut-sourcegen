@@ -169,9 +169,16 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             enumBuilder.addAnnotation(asAnnotationSpec(annotation));
         }
 
-        enumDef.getEnumConstants().forEach((name, exp) -> {
-            if (exp != null) {
-                enumBuilder.addEnumConstant(name, anonymousClassBuilder(renderExpression(null, null, exp)).build());
+        enumDef.getEnumConstants().forEach((name, exps) -> {
+            if (exps != null) {
+                CodeBlock.Builder expBuilder = CodeBlock.builder();
+                for (int i = 0; i < exps.size(); i++) {
+                    expBuilder.add(renderExpression(null, null, exps.get(i)));
+                    if (i < exps.size() - 1) {
+                        expBuilder.add(", ");
+                    }
+                }
+                enumBuilder.addEnumConstant(name, anonymousClassBuilder(expBuilder.build()).build());
             } else {
                 enumBuilder.addEnumConstant(name);
             }

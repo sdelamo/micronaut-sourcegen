@@ -19,7 +19,6 @@ package io.micronaut.sourcegen
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import com.squareup.kotlinpoet.javapoet.toKClassName
 import com.squareup.kotlinpoet.javapoet.toKTypeName
@@ -295,14 +294,21 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         enumDef.annotations.stream().map { annotationDef: AnnotationDef -> asAnnotationSpec(annotationDef) }
             .forEach { annotationSpec: AnnotationSpec -> enumBuilder.addAnnotation(annotationSpec) }
 
-        enumDef.enumConstants.forEach { (name: String?, exp: ExpressionDef?) ->
-            if (exp != null) {
+        enumDef.enumConstants.forEach { (name: String?, exps: List<ExpressionDef>?) ->
+            if (exps != null) {
+                val expBuilder: CodeBlock.Builder = CodeBlock.builder()
+                for (i in exps.indices) {
+                    expBuilder.add(renderExpressionCode(null,
+                        MethodDef.builder("").returns(TypeDef.VOID).build(),
+                        exps[i]))
+                    if (i < exps.size - 1) {
+                        expBuilder.add(", ")
+                    }
+                }
                 enumBuilder.addEnumConstant(
                     name,
-                    TypeSpec.companionObjectBuilder().addSuperclassConstructorParameter(
-                        renderExpressionCode(null,
-                            MethodDef.builder("").returns(TypeDef.VOID).build(),
-                            exp))
+                    TypeSpec.companionObjectBuilder()
+                        .addSuperclassConstructorParameter(expBuilder.build())
                         .build()
                 )
             } else {

@@ -39,7 +39,7 @@ import static java.lang.String.join;
 public final class EnumDef extends ObjectDef {
 
     private final List<FieldDef> fields;
-    private final LinkedHashMap<String, ExpressionDef> enumConstants;
+    private final LinkedHashMap<String, List<ExpressionDef>> enumConstants;
 
     private EnumDef(String name,
                     EnumSet<Modifier> modifiers,
@@ -48,7 +48,7 @@ public final class EnumDef extends ObjectDef {
                     List<PropertyDef> properties,
                     List<AnnotationDef> annotations,
                     List<String> javadoc,
-                    LinkedHashMap<String, ExpressionDef> enumConstants,
+                    LinkedHashMap<String, List<ExpressionDef>> enumConstants,
                     List<TypeDef> superinterfaces,
                     List<ObjectDef> innerTypes) {
         super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
@@ -64,7 +64,7 @@ public final class EnumDef extends ObjectDef {
         return fields;
     }
 
-    public LinkedHashMap<String, ExpressionDef> getEnumConstants() {
+    public LinkedHashMap<String, List<ExpressionDef>> getEnumConstants() {
         return enumConstants;
     }
 
@@ -107,7 +107,7 @@ public final class EnumDef extends ObjectDef {
     public static final class EnumDefBuilder extends ObjectDefBuilder<EnumDefBuilder> {
 
         private final List<FieldDef> fields = new ArrayList<>();
-        private final LinkedHashMap<String, ExpressionDef> enumConstants = new LinkedHashMap<>();
+        private final LinkedHashMap<String, List<ExpressionDef>> enumConstants = new LinkedHashMap<>();
 
         private EnumDefBuilder(String name) {
             super(name);
@@ -124,9 +124,9 @@ public final class EnumDef extends ObjectDef {
             return this;
         }
 
-        public EnumDefBuilder addEnumConstant(String name, ExpressionDef value) {
+        public EnumDefBuilder addEnumConstant(String name, ExpressionDef... values) {
             String constName = getConstantName(name);
-            enumConstants.put(constName, value);
+            enumConstants.put(constName, List.of(values));
             return this;
         }
 
