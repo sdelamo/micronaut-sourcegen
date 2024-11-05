@@ -35,6 +35,8 @@ import com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview
 import com.squareup.kotlinpoet.javapoet.toKClassName
 import com.squareup.kotlinpoet.javapoet.toKTypeName
 import io.micronaut.core.annotation.Internal
+import io.micronaut.core.annotation.Nullable
+import io.micronaut.core.reflect.ClassUtils
 import io.micronaut.inject.visitor.VisitorContext
 import io.micronaut.sourcegen.generator.SourceGenerator
 import io.micronaut.sourcegen.model.AnnotationDef
@@ -42,8 +44,7 @@ import io.micronaut.sourcegen.model.ClassDef
 import io.micronaut.sourcegen.model.ClassTypeDef
 import io.micronaut.sourcegen.model.EnumDef
 import io.micronaut.sourcegen.model.ExpressionDef
-import io.micronaut.sourcegen.model.ExpressionDef.CallInstanceMethod
-import io.micronaut.sourcegen.model.ExpressionDef.CallStaticMethod
+import io.micronaut.sourcegen.model.ExpressionDef.*
 import io.micronaut.sourcegen.model.FieldDef
 import io.micronaut.sourcegen.model.InterfaceDef
 import io.micronaut.sourcegen.model.MethodDef
@@ -53,10 +54,13 @@ import io.micronaut.sourcegen.model.PropertyDef
 import io.micronaut.sourcegen.model.RecordDef
 import io.micronaut.sourcegen.model.StatementDef
 import io.micronaut.sourcegen.model.StatementDef.Assign
+import io.micronaut.sourcegen.model.StatementDef.DefineAndAssign
 import io.micronaut.sourcegen.model.TypeDef
+import io.micronaut.sourcegen.model.TypeDef.Primitive.PrimitiveInstance
 import io.micronaut.sourcegen.model.VariableDef
 import java.io.IOException
 import java.io.Writer
+import java.lang.reflect.Array
 import java.util.function.Consumer
 import javax.lang.model.element.Modifier
 
@@ -101,9 +105,9 @@ class KotlinPoetSourceGenerator : SourceGenerator {
     private fun writeInterface(writer: Writer, interfaceDef: InterfaceDef) {
         val interfaceBuilder = TypeSpec.interfaceBuilder(interfaceDef.simpleName)
         interfaceBuilder.addModifiers(asKModifiers(interfaceDef.modifiers))
-        interfaceDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> this.asTypeVariable(tv, interfaceDef) }
+        interfaceDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> asTypeVariable(tv, interfaceDef) }
             .forEach { typeVariable: TypeVariableName -> interfaceBuilder.addTypeVariable(typeVariable) }
-        interfaceDef.superinterfaces.stream().map { typeDef: TypeDef -> this.asType(typeDef, interfaceDef) }
+        interfaceDef.superinterfaces.stream().map { typeDef: TypeDef -> asType(typeDef, interfaceDef) }
             .forEach { it: TypeName ->
                 interfaceBuilder.addSuperinterface(
                     it
@@ -116,7 +120,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         var companionBuilder: TypeSpec.Builder? = null
         for (property in interfaceDef.properties) {
             val propertySpec = if (property.type.isNullable) {
-                buildNullableProperty(
+                buildProperty(
                     property.name,
                     property.type.makeNullable(),
                     property.modifiers,
@@ -168,9 +172,9 @@ class KotlinPoetSourceGenerator : SourceGenerator {
     private fun writeClass(writer: Writer, classDef: ClassDef) {
         val classBuilder = TypeSpec.classBuilder(classDef.simpleName)
         classBuilder.addModifiers(asKModifiers(classDef.modifiers))
-        classDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> this.asTypeVariable(tv, classDef) }
+        classDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> asTypeVariable(tv, classDef) }
             .forEach { typeVariable: TypeVariableName -> classBuilder.addTypeVariable(typeVariable) }
-        classDef.superinterfaces.stream().map { typeDef: TypeDef -> this.asType(typeDef, classDef) }
+        classDef.superinterfaces.stream().map { typeDef: TypeDef -> asType(typeDef, classDef) }
             .forEach { it: TypeName ->
                 classBuilder.addSuperinterface(
                     it
@@ -185,7 +189,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         for (property in classDef.properties) {
             var propertySpec: PropertySpec
             if (property.type.isNullable) {
-                propertySpec = buildNullableProperty(
+                propertySpec = buildProperty(
                     property.name,
                     property.type.makeNullable(),
                     property.modifiers,
@@ -229,12 +233,18 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     companionBuilder = TypeSpec.companionObjectBuilder()
                 }
                 companionBuilder.addProperty(
-                    buildNullableProperty(field, stripStatic(modifiers), field.javadoc, classDef)
+                    buildProperty(field, stripStatic(modifiers), field.javadoc, classDef)
                 )
             } else {
-                classBuilder.addProperty(
-                    buildNullableProperty(field, modifiers, field.javadoc, classDef)
-                )
+                if (field.type.isNullable) {
+                    classBuilder.addProperty(
+                        buildProperty(field, modifiers, field.javadoc, classDef)
+                    )
+                } else {
+                    classBuilder.addProperty(
+                        buildProperty(field, modifiers, field.javadoc, classDef)
+                    )
+                }
             }
         }
 
@@ -268,9 +278,9 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         val classBuilder = TypeSpec.classBuilder(recordDef.simpleName)
         classBuilder.addModifiers(KModifier.DATA)
         classBuilder.addModifiers(asKModifiers(recordDef.modifiers))
-        recordDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> this.asTypeVariable(tv, recordDef) }
+        recordDef.typeVariables.stream().map { tv: TypeDef.TypeVariable -> asTypeVariable(tv, recordDef) }
             .forEach { typeVariable: TypeVariableName -> classBuilder.addTypeVariable(typeVariable) }
-        recordDef.superinterfaces.stream().map { typeDef: TypeDef -> this.asType(typeDef, recordDef) }
+        recordDef.superinterfaces.stream().map { typeDef: TypeDef -> asType(typeDef, recordDef) }
             .forEach { it: TypeName ->
                 classBuilder.addSuperinterface(
                     it,
@@ -338,7 +348,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
     private fun writeEnumDef(writer: Writer, enumDef: EnumDef) {
         val enumBuilder = TypeSpec.enumBuilder(enumDef.simpleName)
         enumBuilder.addModifiers(asKModifiers(enumDef.modifiers))
-        enumDef.superinterfaces.stream().map { typeDef: TypeDef -> this.asType(typeDef, enumDef) }
+        enumDef.superinterfaces.stream().map { typeDef: TypeDef -> asType(typeDef, enumDef) }
             .forEach { it: TypeName -> enumBuilder.addSuperinterface(it) }
         enumDef.javadoc.forEach(Consumer { format: String -> enumBuilder.addKdoc(format) })
         enumDef.annotations.stream().map { annotationDef: AnnotationDef -> asAnnotationSpec(annotationDef) }
@@ -374,7 +384,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             .writeTo(writer)
     }
 
-    private fun buildNullableProperty(
+    private fun buildProperty(
         name: String,
         typeDef: TypeDef,
         modifiers: Set<Modifier>,
@@ -398,7 +408,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             )
         }
         if (initializer != null) {
-            if (initializer is ExpressionDef.Constant) {
+            if (initializer is Constant) {
                 propertyBuilder.initializer(
                     CodeBlock.of(
                         "%L", initializer.value
@@ -406,8 +416,10 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 )
             }
         }
-        return propertyBuilder
-            .initializer("null").build()
+        if (typeDef.isNullable) {
+            propertyBuilder.initializer("null")
+        }
+        return propertyBuilder.build()
     }
 
     private fun buildConstructorProperty(
@@ -437,8 +449,13 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             .build()
     }
 
-    private fun buildNullableProperty(field: FieldDef, modifiers: Set<Modifier>, docs: List<String>, objectDef: ObjectDef?): PropertySpec {
-        return buildNullableProperty(
+    private fun buildProperty(
+        field: FieldDef,
+        modifiers: Set<Modifier>,
+        docs: List<String>,
+        objectDef: ObjectDef?
+    ): PropertySpec {
+        return buildProperty(
             field.name,
             field.type,
             modifiers,
@@ -456,7 +473,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             FunSpec.builder(method.name).returns(asType(method.returnType, objectDef))
         }
         funBuilder = funBuilder
-            .addModifiers(asKModifiers(modifiers))
+            .addModifiers(asKModifiers(method, modifiers))
             .addParameters(
                 method.parameters.stream()
                     .map { param: ParameterDef ->
@@ -473,85 +490,12 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             )
         }
         method.statements.stream()
-            .map { st: StatementDef -> renderStatement(objectDef, method, st) }
-            .forEach { statement -> funBuilder.addStatement(statement.toString()) }
+            .map { st: StatementDef -> renderStatementCodeBlock(objectDef, method, st) }
+            .forEach(funBuilder::addCode)
         method.javadoc.forEach(Consumer { format: String -> funBuilder.addKdoc(format) })
         return funBuilder.build()
     }
 
-    @OptIn(KotlinPoetJavaPoetPreview::class)
-    private fun asType(typeDef: TypeDef, objectDef: ObjectDef?): TypeName {
-        val result: TypeName = if (typeDef == TypeDef.THIS) {
-            if (objectDef == null) {
-                throw java.lang.IllegalStateException("This type is used outside of the instance scope!")
-            }
-            asType(objectDef.asTypeDef(), null)
-        } else if (typeDef is TypeDef.Array) {
-            asArray(typeDef, objectDef)
-        } else if (typeDef is ClassTypeDef.Parameterized) {
-            asClassName(typeDef.rawType).parameterizedBy(
-                typeDef.typeArguments.map { v: TypeDef -> this.asType(v, objectDef) }
-            )
-        } else if (typeDef is TypeDef.Primitive) {
-            when (typeDef.name) {
-                "void" -> UNIT
-                "byte" -> com.squareup.javapoet.TypeName.BYTE.toKTypeName()
-                "short" -> com.squareup.javapoet.TypeName.SHORT.toKTypeName()
-                "char" -> com.squareup.javapoet.TypeName.CHAR.toKTypeName()
-                "int" -> com.squareup.javapoet.TypeName.INT.toKTypeName()
-                "long" -> com.squareup.javapoet.TypeName.LONG.toKTypeName()
-                "float" -> com.squareup.javapoet.TypeName.FLOAT.toKTypeName()
-                "double" -> com.squareup.javapoet.TypeName.DOUBLE.toKTypeName()
-                "boolean" -> com.squareup.javapoet.TypeName.BOOLEAN.toKTypeName()
-                else -> throw IllegalStateException("Unrecognized primitive name: " + typeDef.name)
-            }
-        } else if (typeDef is ClassTypeDef) {
-            asClassName(typeDef)
-        } else if (typeDef is TypeDef.Wildcard) {
-            if (typeDef.lowerBounds.isNotEmpty()) {
-                WildcardTypeName.consumerOf(
-                    asType(
-                        typeDef.lowerBounds[0],
-                        objectDef
-                    )
-                )
-            } else {
-                WildcardTypeName.producerOf(
-                    asType(
-                        typeDef.upperBounds[0],
-                        objectDef
-                    )
-                )
-            }
-        } else if (typeDef is TypeDef.TypeVariable) {
-            return asTypeVariable(typeDef, objectDef)
-        } else {
-            throw IllegalStateException("Unrecognized type definition $typeDef")
-        }
-        if (typeDef.isNullable) {
-            return asNullable(result)
-        }
-        return result
-    }
-
-    private fun asArray(classType: TypeDef.Array, objectDef: ObjectDef?): TypeName {
-        var newDef = ClassTypeDef.Parameterized(
-                ClassTypeDef.of("kotlin.Array"), listOf(classType.componentType))
-        for (i in 2.. classType.dimensions) {
-            newDef = ClassTypeDef.Parameterized(ClassTypeDef.of("kotlin.Array"), listOf(newDef))
-        }
-        return this.asType(newDef, objectDef)
-    }
-
-    private fun asTypeVariable(tv: TypeDef.TypeVariable, objectDef: ObjectDef?): TypeVariableName {
-        return TypeVariableName(
-            tv.name,
-            tv.bounds.stream().map { v: TypeDef -> this.asType(v, objectDef) }.toList()
-        )
-    }
-
-    @JvmRecord
-    private data class ExpResult(val rendered: CodeBlock, val type: TypeDef)
     companion object {
         private fun stripStatic(modifiers: MutableSet<Modifier>): MutableSet<Modifier> {
             val mutable = HashSet(modifiers)
@@ -582,6 +526,16 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             return kClassName.copy(true, kClassName.annotations, kClassName.tags)
         }
 
+        private fun asKModifiers(methodDef: MethodDef, modifier: Collection<Modifier>): List<KModifier> {
+            val modifiers = asKModifiers(modifier)
+            if (methodDef.isOverride) {
+                val mutableList = modifiers.toMutableList()
+                mutableList.add(KModifier.OVERRIDE)
+                return mutableList
+            }
+            return modifiers
+        }
+
         private fun asKModifiers(modifier: Collection<Modifier>): List<KModifier> {
             return modifier.stream().map { m: Modifier ->
                 when (m) {
@@ -596,103 +550,582 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             }.toList()
         }
 
+        @OptIn(KotlinPoetJavaPoetPreview::class)
+        private fun asType(typeDef: TypeDef, objectDef: ObjectDef?): TypeName {
+            val result: TypeName = if (typeDef == TypeDef.THIS) {
+                if (objectDef == null) {
+                    throw java.lang.IllegalStateException("This type is used outside of the instance scope!")
+                }
+                asType(objectDef.asTypeDef(), null)
+            } else if (typeDef is TypeDef.Array) {
+                asArray(typeDef, objectDef)
+            } else if (typeDef is ClassTypeDef.Parameterized) {
+                asClassName(typeDef.rawType).parameterizedBy(
+                    typeDef.typeArguments.map { v: TypeDef -> this.asType(v, objectDef) }
+                )
+            } else if (typeDef is TypeDef.Primitive) {
+                when (typeDef.name) {
+                    "void" -> UNIT
+                    "byte" -> com.squareup.javapoet.TypeName.BYTE.toKTypeName()
+                    "short" -> com.squareup.javapoet.TypeName.SHORT.toKTypeName()
+                    "char" -> com.squareup.javapoet.TypeName.CHAR.toKTypeName()
+                    "int" -> com.squareup.javapoet.TypeName.INT.toKTypeName()
+                    "long" -> com.squareup.javapoet.TypeName.LONG.toKTypeName()
+                    "float" -> com.squareup.javapoet.TypeName.FLOAT.toKTypeName()
+                    "double" -> com.squareup.javapoet.TypeName.DOUBLE.toKTypeName()
+                    "boolean" -> com.squareup.javapoet.TypeName.BOOLEAN.toKTypeName()
+                    else -> throw IllegalStateException("Unrecognized primitive name: " + typeDef.name)
+                }
+            } else if (typeDef is ClassTypeDef) {
+                asClassName(typeDef)
+            } else if (typeDef is TypeDef.Wildcard) {
+                if (typeDef.lowerBounds.isNotEmpty()) {
+                    WildcardTypeName.consumerOf(
+                        asType(
+                            typeDef.lowerBounds[0],
+                            objectDef
+                        )
+                    )
+                } else {
+                    WildcardTypeName.producerOf(
+                        asType(
+                            typeDef.upperBounds[0],
+                            objectDef
+                        )
+                    )
+                }
+            } else if (typeDef is TypeDef.TypeVariable) {
+                return asTypeVariable(typeDef, objectDef)
+            } else {
+                throw IllegalStateException("Unrecognized type definition $typeDef")
+            }
+            if (typeDef.isNullable) {
+                return asNullable(result)
+            }
+            return result
+        }
+
+        private fun asTypeVariable(tv: TypeDef.TypeVariable, objectDef: ObjectDef?): TypeVariableName {
+            return TypeVariableName(
+                tv.name,
+                tv.bounds.stream().map { v: TypeDef -> asType(v, objectDef) }.toList()
+            )
+        }
+
+        private fun asArray(classType: TypeDef.Array, objectDef: ObjectDef?): TypeName {
+            var newDef = ClassTypeDef.Parameterized(
+                ClassTypeDef.of("kotlin.Array"), listOf(classType.componentType)
+            )
+            for (i in 2..classType.dimensions) {
+                newDef = ClassTypeDef.Parameterized(ClassTypeDef.of("kotlin.Array"), listOf(newDef))
+            }
+            return asType(newDef, objectDef)
+        }
+
+        private fun renderStatementCodeBlock(
+            objectDef: @Nullable ObjectDef?,
+            methodDef: MethodDef,
+            statementDef: StatementDef
+        ): CodeBlock {
+            if (statementDef is StatementDef.Multi) {
+                val builder: CodeBlock.Builder =
+                    CodeBlock.builder()
+                for (statement in statementDef.statements) {
+                    builder.add(renderStatementCodeBlock(objectDef, methodDef, statement))
+                }
+                return builder.build()
+            }
+            if (statementDef is StatementDef.If) {
+                val builder: CodeBlock.Builder =
+                    CodeBlock.builder()
+                builder.add("if (")
+                builder.add(renderExpressionCode(objectDef, methodDef, statementDef.condition))
+                builder.add(") {\n")
+                builder.indent()
+                builder.add(renderStatementCodeBlock(objectDef, methodDef, statementDef.statement))
+                builder.unindent()
+                builder.add("}\n")
+                return builder.build()
+            }
+            if (statementDef is StatementDef.IfElse) {
+                val builder: CodeBlock.Builder = CodeBlock.builder()
+                builder.add("if (")
+                builder.add(renderExpressionCode(objectDef, methodDef, statementDef.condition))
+                builder.add(") {\n")
+                builder.indent()
+                builder.add(renderStatementCodeBlock(objectDef, methodDef, statementDef.statement))
+                builder.unindent()
+                builder.add("} else {\n")
+                builder.indent()
+                builder.add(renderStatementCodeBlock(objectDef, methodDef, statementDef.elseStatement))
+                builder.unindent()
+                builder.add("}\n")
+                return builder.build()
+            }
+            if (statementDef is StatementDef.Switch) {
+                val builder: CodeBlock.Builder =
+                    CodeBlock.builder()
+                builder.add("when (")
+                builder.add(renderExpressionCode(objectDef, methodDef, statementDef.expression))
+                builder.add(") {\n")
+                builder.indent()
+                var elseExp: StatementDef? = null
+                for ((key, statement) in statementDef.cases) {
+                    if (key == null || key.value == null) {
+                        elseExp = statement
+                        continue
+                    } else {
+                        builder.add(renderConstantExpression(key, methodDef))
+                    }
+                    builder.add("-> {\n")
+                    builder.indent()
+                    builder.add(renderStatementCodeBlock(objectDef, methodDef, statement))
+                    builder.unindent()
+                    builder.add("}\n")
+                }
+                if (elseExp != null) {
+                    builder.add("else -> {\n")
+                    builder.indent()
+                    builder.add(renderStatementCodeBlock(objectDef, methodDef, elseExp))
+                    builder.unindent()
+                    builder.add("}\n")
+                }
+                builder.unindent()
+                builder.add("}\n")
+                return builder.build()
+            }
+            if (statementDef is StatementDef.While) {
+                val builder: CodeBlock.Builder =
+                    CodeBlock.builder()
+                builder.add("while (")
+                builder.add(renderExpressionCode(objectDef, methodDef, statementDef.expression))
+                builder.add(") {\n")
+                builder.indent()
+                builder.add(renderStatementCodeBlock(objectDef, methodDef, statementDef.statement))
+                builder.unindent()
+                builder.add("}\n")
+                return builder.build()
+            }
+            return CodeBlock.builder()
+                .addStatement("%L", renderStatement(objectDef, methodDef, statementDef))
+                .build()
+        }
+
         private fun renderStatement(
             objectDef: ObjectDef?,
             methodDef: MethodDef,
             statementDef: StatementDef
         ): CodeBlock {
+            if (statementDef is StatementDef.Throw) {
+                return CodeBlock.builder()
+                    .add("throw ")
+                    .add(renderExpressionCode(objectDef, methodDef, statementDef.variableDef))
+                    .build()
+            }
             if (statementDef is StatementDef.Return) {
-                val expResult = renderExpression(objectDef, methodDef, statementDef.expression)
-                return CodeBlock.of("return ")
-                    .toBuilder()
-                    .add(renderWithNotNullAssertion(expResult, methodDef.returnType))
+                val codeBlock = renderExpressionWithNotNullAssertion(
+                    objectDef,
+                    methodDef,
+                    statementDef.expression,
+                    methodDef.returnType
+                )
+                return CodeBlock.builder()
+                    .add("return ")
+                    .add(codeBlock)
                     .build()
             }
             if (statementDef is Assign) {
                 val variableExp = renderVariable(objectDef, methodDef, statementDef.variable)
-                val valueExp = renderExpression(objectDef, methodDef, statementDef.expression)
-                val codeBuilder = variableExp.rendered.toBuilder()
+                val codeBuilder = variableExp.toBuilder()
                 codeBuilder.add(" = ")
-                codeBuilder.add(renderWithNotNullAssertion(valueExp, variableExp.type))
+                codeBuilder.add(
+                    renderExpressionCode(
+                        objectDef,
+                        methodDef,
+                        statementDef.expression,
+                        statementDef.variable.type()
+                    )
+                )
                 return codeBuilder.build()
             }
+            if (statementDef is DefineAndAssign) {
+                return CodeBlock.builder()
+                    .add("var %L:%T", statementDef.variable.name, asType(statementDef.variable.type, objectDef))
+                    .add(" = ")
+                    .add(
+                        renderExpressionCode(
+                            objectDef,
+                            methodDef,
+                            statementDef.expression,
+                            statementDef.variable.type
+                        )
+                    )
+                    .build()
+            }
+            if (statementDef is ExpressionDef) {
+                return renderExpressionCode(objectDef, methodDef, statementDef)
+            }
+
             throw IllegalStateException("Unrecognized statement: $statementDef")
         }
 
-        private fun renderExpression(
+        private fun renderYield(
+            builder: CodeBlock.Builder,
+            methodDef: MethodDef,
+            statementDef: StatementDef,
+            objectDef: ObjectDef?
+        ) {
+            if (statementDef is StatementDef.Return) {
+                builder.addStatement(
+                    "%L",
+                    CodeBlock.builder().add("return ")
+                        .add(renderExpressionCode(objectDef, methodDef, statementDef.expression, methodDef.returnType))
+                        .build()
+                )
+            } else {
+                throw java.lang.IllegalStateException("The last statement of SwitchYieldCase should be a return. Found: $statementDef")
+            }
+        }
+
+        private fun renderExpressionCode(
+            objectDef: ObjectDef?,
+            methodDef: MethodDef,
+            expressionDef: ExpressionDef,
+            expectedType: TypeDef
+        ): CodeBlock {
+            val codeBlock = renderExpressionCode(objectDef, methodDef, expressionDef)
+            val builder = codeBlock.toBuilder()
+            if (!expectedType.isNullable && expressionDef.type().isNullable) {
+                builder.add("!!")
+            }
+            return builder.build()
+        }
+
+        private fun renderExpressionCode(
             objectDef: ObjectDef?,
             methodDef: MethodDef,
             expressionDef: ExpressionDef
-        ): ExpResult {
-            if (expressionDef is ExpressionDef.NewInstance) {
+        ): CodeBlock {
+            if (expressionDef is NewInstance) {
                 val codeBuilder = CodeBlock.builder()
                 codeBuilder.add("%T(", asClassName(expressionDef.type))
                 for ((index, parameter) in expressionDef.values.withIndex()) {
-                    val expResult = renderExpression(objectDef, methodDef, parameter)
-                    codeBuilder.add(renderWithNotNullAssertion(expResult, parameter.type()))
+                    codeBuilder.add(renderExpressionCode(objectDef, methodDef, parameter))
                     if (index != expressionDef.values.size - 1) {
                         codeBuilder.add(", ")
                     }
                 }
                 codeBuilder.add(")")
-                return ExpResult(
-                    codeBuilder.build(),
-                    expressionDef.type
-                )
+                return codeBuilder.build()
             }
             if (expressionDef is CallInstanceMethod) {
-                val expResult = renderVariable(objectDef, methodDef, expressionDef.instance)
-                val codeBuilder = expResult.rendered.toBuilder()
+                val instanceExp = renderExpressionCode(objectDef, methodDef, expressionDef.instance)
+                val codeBuilder = CodeBlock.builder()
+                codeBuilder.add(instanceExp)
+                if (expressionDef.instance is CallInstanceMethod) {
+                    codeBuilder.add("\n")
+                }
                 codeBuilder.add(".%N(", expressionDef.name)
                 for ((index, parameter) in expressionDef.parameters.withIndex()) {
-                    codeBuilder.add(renderExpression(objectDef, methodDef, parameter).rendered)
+                    codeBuilder.add(renderExpressionCode(objectDef, methodDef, parameter))
                     if (index != expressionDef.parameters.size - 1) {
                         codeBuilder.add(", ")
                     }
                 }
                 codeBuilder.add(")")
-                return ExpResult(
-                    codeBuilder.build(),
-                    expressionDef.type()
-                )
+                return codeBuilder.build()
+            }
+            if (expressionDef is GetPropertyValue) {
+                val instanceExp = renderExpressionCode(objectDef, methodDef, expressionDef.instance)
+                val codeBuilder = instanceExp.toBuilder()
+                codeBuilder.add(".%L", expressionDef.propertyElement.name)
+                return codeBuilder.build()
             }
             if (expressionDef is CallStaticMethod) {
                 val codeBuilder = CodeBlock.builder()
                 codeBuilder.add("%T.%N(", asClassName(expressionDef.classDef), expressionDef.name)
                 for ((index, parameter) in expressionDef.parameters.withIndex()) {
-                    codeBuilder.add(renderExpression(objectDef, methodDef, parameter).rendered)
+                    codeBuilder.add(renderExpressionCode(objectDef, methodDef, parameter))
                     if (index != expressionDef.parameters.size - 1) {
                         codeBuilder.add(", ")
                     }
                 }
                 codeBuilder.add(")")
-                return ExpResult(
-                    codeBuilder.build(),
-                    expressionDef.type()
-                )
+                return codeBuilder.build()
             }
-            if (expressionDef is ExpressionDef.Convert) {
-                val expResult = renderExpression(objectDef, methodDef, expressionDef.expressionDef)
-                val resultType = expressionDef.type
-                return ExpResult(
-                    renderWithNotNullAssertion(expResult, resultType),
-                    resultType
+            if (expressionDef is Convert) {
+                return renderExpressionCode(objectDef, methodDef, expressionDef.expressionDef, expressionDef.type)
+            }
+            if (expressionDef is Cast) {
+                val codeBuilder = CodeBlock.builder()
+                codeBuilder.add(
+                    renderExpressionCode(
+                        objectDef,
+                        methodDef,
+                        expressionDef.expressionDef,
+                        expressionDef.type
+                    )
                 )
+                codeBuilder.add(" as %T", asType(expressionDef.type, objectDef))
+                return codeBuilder.build()
             }
             if (expressionDef is VariableDef) {
                 return renderVariable(objectDef, methodDef, expressionDef)
             }
+            if (expressionDef is Constant) {
+                return renderConstantExpression(expressionDef, methodDef)
+            }
+            if (expressionDef is And) {
+                return CodeBlock.builder()
+                    .add(renderCondition(objectDef, methodDef, expressionDef.left))
+                    .add(" && ")
+                    .add(renderCondition(objectDef, methodDef, expressionDef.right))
+                    .build()
+            }
+            if (expressionDef is Or) {
+                return CodeBlock.builder()
+                    .add(renderCondition(objectDef, methodDef, expressionDef.left))
+                    .add(" || ")
+                    .add(renderCondition(objectDef, methodDef, expressionDef.right))
+                    .build()
+            }
+            if (expressionDef is IfElse) {
+                return CodeBlock.builder()
+                    .add("if (")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.condition, TypeDef.Primitive.BOOLEAN))
+                    .add(") ")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression, expressionDef.type()))
+                    .add(" else ")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.elseExpression, expressionDef.type()))
+                    .build()
+            }
+            if (expressionDef is Switch) {
+                val builder: CodeBlock.Builder = CodeBlock.builder()
+                builder.add("when (")
+                builder.add(
+                    renderExpressionCode(
+                        objectDef,
+                        methodDef,
+                        expressionDef.expression,
+                        TypeDef.Primitive.BOOLEAN
+                    )
+                )
+                builder.add(") {\n")
+                builder.indent()
+                var elseExp: ExpressionDef? = null
+                for ((key, value) in expressionDef.cases) {
+                    if (key == null || key.value == null) {
+                        elseExp = value
+                        continue
+                    } else {
+                        builder.add(renderExpressionCode(objectDef, methodDef, key))
+                    }
+                    builder.add(" -> ")
+                    builder.add(renderExpressionCode(objectDef, methodDef, value))
+                    if (value is SwitchYieldCase) {
+                        builder.add("\n")
+                    } else {
+                        builder.add(";\n")
+                    }
+                }
+                if (elseExp != null) {
+                    builder.add("else -> ")
+                    builder.add(renderExpressionCode(objectDef, methodDef, elseExp))
+                }
+                builder.unindent()
+                builder.add("}")
+                return builder.build()
+            }
+            if (expressionDef is SwitchYieldCase) {
+                val builder: CodeBlock.Builder = CodeBlock.builder()
+                builder.add("{\n")
+                builder.indent()
+                val statement = expressionDef.statement
+                val flatten = statement.flatten()
+                check(!flatten.isEmpty()) { "SwitchYieldCase did not return any statements" }
+                val last = flatten[flatten.size - 1]
+                val rest: List<StatementDef> = flatten.subList(0, flatten.size - 1)
+                for (statementDef in rest) {
+                    builder.add(renderStatementCodeBlock(objectDef, methodDef, statementDef))
+                }
+                renderYield(builder, methodDef, last, objectDef)
+                builder.unindent()
+                builder.add("}")
+                val str: String = builder.build().toString()
+                // Render the body to prevent nested statements
+                return CodeBlock.of(str)
+            }
+            if (expressionDef is Condition) {
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.left))
+                    .add(expressionDef.operator)
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.right))
+                    .build()
+            }
+            if (expressionDef is NewArrayOfSize) {
+                return CodeBlock.of(
+                    "arrayOfNulls<%T>(%L)",
+                    asType(expressionDef.type.componentType, objectDef),
+                    expressionDef.size
+                )
+            }
+            if (expressionDef is NewArrayInitialized) {
+                val builder: CodeBlock.Builder = CodeBlock.builder()
+                builder.add("arrayOf<%T>(", asType(expressionDef.type.componentType, objectDef))
+                val iterator: Iterator<ExpressionDef> = expressionDef.expressions.iterator()
+                while (iterator.hasNext()) {
+                    val expression = iterator.next()
+                    builder.add(renderExpressionCode(objectDef, methodDef, expression))
+                    if (iterator.hasNext()) {
+                        builder.add(",")
+                    }
+                }
+                builder.add(")")
+                return builder.build()
+            }
+            if (expressionDef is PrimitiveInstance) {
+                return renderExpressionCode(objectDef, methodDef, expressionDef.value)
+            }
+            if (expressionDef is InvokeGetClassMethod) {
+                val instanceExp = renderExpressionCode(objectDef, methodDef, expressionDef.instance)
+                return instanceExp.toBuilder().add(".javaClass").build()
+            }
+            if (expressionDef is InvokeHashCodeMethod) {
+                val instanceExp = renderExpressionCode(objectDef, methodDef, expressionDef.instance)
+                val type = expressionDef.instance.type()
+                if (type.isArray) {
+                    if (type is TypeDef.Array && type.dimensions > 1) {
+                        return instanceExp.toBuilder().add(".contentDeepHashCode()").build()
+                    }
+                    return instanceExp.toBuilder().add(".contentHashCode()").build()
+                }
+                return instanceExp.toBuilder().add(".hashCode()").build()
+            }
+            if (expressionDef is EqualsStructurally) {
+                val type = expressionDef.instance.type()
+                if (type.isArray) {
+                    if (type is TypeDef.Array && type.dimensions > 1) {
+                        return CodeBlock.builder()
+                            .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                            .add(".contentDeepEquals(")
+                            .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                            .add(")")
+                            .build()
+                    }
+                    return CodeBlock.builder()
+                        .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                        .add(".contentEquals(")
+                        .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                        .add(")")
+                        .build()
+                }
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                    .add(" == ")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                    .build()
+            }
+            if (expressionDef is EqualsReferentially) {
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                    .add(" === ")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                    .build()
+            }
             throw IllegalStateException("Unrecognized expression: $expressionDef")
+        }
+
+        private fun renderCondition(
+            objectDef: @Nullable ObjectDef?,
+            methodDef: MethodDef,
+            expressionDef: ExpressionDef
+        ): CodeBlock {
+            val needsParentheses = expressionDef is And || expressionDef is Or
+            val rendered = renderExpressionCode(objectDef, methodDef, expressionDef)
+            if (needsParentheses) {
+                return CodeBlock.builder().add("(").add(rendered).add(")").build()
+            }
+            return rendered
+        }
+
+        private fun renderConstantExpression(
+            constant: Constant,
+            methodDef: MethodDef
+        ): CodeBlock {
+            val type = constant.type
+            val value = constant.value ?: return CodeBlock.of("null")
+            if (type is ClassTypeDef && type.isEnum) {
+                return renderExpressionCode(
+                    null, methodDef, VariableDef.StaticField(
+                        type,
+                        if (value is Enum<*>) value.name else value.toString(),
+                        type
+                    )
+                )
+            }
+            if (type is TypeDef.Primitive) {
+                return when (type.name) {
+                    "long" -> CodeBlock.of(value.toString() + "l")
+                    "float" -> CodeBlock.of(value.toString() + "f")
+                    "double" -> CodeBlock.of(value.toString() + "d")
+                    else -> CodeBlock.of("%L", value)
+                }
+            } else if (type is TypeDef.Array) {
+                if (value.javaClass.isArray) {
+                    val array = value
+                    val builder = CodeBlock.builder()
+                    val length = Array.getLength(array)
+                    val componentType = type.componentType
+                    for (i in 0..length) {
+                        builder.add(
+                            renderConstantExpression(
+                                Constant(componentType, Array.get(array, i)),
+                                methodDef
+                            )
+                        )
+                        if (i + 1 != length) {
+                            builder.add(",")
+                        }
+                    }
+                    val values = builder.build()
+                    val typeName: String = if (componentType is ClassTypeDef) {
+                        componentType.simpleName
+                    } else if (componentType is TypeDef.Primitive) {
+                        componentType.name
+                    } else {
+                        throw java.lang.IllegalStateException("Unrecognized expression: $constant")
+                    }
+                    return CodeBlock.builder()
+                        .add("new %N[] {", typeName)
+                        .add(values)
+                        .add("}")
+                        .build()
+                }
+            } else if (type is ClassTypeDef) {
+                val name = type.name
+                return if (ClassUtils.isJavaLangType(name)) {
+                    when (name) {
+                        "java.lang.Long" -> CodeBlock.of(value.toString() + "l")
+                        "java.lang.Float" -> CodeBlock.of(value.toString() + "f")
+                        "java.lang.Double" -> CodeBlock.of(value.toString() + "d")
+                        "java.lang.String" -> CodeBlock.of("%S", value)
+                        else -> CodeBlock.of("%L", value)
+                    }
+                } else {
+                    CodeBlock.of("%L", value)
+                }
+            }
+            throw IllegalStateException("Unrecognized expression: $constant")
         }
 
         private fun renderVariable(
             objectDef: ObjectDef?,
             methodDef: MethodDef,
-            variableDef: ExpressionDef
-        ): ExpResult {
+            variableDef: VariableDef
+        ): CodeBlock {
             if (variableDef is VariableDef.MethodParameter) {
                 methodDef.getParameter(variableDef.name) // Check if exists
-                return ExpResult(CodeBlock.of("%N", variableDef.name), variableDef.type)
+                return CodeBlock.of("%N", variableDef.name)
             }
             if (variableDef is VariableDef.Field) {
                 checkNotNull(objectDef) { "Field 'this' is not available" }
@@ -701,27 +1134,40 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 } else {
                     throw IllegalStateException("Field access no supported on the object definition: $objectDef")
                 }
-                val expResult = renderVariable(objectDef, methodDef, variableDef.instance)
-                val builder = expResult.rendered.toBuilder()
-                if (expResult.type.isNullable) {
+                val codeBlock = renderExpressionCode(objectDef, methodDef, variableDef.instance)
+                val builder = codeBlock.toBuilder()
+                if (variableDef.instance.type().isNullable) {
                     builder.add("!!")
                 }
                 builder.add(". %N", variableDef.name)
-                return ExpResult(
-                    builder.build(),
-                    variableDef.type
+                return builder.build()
+            }
+            if (variableDef is VariableDef.StaticField) {
+                return CodeBlock.of(
+                    "%T.%L",
+                    asType(variableDef.ownerType, objectDef),
+                    variableDef.name
                 )
             }
             if (variableDef is VariableDef.This) {
                 checkNotNull(objectDef) { "Accessing 'this' is not available" }
-                return ExpResult(CodeBlock.of("this"), variableDef.type)
+                return CodeBlock.of("this")
+            }
+            if (variableDef is VariableDef.Local) {
+                return CodeBlock.of("%L", variableDef.name)
             }
             throw IllegalStateException("Unrecognized variable: $variableDef")
         }
 
-        private fun renderWithNotNullAssertion(expResult: ExpResult, result: TypeDef): CodeBlock {
-            val builder = expResult.rendered.toBuilder()
-            if (!result.isNullable && expResult.type.isNullable) {
+        private fun renderExpressionWithNotNullAssertion(
+            objectDef: ObjectDef?,
+            methodDef: MethodDef,
+            expressionDef: ExpressionDef,
+            result: TypeDef
+        ): CodeBlock {
+            val codeBlock = renderExpressionCode(objectDef, methodDef, expressionDef)
+            val builder = codeBlock.toBuilder()
+            if (!result.isNullable && expressionDef.type().isNullable) {
                 builder.add("!!")
             }
             return builder.build()

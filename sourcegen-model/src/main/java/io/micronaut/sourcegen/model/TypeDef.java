@@ -41,7 +41,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
 
     TypeDef OBJECT = of(Object.class);
 
-    TypeDef BOOLEAN = of(boolean.class);
+    TypeDef STRING = of(String.class);
 
     /**
      * A simple type representing a special this-type, in context of a class def, method or field the type will be replaced by the current type.
@@ -87,7 +87,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
      * @param name The primitive type name
      * @return a new type definition
      */
-    static TypeDef primitive(String name) {
+    static Primitive primitive(String name) {
         return new Primitive(name);
     }
 
@@ -97,7 +97,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
      * @param type The primitive type
      * @return a new type definition
      */
-    static TypeDef primitive(Class<?> type) {
+    static Primitive primitive(Class<?> type) {
         if (!type.isPrimitive()) {
             throw new IllegalStateException("Expected a primitive type got: " + type);
         }
@@ -188,6 +188,17 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
      * @param genericParameters The parameters
      * @return a new type definition
      */
+    static ClassTypeDef parameterized(ClassTypeDef type, Class<?>... genericParameters) {
+        return parameterized(type, Stream.of(genericParameters).map(TypeDef::of).toList());
+    }
+
+    /**
+     * Creates a new type with generic parameters.
+     *
+     * @param type              The type
+     * @param genericParameters The parameters
+     * @return a new type definition
+     */
     static ClassTypeDef parameterized(ClassTypeDef type, List<TypeDef> genericParameters) {
         return new ClassTypeDef.Parameterized(type, genericParameters);
     }
@@ -208,6 +219,12 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
         }
         if (classElement.isPrimitive()) {
             return primitive(classElement.getName());
+        }
+        if (classElement instanceof GenericPlaceholderElement placeholderElement) {
+            return new TypeVariable(
+                placeholderElement.getVariableName(),
+                placeholderElement.getBounds().stream().map(TypeDef::of).toList()
+            );
         }
         if (classElement instanceof WildcardElement wildcardElement) {
             return new Wildcard(
@@ -250,6 +267,20 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
     }
 
     /**
+     * @return Is primitive type
+     */
+    default boolean isPrimitive() {
+        return this instanceof TypeDef.Primitive;
+    }
+
+    /**
+     * @return Is Array type
+     */
+    default boolean isArray() {
+        return this instanceof TypeDef.Array;
+    }
+
+    /**
      * @return A new nullable type
      */
     default TypeDef makeNullable() {
@@ -266,6 +297,25 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
     @Experimental
     record Primitive(String name) implements TypeDef {
 
+        public static final TypeDef.Primitive INT = primitive(int.class);
+        public static final TypeDef.Primitive BOOLEAN = primitive(boolean.class);
+        public static final TypeDef.Primitive LONG = primitive(long.class);
+        public static final TypeDef.Primitive CHAR = primitive(char.class);
+        public static final TypeDef.Primitive BYTE = primitive(byte.class);
+        public static final TypeDef.Primitive SHORT = primitive(short.class);
+        public static final TypeDef.Primitive DOUBLE = primitive(double.class);
+        public static final TypeDef.Primitive FLOAT = primitive(float.class);
+
+        @Override
+        public boolean isPrimitive() {
+            return true;
+        }
+
+        @Override
+        public boolean isArray() {
+            return false;
+        }
+
         @Override
         public TypeDef makeNullable() {
             return wrapperType().makeNullable();
@@ -276,6 +326,43 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
             return ClassTypeDef.of(
                 ReflectionUtils.getWrapperType(primitiveType)
             );
+        }
+
+        /**
+         * The new instance expression for primitives.
+         *
+         * @param value The initial value
+         * @return The new instance
+         * @since 1.3
+         */
+        @Experimental
+        public PrimitiveInstance initialize(ExpressionDef value) {
+            return new PrimitiveInstance(this, value);
+        }
+
+        /**
+         * The new instance expression for primitives.
+         *
+         * @param constant The constant
+         * @return The new instance
+         * @since 1.3
+         */
+        @Experimental
+        public PrimitiveInstance initialize(Object constant) {
+            return new PrimitiveInstance(this, new ExpressionDef.Constant(this, constant));
+        }
+
+        /**
+         * The new instance expression.
+         *
+         * @param type   The type
+         * @param value The initial value
+         * @author Elif Kurtay
+         * @since 1.3
+         */
+        @Experimental
+        public record PrimitiveInstance(TypeDef.Primitive type,
+                                        ExpressionDef value) implements ExpressionDef {
         }
     }
 
@@ -290,6 +377,15 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
     @Experimental
     record Wildcard(List<TypeDef> upperBounds,
                     List<TypeDef> lowerBounds) implements TypeDef {
+        @Override
+        public boolean isPrimitive() {
+            return false;
+        }
+
+        @Override
+        public boolean isArray() {
+            return false;
+        }
     }
 
     /**
@@ -305,6 +401,17 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
 
         public TypeVariable(String name) {
             this(name, List.of());
+        }
+
+        public static TypeVariable of(String name, ClassElement classElement) {
+            if (classElement instanceof GenericPlaceholderElement placeholderElement) {
+                return new TypeVariable(
+                    name,
+                    placeholderElement.getBounds().stream().map(TypeDef::of).toList()
+                );
+            } else {
+                return new TypeVariable(name);
+            }
         }
 
     }
@@ -329,6 +436,16 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Array, TypeDef.Pri
         @Override
         public TypeDef makeNullable() {
             return new Array(componentType, dimensions, true);
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return false;
+        }
+
+        @Override
+        public boolean isArray() {
+            return true;
         }
     }
 }
