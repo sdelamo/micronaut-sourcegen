@@ -36,7 +36,6 @@ import java.util.List;
 public final class ClassDef extends ObjectDef {
 
     private final List<FieldDef> fields;
-    private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
     private final ClassTypeDef superclass;
 
@@ -51,9 +50,8 @@ public final class ClassDef extends ObjectDef {
                      List<TypeDef> superinterfaces,
                      ClassTypeDef superclass,
                      List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc, methods, superinterfaces, innerTypes);
+        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
-        this.properties = properties;
         this.typeVariables = typeVariables;
         this.superclass = superclass;
     }
@@ -64,10 +62,6 @@ public final class ClassDef extends ObjectDef {
 
     public List<FieldDef> getFields() {
         return fields;
-    }
-
-    public List<PropertyDef> getProperties() {
-        return properties;
     }
 
     public List<TypeDef.TypeVariable> getTypeVariables() {
@@ -86,7 +80,7 @@ public final class ClassDef extends ObjectDef {
                 return field;
             }
         }
-        for (PropertyDef property : properties) {
+        for (PropertyDef property : getProperties()) {
             if (property.getName().equals(name)) {
                 return FieldDef.builder(property.getName()).ofType(property.getType()).build();
             }
@@ -144,7 +138,6 @@ public final class ClassDef extends ObjectDef {
     public static final class ClassDefBuilder extends ObjectDefBuilder<ClassDefBuilder> {
 
         private final List<FieldDef> fields = new ArrayList<>();
-        private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
         private ClassTypeDef superclass;
 
@@ -159,11 +152,6 @@ public final class ClassDef extends ObjectDef {
 
         public ClassDefBuilder addField(FieldDef field) {
             fields.add(field);
-            return this;
-        }
-
-        public ClassDefBuilder addProperty(PropertyDef property) {
-            properties.add(property);
             return this;
         }
 

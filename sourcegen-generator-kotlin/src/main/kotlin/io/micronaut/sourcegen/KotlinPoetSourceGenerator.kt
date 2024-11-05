@@ -173,68 +173,8 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             .forEach { annotationSpec: AnnotationSpec -> classBuilder.addAnnotation(annotationSpec) }
 
         var companionBuilder: TypeSpec.Builder? = null
-        val notNullProperties: MutableList<PropertyDef> = ArrayList()
-        for (property in classDef.properties) {
-            var propertySpec: PropertySpec
-            if (property.type.isNullable) {
-                propertySpec = buildProperty(
-                    property.name,
-                    property.type.makeNullable(),
-                    property.modifiers,
-                    property.annotations,
-                    property.javadoc,
-                    null,
-                    classDef
-                )
-            } else {
-                propertySpec = buildConstructorProperty(
-                    property.name,
-                    property.type,
-                    property.modifiers,
-                    property.annotations,
-                    property.javadoc,
-                    classDef
-                )
-                notNullProperties.add(property)
-            }
-            classBuilder.addProperty(
-                propertySpec
-            )
-        }
-        if (notNullProperties.isNotEmpty()) {
-            classBuilder.primaryConstructor(
-                FunSpec.constructorBuilder().addModifiers(KModifier.PUBLIC).addParameters(
-                    notNullProperties.stream()
-                        .map { prop: PropertyDef ->
-                            ParameterSpec.builder(
-                                prop.name,
-                                asType(prop.type, classDef)
-                            ).build()
-                        }.toList()
-                ).build()
-            )
-        }
-        for (field in classDef.fields) {
-            val modifiers = field.modifiers
-            if (modifiers.contains(Modifier.STATIC)) {
-                if (companionBuilder == null) {
-                    companionBuilder = TypeSpec.companionObjectBuilder()
-                }
-                companionBuilder.addProperty(
-                    buildProperty(field, stripStatic(modifiers), field.javadoc, classDef)
-                )
-            } else {
-                if (field.type.isNullable) {
-                    classBuilder.addProperty(
-                        buildProperty(field, modifiers, field.javadoc, classDef)
-                    )
-                } else {
-                    classBuilder.addProperty(
-                        buildProperty(field, modifiers, field.javadoc, classDef)
-                    )
-                }
-            }
-        }
+        buildProperties(classDef, classBuilder)
+        companionBuilder = buildFields(classDef, companionBuilder, classBuilder)
 
         for (method in classDef.methods) {
             var modifiers = method.modifiers
@@ -354,11 +294,32 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         enumDef.annotations.stream().map { annotationDef: AnnotationDef -> asAnnotationSpec(annotationDef) }
             .forEach { annotationSpec: AnnotationSpec -> enumBuilder.addAnnotation(annotationSpec) }
 
-        for (enumConstant in enumDef.enumConstants) {
-            enumBuilder.addEnumConstant(enumConstant)
+        enumDef.enumConstants.forEach { (name: String?, exps: List<ExpressionDef>?) ->
+            if (exps != null) {
+                val expBuilder: CodeBlock.Builder = CodeBlock.builder()
+                for (i in exps.indices) {
+                    expBuilder.add(renderExpressionCode(null,
+                        MethodDef.builder("").returns(TypeDef.VOID).build(),
+                        exps[i]))
+                    if (i < exps.size - 1) {
+                        expBuilder.add(", ")
+                    }
+                }
+                enumBuilder.addEnumConstant(
+                    name,
+                    TypeSpec.companionObjectBuilder()
+                        .addSuperclassConstructorParameter(expBuilder.build())
+                        .build()
+                )
+            } else {
+                enumBuilder.addEnumConstant(name)
+            }
         }
 
         var companionBuilder: TypeSpec.Builder? = null
+        buildProperties(enumDef, enumBuilder)
+        companionBuilder = buildFields(enumDef, companionBuilder, enumBuilder)
+
         for (method in enumDef.methods) {
             var modifiers = method.modifiers
             if (modifiers.contains(Modifier.STATIC)) {
@@ -411,6 +372,90 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             }
             classBuilder.addType(innerBuilder.build())
         }
+    }
+
+    private fun buildProperties(
+        objectDef: ObjectDef,
+        builder: TypeSpec.Builder
+    ) {
+        val notNullProperties: MutableList<PropertyDef> = ArrayList()
+        for (property in objectDef.properties) {
+            var propertySpec: PropertySpec
+            if (property.type.isNullable) {
+                propertySpec = buildProperty(
+                    property.name,
+                    property.type.makeNullable(),
+                    property.modifiers,
+                    property.annotations,
+                    property.javadoc,
+                    null,
+                    objectDef
+                )
+            } else {
+                propertySpec = buildConstructorProperty(
+                    property.name,
+                    property.type,
+                    property.modifiers,
+                    property.annotations,
+                    property.javadoc,
+                    objectDef
+                )
+                notNullProperties.add(property)
+            }
+            builder.addProperty(
+                propertySpec
+            )
+        }
+        if (notNullProperties.isNotEmpty()) {
+            builder.primaryConstructor(
+                FunSpec.constructorBuilder().addModifiers(KModifier.PUBLIC).addParameters(
+                    notNullProperties.stream()
+                        .map { prop: PropertyDef ->
+                            ParameterSpec.builder(
+                                prop.name,
+                                asType(prop.type, objectDef)
+                            ).build()
+                        }.toList()
+                ).build()
+            )
+        }
+    }
+
+    private fun buildFields(
+        objectDef: ObjectDef,
+        companionBuilder: TypeSpec.Builder?,
+        builder: TypeSpec.Builder
+    ): TypeSpec.Builder? {
+        var companionBuilderTmp = companionBuilder
+        var fields: List<FieldDef>
+        if (objectDef is ClassDef)
+            fields = objectDef.fields
+        else if (objectDef is EnumDef)
+            fields = objectDef.fields
+        else return builder
+
+        for (field in fields) {
+            val modifiers = field.modifiers
+            if (modifiers.contains(Modifier.STATIC)) {
+                if (companionBuilderTmp == null) {
+                    companionBuilderTmp = TypeSpec.companionObjectBuilder()
+                }
+                companionBuilderTmp.addProperty(
+                    buildProperty(field, stripStatic(modifiers), field.javadoc, objectDef)
+                )
+            } else {
+                if (field.type.isNullable) {
+                    builder.addProperty(
+                        buildProperty(field, modifiers, field.javadoc, objectDef)
+                    )
+                } else {
+                    builder.addProperty(
+                        buildProperty(field, modifiers, field.javadoc, objectDef)
+                    )
+                }
+            }
+        }
+        return companionBuilderTmp
     }
 
     private fun buildProperty(
@@ -541,6 +586,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             return mutable
         }
 
+        @OptIn(KotlinPoetJavaPoetPreview::class)
         private fun asClassName(classType: ClassTypeDef): ClassName {
             val packageName = classType.packageName
             val simpleName = classType.simpleName
@@ -1169,6 +1215,8 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             if (variableDef is VariableDef.Field) {
                 checkNotNull(objectDef) { "Field 'this' is not available" }
                 if (objectDef is ClassDef) {
+                    objectDef.getField(variableDef.name) // Check if exists
+                } else if (objectDef is EnumDef) {
                     objectDef.getField(variableDef.name) // Check if exists
                 } else {
                     throw IllegalStateException("Field access no supported on the object definition: $objectDef")

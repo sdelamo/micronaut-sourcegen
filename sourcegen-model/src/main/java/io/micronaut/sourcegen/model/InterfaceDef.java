@@ -31,7 +31,6 @@ import java.util.List;
 @Experimental
 public final class InterfaceDef extends ObjectDef {
 
-    private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
 
     private InterfaceDef(String name,
@@ -43,17 +42,12 @@ public final class InterfaceDef extends ObjectDef {
                          List<TypeDef.TypeVariable> typeVariables,
                          List<TypeDef> superinterfaces,
                          List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc, methods, superinterfaces, innerTypes);
-        this.properties = properties;
+        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.typeVariables = typeVariables;
     }
 
     public static InterfaceDefBuilder builder(String name) {
         return new InterfaceDefBuilder(name);
-    }
-
-    public List<PropertyDef> getProperties() {
-        return properties;
     }
 
     public List<TypeDef.TypeVariable> getTypeVariables() {
@@ -69,16 +63,10 @@ public final class InterfaceDef extends ObjectDef {
     @Experimental
     public static final class InterfaceDefBuilder extends ObjectDefBuilder<InterfaceDefBuilder> {
 
-        private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
 
         private InterfaceDefBuilder(String name) {
             super(name);
-        }
-
-        public InterfaceDefBuilder addProperty(PropertyDef property) {
-            properties.add(property);
-            return this;
         }
 
         public InterfaceDefBuilder addTypeVariable(TypeDef.TypeVariable typeVariable) {

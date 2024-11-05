@@ -127,6 +127,13 @@ public final class MethodDef extends AbstractElement {
         return override;
     }
 
+    /**
+     * @return True if method is a constructor
+     */
+    public boolean isConstructor() {
+        return CONSTRUCTOR.equals(getName());
+    }
+
     public static MethodDefBuilder builder(String name) {
         return new MethodDefBuilder(name);
     }

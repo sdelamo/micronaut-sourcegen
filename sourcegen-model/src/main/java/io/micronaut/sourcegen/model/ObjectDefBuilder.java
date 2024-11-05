@@ -34,6 +34,7 @@ public sealed class ObjectDefBuilder<ThisType>
                 RecordDef.RecordDefBuilder, EnumDef.EnumDefBuilder {
 
     protected final List<MethodDef> methods = new ArrayList<>();
+    protected final List<PropertyDef> properties = new ArrayList<>();
     protected final List<TypeDef> superinterfaces = new ArrayList<>();
     protected final List<ObjectDef> innerTypes = new ArrayList<>();
 
@@ -43,6 +44,11 @@ public sealed class ObjectDefBuilder<ThisType>
 
     public final ThisType addMethod(MethodDef method) {
         methods.add(method);
+        return thisInstance;
+    }
+
+    public final ThisType addProperty(PropertyDef property) {
+        properties.add(property);
         return thisInstance;
     }
 

@@ -29,4 +29,5 @@ import io.micronaut.sourcegen.custom.example.*
 @GenerateArray
 @GenerateAnnotatedType
 @GenerateInnerTypes
+@GenerateMyEnum2
 class Trigger

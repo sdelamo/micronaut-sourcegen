@@ -32,22 +32,29 @@ import java.util.Set;
 public abstract sealed class ObjectDef extends AbstractElement permits ClassDef, EnumDef, InterfaceDef, RecordDef {
 
     private final List<MethodDef> methods;
+    private final List<PropertyDef> properties;
     private final List<TypeDef> superinterfaces;
     private final List<ObjectDef> innerTypes;
 
     ObjectDef(
             String name, Set<Modifier> modifiers, List<AnnotationDef> annotations,
-            List<String> javadoc, List<MethodDef> methods, List<TypeDef> superinterfaces,
+            List<String> javadoc, List<MethodDef> methods,  List<PropertyDef> properties, 
+            List<TypeDef> superinterfaces,
             List<ObjectDef> innerTypes
     ) {
         super(name, modifiers, annotations, javadoc);
         this.methods = methods;
+        this.properties = properties;
         this.superinterfaces = superinterfaces;
         this.innerTypes = innerTypes;
     }
 
     public final List<MethodDef> getMethods() {
         return methods;
+    }
+
+    public final List<PropertyDef> getProperties() {
+        return properties;
     }
 
     public final List<TypeDef> getSuperinterfaces() {
