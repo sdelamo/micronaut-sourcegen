@@ -29,12 +29,9 @@ import java.util.List;
  * @since 1.0
  */
 @Experimental
-public final class InterfaceDef extends AbstractElement implements ObjectDef {
+public final class InterfaceDef extends ObjectDef {
 
-    private final List<MethodDef> methods;
-    private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
-    private final List<TypeDef> superinterfaces;
 
     private InterfaceDef(String name,
                          EnumSet<Modifier> modifiers,
@@ -43,32 +40,18 @@ public final class InterfaceDef extends AbstractElement implements ObjectDef {
                          List<AnnotationDef> annotations,
                          List<String> javadoc,
                          List<TypeDef.TypeVariable> typeVariables,
-                         List<TypeDef> superinterfaces) {
-        super(name, modifiers, annotations, javadoc);
-        this.methods = methods;
-        this.properties = properties;
+                         List<TypeDef> superinterfaces,
+                         List<ObjectDef> innerTypes) {
+        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.typeVariables = typeVariables;
-        this.superinterfaces = superinterfaces;
     }
 
     public static InterfaceDefBuilder builder(String name) {
         return new InterfaceDefBuilder(name);
     }
 
-    public List<MethodDef> getMethods() {
-        return methods;
-    }
-
-    public List<PropertyDef> getProperties() {
-        return properties;
-    }
-
     public List<TypeDef.TypeVariable> getTypeVariables() {
         return typeVariables;
-    }
-
-    public List<TypeDef> getSuperinterfaces() {
-        return superinterfaces;
     }
 
     /**
@@ -78,25 +61,12 @@ public final class InterfaceDef extends AbstractElement implements ObjectDef {
      * @since 1.0
      */
     @Experimental
-    public static final class InterfaceDefBuilder extends AbstractElementBuilder<InterfaceDefBuilder> {
+    public static final class InterfaceDefBuilder extends ObjectDefBuilder<InterfaceDefBuilder> {
 
-        private final List<MethodDef> methods = new ArrayList<>();
-        private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
-        private final List<TypeDef> superinterfaces = new ArrayList<>();
 
         private InterfaceDefBuilder(String name) {
             super(name);
-        }
-
-        public InterfaceDefBuilder addMethod(MethodDef method) {
-            methods.add(method);
-            return this;
-        }
-
-        public InterfaceDefBuilder addProperty(PropertyDef property) {
-            properties.add(property);
-            return this;
         }
 
         public InterfaceDefBuilder addTypeVariable(TypeDef.TypeVariable typeVariable) {
@@ -104,13 +74,8 @@ public final class InterfaceDef extends AbstractElement implements ObjectDef {
             return this;
         }
 
-        public InterfaceDefBuilder addSuperinterface(TypeDef superinterface) {
-            superinterfaces.add(superinterface);
-            return this;
-        }
-
         public InterfaceDef build() {
-            return new InterfaceDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces);
+            return new InterfaceDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
         }
 
     }

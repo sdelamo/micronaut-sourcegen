@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
-import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MemberElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
@@ -66,6 +65,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+import static io.micronaut.sourcegen.javapoet.TypeSpec.anonymousClassBuilder;
+
 /**
  * The Java source generator.
  *
@@ -96,6 +97,12 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
     }
 
     private void writeInterface(Writer writer, InterfaceDef interfaceDef) throws IOException {
+        TypeSpec.Builder interfaceBuilder = getInterfaceBuilder(interfaceDef);
+        JavaFile javaFile = JavaFile.builder(interfaceDef.getPackageName(), interfaceBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getInterfaceBuilder(InterfaceDef interfaceDef) {
         TypeSpec.Builder interfaceBuilder = TypeSpec.interfaceBuilder(interfaceDef.getSimpleName());
         interfaceBuilder.addModifiers(interfaceDef.getModifiersArray());
         interfaceDef.getTypeVariables().stream().map(t -> asTypeVariable(t, interfaceDef)).forEach(interfaceBuilder::addTypeVariable);
@@ -135,16 +142,24 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
 //                    .addStatement("this." + propertyName + " = " + propertyName)
                 .build());
         }
+
+        addInnerTypes(interfaceDef.getInnerTypes(), interfaceBuilder, true);
+
         for (MethodDef method : interfaceDef.getMethods()) {
             interfaceBuilder.addMethod(
                 asMethodSpec(interfaceDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(interfaceDef.getPackageName(), interfaceBuilder.build()).build();
-        javaFile.writeTo(writer);
+        return interfaceBuilder;
     }
 
     private void writeEnum(Writer writer, EnumDef enumDef) throws IOException {
+        TypeSpec.Builder enumBuilder = getEnumBuilder(enumDef);
+        JavaFile javaFile = JavaFile.builder(enumDef.getPackageName(), enumBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getEnumBuilder(EnumDef enumDef) {
         TypeSpec.Builder enumBuilder = TypeSpec.enumBuilder(enumDef.getSimpleName());
         enumBuilder.addModifiers(enumDef.getModifiersArray());
         enumDef.getSuperinterfaces().stream().map(typeDef -> asType(typeDef, enumDef)).forEach(enumBuilder::addSuperinterface);
@@ -154,20 +169,41 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             enumBuilder.addAnnotation(asAnnotationSpec(annotation));
         }
 
-        for (String enumConstant : enumDef.getEnumConstants()) {
-            enumBuilder.addEnumConstant(enumConstant);
-        }
+        enumDef.getEnumConstants().forEach((name, exps) -> {
+            if (exps != null) {
+                CodeBlock.Builder expBuilder = CodeBlock.builder();
+                for (int i = 0; i < exps.size(); i++) {
+                    expBuilder.add(renderExpression(null, null, exps.get(i)));
+                    if (i < exps.size() - 1) {
+                        expBuilder.add(", ");
+                    }
+                }
+                enumBuilder.addEnumConstant(name, anonymousClassBuilder(expBuilder.build()).build());
+            } else {
+                enumBuilder.addEnumConstant(name);
+            }
+        });
+
+        buildProperties(enumDef, enumBuilder);
+
+        buildFields(enumDef, enumBuilder);
 
         for (MethodDef method : enumDef.getMethods()) {
             enumBuilder.addMethod(
                 asMethodSpec(enumDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(enumDef.getPackageName(), enumBuilder.build()).build();
-        javaFile.writeTo(writer);
+        addInnerTypes(enumDef.getInnerTypes(), enumBuilder, false);
+        return enumBuilder;
     }
 
     private void writeClass(Writer writer, ClassDef classDef) throws IOException {
+        TypeSpec.Builder classBuilder = getClassBuilder(classDef);
+        JavaFile javaFile = JavaFile.builder(classDef.getPackageName(), classBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getClassBuilder(ClassDef classDef) {
         TypeSpec.Builder classBuilder = TypeSpec.classBuilder(classDef.getSimpleName());
         classBuilder.addModifiers(classDef.getModifiersArray());
         classDef.getTypeVariables().stream().map(t -> asTypeVariable(t, classDef)).forEach(classBuilder::addTypeVariable);
@@ -180,68 +216,28 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         for (AnnotationDef annotation : classDef.getAnnotations()) {
             classBuilder.addAnnotation(asAnnotationSpec(annotation));
         }
-        for (PropertyDef property : classDef.getProperties()) {
-            TypeName propertyType = asType(property.getType(), classDef);
-            String propertyName = property.getName();
-            FieldSpec.Builder fieldBuilder = FieldSpec.builder(
-                propertyType,
-                propertyName
-            ).addModifiers(Modifier.PRIVATE);
-            for (AnnotationDef annotation : property.getAnnotations()) {
-                fieldBuilder.addAnnotation(
-                    asAnnotationSpec(annotation)
-                );
-            }
-            property.getJavadoc().forEach(fieldBuilder::addJavadoc);
-            classBuilder.addField(
-                fieldBuilder
-                    .build()
-            );
-            String capitalizedPropertyName = NameUtils.capitalize(propertyName);
-            classBuilder.addMethod(MethodSpec.methodBuilder("get" + capitalizedPropertyName)
-                .addModifiers(property.getModifiersArray())
-                .returns(propertyType)
-                .addStatement("return this." + propertyName)
-                .build());
-            classBuilder.addMethod(MethodSpec.methodBuilder("set" + capitalizedPropertyName)
-                .addModifiers(property.getModifiersArray())
-                .addParameter(ParameterSpec.builder(propertyType, propertyName).build())
-                .addStatement("this." + propertyName + " = " + propertyName)
-                .build());
-        }
-        for (FieldDef field : classDef.getFields()) {
-            FieldSpec.Builder fieldBuilder = FieldSpec.builder(
-                asType(field.getType(), classDef),
-                field.getName()
-            ).addModifiers(field.getModifiersArray());
-            field.getInitializer().ifPresent(init ->
-                fieldBuilder.initializer(renderExpression(
-                    null,
-                    null,
-                    init
-                ))
-            );
-            field.getJavadoc().forEach(fieldBuilder::addJavadoc);
-            for (AnnotationDef annotation : field.getAnnotations()) {
-                fieldBuilder.addAnnotation(
-                    asAnnotationSpec(annotation)
-                );
-            }
-            classBuilder.addField(
-                fieldBuilder
-                    .build()
-            );
-        }
+
+        buildProperties(classDef, classBuilder);
+
+        buildFields(classDef, classBuilder);
+
+        addInnerTypes(classDef.getInnerTypes(), classBuilder, false);
+
         for (MethodDef method : classDef.getMethods()) {
             classBuilder.addMethod(
                 asMethodSpec(classDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(classDef.getPackageName(), classBuilder.build()).build();
-        javaFile.writeTo(writer);
+        return classBuilder;
     }
 
     private void writeRecord(Writer writer, RecordDef recordDef) throws IOException {
+        TypeSpec.Builder classBuilder = getRecordBuilder(recordDef);
+        JavaFile javaFile = JavaFile.builder(recordDef.getPackageName(), classBuilder.build()).build();
+        javaFile.writeTo(writer);
+    }
+
+    private TypeSpec.Builder getRecordBuilder(RecordDef recordDef) {
         TypeSpec.Builder classBuilder = TypeSpec.recordBuilder(recordDef.getSimpleName());
         classBuilder.addModifiers(recordDef.getModifiersArray());
         recordDef.getTypeVariables().stream().map(t -> asTypeVariable(t, recordDef)).forEach(classBuilder::addTypeVariable);
@@ -265,14 +261,101 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 componentBuilder.build()
             );
         }
+
+        addInnerTypes(recordDef.getInnerTypes(), classBuilder, false);
+
         for (MethodDef method : recordDef.getMethods()) {
             classBuilder.addMethod(
                 asMethodSpec(recordDef, method)
             );
         }
-        JavaFile javaFile = JavaFile.builder(recordDef.getPackageName(), classBuilder.build()).build();
-        javaFile.writeTo(writer);
+        return classBuilder;
     }
+
+    private void addInnerTypes(List<ObjectDef> innerTypes, TypeSpec.Builder classBuilder, boolean isInterface) {
+        for (ObjectDef innerType : innerTypes) {
+            TypeSpec.Builder innerBuilder;
+            if (innerType instanceof ClassDef innerClassDef) {
+                innerBuilder = getClassBuilder(innerClassDef);
+            } else if (innerType instanceof InterfaceDef innerInterfaceDef) {
+                innerBuilder = getInterfaceBuilder(innerInterfaceDef);
+            } else if (innerType instanceof EnumDef innerEnumDef) {
+                innerBuilder = getEnumBuilder(innerEnumDef);
+            } else if (innerType instanceof RecordDef innerRecordDef) {
+                innerBuilder = getRecordBuilder(innerRecordDef);
+            } else {
+                throw new IllegalStateException("Unknown object definition: " + innerType);
+            }
+            if (isInterface) {
+                innerBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
+            }
+            classBuilder.addType(innerBuilder.build());
+        }
+    }
+
+    private void buildFields(ObjectDef objectDef, TypeSpec.Builder builder) {
+        var fields = objectDef instanceof ClassDef ?
+            ((ClassDef) objectDef).getFields() :
+            ((EnumDef) objectDef).getFields();
+        for (FieldDef field : fields) {
+            FieldSpec.Builder fieldBuilder = FieldSpec.builder(
+                    asType(field.getType(), objectDef),
+                    field.getName()
+                ).addModifiers(field.getModifiersArray());
+            field.getInitializer().ifPresent(init ->
+                fieldBuilder.initializer(renderExpression(
+                    null,
+                    null,
+                    init
+                ))
+            );
+            field.getJavadoc().forEach(fieldBuilder::addJavadoc);
+            for (AnnotationDef annotation : field.getAnnotations()) {
+                fieldBuilder.addAnnotation(
+                    asAnnotationSpec(annotation)
+                );
+            }
+            builder.addField(
+                fieldBuilder
+                    .build()
+            );
+        }
+    }
+
+    private void buildProperties(ObjectDef objectDef, TypeSpec.Builder builder) {
+        for (PropertyDef property : objectDef.getProperties()) {
+            TypeName propertyType = asType(property.getType(), objectDef);
+            String propertyName = property.getName();
+            FieldSpec.Builder fieldBuilder = FieldSpec.builder(
+                propertyType,
+                propertyName
+            ).addModifiers(Modifier.PRIVATE);
+            for (AnnotationDef annotation : property.getAnnotations()) {
+                fieldBuilder.addAnnotation(
+                    asAnnotationSpec(annotation)
+                );
+            }
+            property.getJavadoc().forEach(fieldBuilder::addJavadoc);
+            builder.addField(
+                fieldBuilder
+                    .build()
+            );
+            String capitalizedPropertyName = NameUtils.capitalize(propertyName);
+            builder.addMethod(MethodSpec.methodBuilder("get" + capitalizedPropertyName)
+                .addModifiers(property.getModifiersArray())
+                .returns(propertyType)
+                .addStatement("return this." + propertyName)
+                .build());
+            if (objectDef instanceof ClassDef) {
+                builder.addMethod(MethodSpec.methodBuilder("set" + capitalizedPropertyName)
+                    .addModifiers(property.getModifiersArray())
+                    .addParameter(ParameterSpec.builder(propertyType, propertyName).build())
+                    .addStatement("this." + propertyName + " = " + propertyName)
+                    .build());
+            }
+        }
+    }
+
 
     private MethodSpec asMethodSpec(ObjectDef objectDef, MethodDef method) {
         String methodName = method.getName();
@@ -375,6 +458,10 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                     throw new IllegalStateException("Unrecognized primitive name: " + primitive.name());
             };
         }
+        if (typeDef instanceof ClassTypeDef.AnnotatedClassTypeDef annotatedType) {
+            var annotationsSpecs = annotatedType.annotations().stream().map(this::asAnnotationSpec).toList();
+            return asType(annotatedType.typeDef(), objectDef).annotated(annotationsSpecs);
+        }
         if (typeDef instanceof ClassTypeDef classType) {
             return ClassName.bestGuess(classType.getName());
         }
@@ -396,6 +483,10 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         }
         if (typeDef instanceof TypeDef.TypeVariable typeVariable) {
             return asTypeVariable(typeVariable, objectDef);
+        }
+        if (typeDef instanceof TypeDef.AnnotatedTypeDef annotatedType) {
+            var annotationsSpecs = annotatedType.annotations().stream().map(this::asAnnotationSpec).toList();
+            return asType(annotatedType.typeDef(), objectDef).annotated(annotationsSpecs);
         }
         throw new IllegalStateException("Unrecognized type definition " + typeDef);
     }
@@ -593,9 +684,9 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             if (memberElement instanceof MethodElement methodElement) {
                 return renderExpression(objectDef, methodDef, getPropertyValue.instance().invoke(methodElement));
             }
-            if (memberElement instanceof FieldElement fieldElement) {
+            // if (memberElement instanceof FieldElement fieldElement) {
                 // TODO: support field
-            }
+            // }
             throw new IllegalStateException("Unrecognized property read element: " + propertyElement);
         }
         if (expressionDef instanceof ExpressionDef.Condition condition) {
@@ -867,8 +958,12 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 if (!classDef.hasField(field.name())) {
                     throw new IllegalStateException("Field " + field.name() + " is not available in [" + classDef + "]:" + classDef.getFields());
                 }
+            } else if (objectDef instanceof EnumDef enumDef) {
+                if (!enumDef.hasField(field.name())) {
+                    throw new IllegalStateException("Field " + field.name() + " is not available in [" + enumDef + "]:" + enumDef.getProperties());
+                }
             } else {
-                throw new IllegalStateException("Field access no supported on the object definition: " + objectDef);
+                throw new IllegalStateException("Field access not supported on the object definition: " + objectDef);
             }
             return CodeBlock.of(renderExpression(objectDef, methodDef, field.instance()) + "." + field.name());
         }

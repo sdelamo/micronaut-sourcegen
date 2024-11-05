@@ -33,13 +33,10 @@ import java.util.List;
  * @since 1.0
  */
 @Experimental
-public final class ClassDef extends AbstractElement implements ObjectDef {
+public final class ClassDef extends ObjectDef {
 
     private final List<FieldDef> fields;
-    private final List<MethodDef> methods;
-    private final List<PropertyDef> properties;
     private final List<TypeDef.TypeVariable> typeVariables;
-    private final List<TypeDef> superinterfaces;
     private final ClassTypeDef superclass;
 
     private ClassDef(String name,
@@ -51,13 +48,11 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
                      List<String> javadoc,
                      List<TypeDef.TypeVariable> typeVariables,
                      List<TypeDef> superinterfaces,
-                     ClassTypeDef superclass) {
-        super(name, modifiers, annotations, javadoc);
+                     ClassTypeDef superclass,
+                     List<ObjectDef> innerTypes) {
+        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
-        this.methods = methods;
-        this.properties = properties;
         this.typeVariables = typeVariables;
-        this.superinterfaces = superinterfaces;
         this.superclass = superclass;
     }
 
@@ -69,20 +64,8 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
         return fields;
     }
 
-    public List<MethodDef> getMethods() {
-        return methods;
-    }
-
-    public List<PropertyDef> getProperties() {
-        return properties;
-    }
-
     public List<TypeDef.TypeVariable> getTypeVariables() {
         return typeVariables;
-    }
-
-    public List<TypeDef> getSuperinterfaces() {
-        return superinterfaces;
     }
 
     @Nullable
@@ -97,7 +80,7 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
                 return field;
             }
         }
-        for (PropertyDef property : properties) {
+        for (PropertyDef property : getProperties()) {
             if (property.getName().equals(name)) {
                 return FieldDef.builder(property.getName()).ofType(property.getType()).build();
             }
@@ -152,13 +135,10 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
      * @since 1.0
      */
     @Experimental
-    public static final class ClassDefBuilder extends AbstractElementBuilder<ClassDefBuilder> {
+    public static final class ClassDefBuilder extends ObjectDefBuilder<ClassDefBuilder> {
 
         private final List<FieldDef> fields = new ArrayList<>();
-        private final List<MethodDef> methods = new ArrayList<>();
-        private final List<PropertyDef> properties = new ArrayList<>();
         private final List<TypeDef.TypeVariable> typeVariables = new ArrayList<>();
-        private final List<TypeDef> superinterfaces = new ArrayList<>();
         private ClassTypeDef superclass;
 
         private ClassDefBuilder(String name) {
@@ -175,28 +155,13 @@ public final class ClassDef extends AbstractElement implements ObjectDef {
             return this;
         }
 
-        public ClassDefBuilder addMethod(MethodDef method) {
-            methods.add(method);
-            return this;
-        }
-
-        public ClassDefBuilder addProperty(PropertyDef property) {
-            properties.add(property);
-            return this;
-        }
-
         public ClassDefBuilder addTypeVariable(TypeDef.TypeVariable typeVariable) {
             typeVariables.add(typeVariable);
             return this;
         }
 
-        public ClassDefBuilder addSuperinterface(TypeDef superinterface) {
-            superinterfaces.add(superinterface);
-            return this;
-        }
-
         public ClassDef build() {
-            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass);
+            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes);
         }
 
         /**

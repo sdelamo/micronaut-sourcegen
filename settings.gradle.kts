@@ -6,7 +6,7 @@ pluginManagement {
 }
 
 plugins {
-    id("io.micronaut.build.shared.settings") version "7.2.1"
+    id("io.micronaut.build.shared.settings") version "7.2.3"
 }
 
 rootProject.name = "sourcegen-parent"
@@ -29,6 +29,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 configure<io.micronaut.build.MicronautBuildSettingsExtension> {
     importMicronautCatalog()
     importMicronautCatalog("micronaut-data")
+    importMicronautCatalog("micronaut-validation")
 }
 
 dependencyResolutionManagement {

@@ -15,27 +15,70 @@
  */
 package io.micronaut.sourcegen.model;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 
+import javax.lang.model.element.Modifier;
+import java.util.List;
+import java.util.Set;
+
 /**
- * The interface defining the object type.
+ * The abstract class representing a type: class, enum, interface or record.
  *
  * @author Denis Stepanov
  * @since 1.0
  */
-public interface ObjectDef {
+@Experimental
+public abstract sealed class ObjectDef extends AbstractElement permits ClassDef, EnumDef, InterfaceDef, RecordDef {
 
-    String getName();
+    private final List<MethodDef> methods;
+    private final List<PropertyDef> properties;
+    private final List<TypeDef> superinterfaces;
+    private final List<ObjectDef> innerTypes;
 
-    default String getPackageName() {
+    ObjectDef(
+            String name, Set<Modifier> modifiers, List<AnnotationDef> annotations,
+            List<String> javadoc, List<MethodDef> methods,  List<PropertyDef> properties, 
+            List<TypeDef> superinterfaces,
+            List<ObjectDef> innerTypes
+    ) {
+        super(name, modifiers, annotations, javadoc);
+        this.methods = methods;
+        this.properties = properties;
+        this.superinterfaces = superinterfaces;
+        this.innerTypes = innerTypes;
+    }
+
+    public final List<MethodDef> getMethods() {
+        return methods;
+    }
+
+    public final List<PropertyDef> getProperties() {
+        return properties;
+    }
+
+    public final List<TypeDef> getSuperinterfaces() {
+        return superinterfaces;
+    }
+
+    public final String getPackageName() {
         return NameUtils.getPackageName(getName());
     }
 
-    default String getSimpleName() {
+    public final String getSimpleName() {
         return NameUtils.getSimpleName(getName());
     }
 
-    default ClassTypeDef asTypeDef() {
+    public final List<ObjectDef> getInnerTypes() {
+        return innerTypes;
+    }
+
+    /**
+     * Get the type definition for this type.
+     *
+     * @return The type definition
+     */
+    public ClassTypeDef asTypeDef() {
         return ClassTypeDef.of(getName());
     }
 
