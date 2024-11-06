@@ -1,6 +1,6 @@
 plugins {
     id("io.micronaut.build.internal.sourcegen-testsuite")
-    id("io.micronaut.application")
+    id("io.micronaut.minimal.application")
 }
 
 micronaut {
@@ -31,11 +31,3 @@ dependencies {
 //    }
 //}
 
-tasks {
-    nativeCompile {
-        enabled = false
-    }
-    nativeTestCompile {
-        enabled = false
-    }
-}
