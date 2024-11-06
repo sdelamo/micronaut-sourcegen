@@ -376,7 +376,7 @@ public sealed interface ClassTypeDef extends TypeDef {
      */
     @Experimental
     record AnnotatedClassTypeDef(ClassTypeDef typeDef,
-                                 List<AnnotationDef> annotations) implements Annotated {
+                                 List<AnnotationDef> annotations) implements TypeDef.Annotated {
     }
 
 }
