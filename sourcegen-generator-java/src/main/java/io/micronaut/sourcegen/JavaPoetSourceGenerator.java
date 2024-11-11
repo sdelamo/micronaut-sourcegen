@@ -418,6 +418,8 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             builder.addMember(memberName, "$Lf", value);
         } else if (value instanceof Character) {
             builder.addMember(memberName, "'$L'", Util.characterLiteralWithoutSingleQuotes((char) value));
+        } else if (value instanceof ClassTypeDef typeDef) {
+            builder.addMember(memberName, "$L.class", typeDef.getSimpleName());
         } else {
             builder.addMember(memberName, "$L", value);
         }
