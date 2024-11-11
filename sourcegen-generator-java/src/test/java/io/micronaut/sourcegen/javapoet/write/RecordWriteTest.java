@@ -142,4 +142,35 @@ public class RecordWriteTest {
         return matcher.group(1);
     }
 
+
+    @Test
+    public void annotationClassValue() throws IOException {
+        RecordDef recordDef = RecordDef.builder("test.$TestRecord")
+            .addAnnotation(AnnotationDef.builder(ClassTypeDef.of("jackson.annotation.JsonSubTypes.Type"))
+                .addMember("value", ClassTypeDef.STRING)
+                .addMember("name", "string")
+                .build())
+            .build();
+        JavaPoetSourceGenerator generator = new JavaPoetSourceGenerator();
+        String result;
+        try (StringWriter writer = new StringWriter()) {
+            generator.write(recordDef, writer);
+            result = writer.toString();
+        }
+
+        var expected = """
+        package test;
+
+        import jackson.annotation.JsonSubTypes;
+
+        @JsonSubTypes.Type(
+            value = String.class,
+            name = "string"
+        )
+        record $TestRecord() {
+        }
+        """;
+        assertEquals(expected.strip(), result.strip());
+    }
+
 }
