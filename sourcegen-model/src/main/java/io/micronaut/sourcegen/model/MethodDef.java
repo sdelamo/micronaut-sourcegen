@@ -397,6 +397,7 @@ public final class MethodDef extends AbstractElement {
 
         /**
          * Add a statement to the static method body.
+         *
          * @param bodyBuilder The builder
          * @return The builder
          * @since 1.5
@@ -424,6 +425,7 @@ public final class MethodDef extends AbstractElement {
 
         /**
          * Add a statement to the method body.
+         *
          * @param bodyBuilder The body builder
          * @return The builder
          */
@@ -435,6 +437,8 @@ public final class MethodDef extends AbstractElement {
 
         /**
          * Add statements to the method body.
+         *
+         * @param newStatements The new statements
          * @return The builder
          */
         @NonNull
@@ -480,6 +484,7 @@ public final class MethodDef extends AbstractElement {
 
         /**
          * Build a method with a body builder.
+         *
          * @param bodyBuilder The body builder
          * @return The builder
          */
@@ -491,6 +496,7 @@ public final class MethodDef extends AbstractElement {
 
         /**
          * Build a static method with a body builder.
+         *
          * @param bodyBuilder The body builder
          * @return The builder
          */

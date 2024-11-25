@@ -34,12 +34,12 @@ import java.util.regex.Pattern;
  * @author Denis Stepanov
  * @since 1.5
  */
-final class TypeUtils {
+public final class TypeUtils {
 
     public static final Type OBJECT_TYPE = Type.getType(Object.class);
     private static final Pattern ARRAY_PATTERN = Pattern.compile("(\\[])+$");
 
-    static Type getType(TypeDef typeDef, @Nullable ObjectDef objectDef) {
+    public static Type getType(TypeDef typeDef, @Nullable ObjectDef objectDef) {
         typeDef = ObjectDef.getContextualType(objectDef, typeDef);
         if (typeDef instanceof TypeDef.Array array) {
             return Type.getType("[".repeat(array.dimensions()) + getType(array.componentType(), objectDef).getDescriptor());

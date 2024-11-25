@@ -1,0 +1,218 @@
+/*
+ * Copyright 2017-2024 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.sourcegen.bytecode;
+
+import io.micronaut.sourcegen.bytecode.expression.ExpressionWriter;
+import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.JavaIdioms;
+import io.micronaut.sourcegen.model.TypeDef;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+
+/**
+ * The common condition writer methods.
+ *
+ * @author Denis Stepanov
+ * @since 1.5
+ */
+public abstract class AbstractConditionalWriter {
+
+    protected static void pushElseConditionalExpression(GeneratorAdapter generatorAdapter,
+                                                        MethodContext context,
+                                                        ExpressionDef expressionDef,
+                                                        Label elseLabel) {
+        if (expressionDef instanceof ExpressionDef.ConditionExpressionDef conditionExpressionDef) {
+            if (expressionDef instanceof ExpressionDef.InstanceOf instanceOf) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, instanceOf.expression(), instanceOf.expression().type());
+                generatorAdapter.instanceOf(TypeUtils.getType(instanceOf.instanceType(), context.objectDef()));
+                generatorAdapter.push(true);
+                generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, elseLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.And andExpressionDef) {
+                pushElseConditionalExpression(generatorAdapter, context, andExpressionDef.left(), elseLabel);
+                pushElseConditionalExpression(generatorAdapter, context, andExpressionDef.right(), elseLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.Or orExpressionDef) {
+                Label ifLabel = new Label();
+                pushIfConditionalExpression(generatorAdapter, context, orExpressionDef.left(), ifLabel);
+                pushIfConditionalExpression(generatorAdapter, context, orExpressionDef.right(), ifLabel);
+                generatorAdapter.goTo(elseLabel);
+                generatorAdapter.visitLabel(ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.Condition condition) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, condition.left(), condition.left().type());
+                ExpressionWriter.pushExpression(generatorAdapter, context, condition.right(), condition.right().type());
+                Type conditionType = TypeUtils.getType(condition.left().type(), context.objectDef());
+                generatorAdapter.ifCmp(conditionType, getInvertConditionOp(condition.operator()), elseLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.IsNull isNull) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, isNull.expression(), isNull.expression().type());
+                generatorAdapter.ifNonNull(elseLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, isNotNull.expression(), isNotNull.expression().type());
+                generatorAdapter.ifNull(elseLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {
+                pushEqualsReferentially(generatorAdapter, context, equalsReferentially, elseLabel, GeneratorAdapter.NE);
+                return;
+            }
+            if (expressionDef instanceof ExpressionDef.EqualsStructurally equalsStructurally) {
+                pushEqualsStructurally(generatorAdapter, context, equalsStructurally, elseLabel, GeneratorAdapter.NE);
+                return;
+            }
+            throw new UnsupportedOperationException("Unrecognized conditional expression: " + conditionExpressionDef);
+        }
+        if (!expressionDef.type().equals(TypeDef.Primitive.BOOLEAN) && !expressionDef.type().equals(TypeDef.Primitive.BOOLEAN.wrapperType())) {
+            throw new IllegalStateException("Conditional expression should produce a boolean: " + expressionDef);
+        }
+        ExpressionWriter.pushExpression(generatorAdapter, context, expressionDef, TypeDef.Primitive.BOOLEAN);
+        generatorAdapter.push(true);
+        generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, elseLabel);
+    }
+
+    private static void pushIfConditionalExpression(GeneratorAdapter generatorAdapter,
+                                                    MethodContext context,
+                                                    ExpressionDef expressionDef,
+                                                    Label ifLabel) {
+        if (expressionDef instanceof ExpressionDef.ConditionExpressionDef conditionExpressionDef) {
+            if (expressionDef instanceof ExpressionDef.InstanceOf instanceOf) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, instanceOf.expression(), instanceOf.expression().type());
+                generatorAdapter.instanceOf(TypeUtils.getType(instanceOf.instanceType(), context.objectDef()));
+                generatorAdapter.push(true);
+                generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.And andExpressionDef) {
+                Label elseLabel = new Label();
+                pushElseConditionalExpression(generatorAdapter, context, andExpressionDef.left(), elseLabel);
+                pushElseConditionalExpression(generatorAdapter, context, andExpressionDef.right(), elseLabel);
+                generatorAdapter.goTo(ifLabel);
+                generatorAdapter.visitLabel(elseLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.Or orExpressionDef) {
+                pushIfConditionalExpression(generatorAdapter, context, orExpressionDef.left(), ifLabel);
+                pushIfConditionalExpression(generatorAdapter, context, orExpressionDef.right(), ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.Condition condition) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, condition.left(), condition.left().type());
+                ExpressionWriter.pushExpression(generatorAdapter, context, condition.right(), condition.right().type());
+                Type conditionType = TypeUtils.getType(condition.left().type(), context.objectDef());
+                generatorAdapter.ifCmp(conditionType, getConditionOp(condition.operator()), ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.IsNull isNull) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, isNull.expression(), isNull.expression().type());
+                generatorAdapter.ifNull(ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
+                ExpressionWriter.pushExpression(generatorAdapter, context, isNotNull.expression(), isNotNull.expression().type());
+                generatorAdapter.ifNonNull(ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {
+                pushEqualsReferentially(generatorAdapter, context, equalsReferentially, ifLabel, GeneratorAdapter.EQ);
+                return;
+            }
+            if (expressionDef instanceof ExpressionDef.EqualsStructurally equalsStructurally) {
+                pushEqualsStructurally(generatorAdapter, context, equalsStructurally, ifLabel, GeneratorAdapter.EQ);
+                return;
+            }
+            throw new UnsupportedOperationException("Unrecognized conditional expression: " + conditionExpressionDef);
+        }
+        if (!expressionDef.type().equals(TypeDef.Primitive.BOOLEAN) && !expressionDef.type().equals(TypeDef.Primitive.BOOLEAN.wrapperType())) {
+            throw new IllegalStateException("Conditional expression should produce a boolean: " + expressionDef);
+        }
+        ExpressionWriter.pushExpression(generatorAdapter, context, expressionDef, TypeDef.Primitive.BOOLEAN);
+        generatorAdapter.push(true);
+        generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, ifLabel);
+    }
+
+    private static void pushEqualsStructurally(GeneratorAdapter generatorAdapter, MethodContext context, ExpressionDef.EqualsStructurally equalsStructurally, Label ifLabel, int op) {
+        TypeDef leftType = equalsStructurally.instance().type();
+        TypeDef rightType = equalsStructurally.other().type();
+        if (leftType.isPrimitive()) {
+            pushEqualsReferentially(generatorAdapter, context, equalsStructurally.instance(), equalsStructurally.other().cast(leftType), ifLabel, op);
+            return;
+        }
+        if (rightType.isPrimitive()) {
+            pushEqualsReferentially(generatorAdapter, context, equalsStructurally.instance().cast(rightType), equalsStructurally.other(), ifLabel, op);
+            return;
+        }
+        pushEqualsStructurally(generatorAdapter, context, equalsStructurally);
+        generatorAdapter.push(true);
+        generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, op, ifLabel);
+    }
+
+    private static void pushEqualsReferentially(GeneratorAdapter generatorAdapter, MethodContext context,
+                                                ExpressionDef.EqualsReferentially equalsReferentially,
+                                                Label label, int op) {
+        ExpressionDef left = equalsReferentially.instance();
+        ExpressionDef right = equalsReferentially.other();
+        pushEqualsReferentially(generatorAdapter, context, left, right, label, op);
+    }
+
+    private static void pushEqualsReferentially(GeneratorAdapter generatorAdapter,
+                                                MethodContext context,
+                                                ExpressionDef left,
+                                                ExpressionDef right,
+                                                Label label,
+                                                int op) {
+        TypeDef leftType = left.type();
+        ExpressionWriter.pushExpression(generatorAdapter, context, left, leftType);
+        TypeDef rightType = right.type();
+        ExpressionWriter.pushExpression(generatorAdapter, context, right, rightType);
+        if (leftType instanceof TypeDef.Primitive p1 && rightType instanceof TypeDef.Primitive) {
+            generatorAdapter.ifCmp(TypeUtils.getType(p1), op, label);
+        } else {
+            generatorAdapter.ifCmp(TypeUtils.OBJECT_TYPE, op, label);
+        }
+    }
+
+    private static void pushEqualsStructurally(GeneratorAdapter generatorAdapter, MethodContext context, ExpressionDef.EqualsStructurally equalsStructurally) {
+        ExpressionWriter.pushExpression(generatorAdapter, context, JavaIdioms.equalsStructurally(equalsStructurally), TypeDef.Primitive.BOOLEAN);
+    }
+
+    private static int getInvertConditionOp(String op) {
+        int conditionOp = getConditionOp(op);
+        return switch (conditionOp) {
+            case GeneratorAdapter.EQ -> GeneratorAdapter.NE;
+            case GeneratorAdapter.NE -> GeneratorAdapter.EQ;
+            default ->
+                throw new UnsupportedOperationException("Unrecognized condition operator: " + conditionOp);
+        };
+    }
+
+    private static int getConditionOp(String op) {
+        return switch (op.trim()) {
+            case "==" -> GeneratorAdapter.EQ;
+            case "!=" -> GeneratorAdapter.NE;
+            default ->
+                throw new UnsupportedOperationException("Unrecognized condition operator: " + op);
+        };
+    }
+
+}

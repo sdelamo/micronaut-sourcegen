@@ -1,0 +1,93 @@
+/*
+ * Copyright 2017-2024 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.sourcegen.bytecode.expression;
+
+import io.micronaut.sourcegen.bytecode.MethodContext;
+import io.micronaut.sourcegen.bytecode.TypeUtils;
+import io.micronaut.sourcegen.model.ClassDef;
+import io.micronaut.sourcegen.model.ClassTypeDef;
+import io.micronaut.sourcegen.model.EnumDef;
+import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.ParameterDef;
+import io.micronaut.sourcegen.model.TypeDef;
+import io.micronaut.sourcegen.model.VariableDef;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
+
+import java.util.Iterator;
+import java.util.Objects;
+
+import static io.micronaut.sourcegen.bytecode.WriterUtils.asMethod;
+import static io.micronaut.sourcegen.bytecode.WriterUtils.popValue;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+
+final class InvokeInstanceMethodExpressionWriter implements ExpressionWriter {
+    private final ExpressionDef.InvokeInstanceMethod invokeInstanceMethod;
+
+    public InvokeInstanceMethodExpressionWriter(ExpressionDef.InvokeInstanceMethod invokeInstanceMethod) {
+        this.invokeInstanceMethod = invokeInstanceMethod;
+    }
+
+    @Override
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+        ExpressionDef instance = invokeInstanceMethod.instance();
+        TypeDef instanceType = instance.type();
+        ExpressionWriter.pushExpression(generatorAdapter, context, instance, instanceType);
+        Iterator<ParameterDef> iterator = invokeInstanceMethod.method().getParameters().iterator();
+        for (ExpressionDef parameter : invokeInstanceMethod.values()) {
+            ExpressionWriter.pushExpression(generatorAdapter, context, parameter, iterator.next().getType());
+        }
+        Type methodOwnerType = TypeUtils.getType(instanceType, context.objectDef());
+        Method method = asMethod(context, invokeInstanceMethod.method());
+        if (invokeInstanceMethod.method().isConstructor()) {
+            generatorAdapter.invokeConstructor(methodOwnerType, method);
+        } else if (instanceType instanceof ClassTypeDef classTypeDef) {
+            if (instance instanceof VariableDef.Super aSuper) {
+                ClassTypeDef superClass;
+                if (aSuper.type() == TypeDef.SUPER) {
+                    if (context.objectDef() instanceof EnumDef) {
+                        superClass = ClassTypeDef.of(Enum.class);
+                    } else if (context.objectDef() instanceof ClassDef classDef) {
+                        superClass = Objects.requireNonNullElse(classDef.getSuperclass(), TypeDef.OBJECT);
+                    } else {
+                        superClass = TypeDef.OBJECT;
+                    }
+                } else {
+                    superClass = aSuper.type();
+                }
+                methodOwnerType = TypeUtils.getType(superClass, context.objectDef());
+                generatorAdapter.visitMethodInsn(
+                    INVOKESPECIAL,
+                    methodOwnerType.getSort() == Type.ARRAY ? methodOwnerType.getDescriptor() : methodOwnerType.getInternalName(),
+                    method.getName(),
+                    method.getDescriptor(),
+                    superClass.isInterface() && invokeInstanceMethod.isDefault()
+                );
+            } else if (classTypeDef.isInterface()) {
+                generatorAdapter.invokeInterface(methodOwnerType, method);
+            } else {
+                generatorAdapter.invokeVirtual(methodOwnerType, method);
+            }
+        } else if (instanceType instanceof TypeDef.Array) {
+            generatorAdapter.invokeVirtual(methodOwnerType, method);
+        }
+        if (!invokeInstanceMethod.method().getReturnType().equals(TypeDef.VOID) && statement) {
+            popValue(generatorAdapter, invokeInstanceMethod.method().getReturnType());
+        }
+    }
+
+}
