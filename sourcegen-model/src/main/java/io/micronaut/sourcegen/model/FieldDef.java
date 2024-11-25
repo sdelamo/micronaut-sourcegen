@@ -16,6 +16,7 @@
 package io.micronaut.sourcegen.model;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.NonNull;
 
 import javax.lang.model.element.Modifier;
 import java.util.EnumSet;
@@ -46,15 +47,39 @@ public final class FieldDef extends AbstractElement {
         this.initializer = initializer;
     }
 
-    public static FieldDefBuilder builder(String name) {
+    /**
+     * Creates a new field builder with a name.
+     * @param name The filed name
+     * @return The field builder
+     * @since 1.5
+     */
+    @NonNull
+    public static FieldDefBuilder builder(@NonNull String name) {
         return new FieldDefBuilder(name);
     }
 
-    public static FieldDefBuilder builder(String name, TypeDef type) {
+    /**
+     * Creates a new field builder with a name and type.
+     *
+     * @param name The filed name
+     * @param type The type
+     * @return The field builder
+     * @since 1.5
+     */
+    @NonNull
+    public static FieldDefBuilder builder(@NonNull String name, @NonNull TypeDef type) {
         return new FieldDefBuilder(name, type);
     }
 
-    public static FieldDefBuilder builder(String name, Class<?> type) {
+    /**
+     * Creates a new field builder with a name and type.
+     * @param name The filed name
+     * @param type The type
+     * @return The field builder
+     * @since 1.5
+     */
+    @NonNull
+    public static FieldDefBuilder builder(@NonNull String name, @NonNull Class<?> type) {
         return new FieldDefBuilder(name, TypeDef.of(type));
     }
 
