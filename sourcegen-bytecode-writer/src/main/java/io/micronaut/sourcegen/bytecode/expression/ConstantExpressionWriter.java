@@ -30,7 +30,7 @@ final class ConstantExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         TypeDef type = constant.type();
         Object value = constant.value();
         if (value == null) {

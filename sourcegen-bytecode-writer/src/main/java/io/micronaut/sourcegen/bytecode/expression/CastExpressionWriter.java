@@ -32,12 +32,10 @@ final class CastExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         ExpressionDef exp = castExpressionDef.expressionDef();
-        TypeDef from = exp.type();
-        ExpressionWriter.pushExpression(generatorAdapter, context, exp, from);
-        TypeDef to = castExpressionDef.type();
-        cast(generatorAdapter, context, from, to);
+        ExpressionWriter.writeExpression(generatorAdapter, context, exp);
+        cast(generatorAdapter, context, exp.type(), castExpressionDef.type());
     }
 
     static void cast(GeneratorAdapter generatorAdapter, MethodContext context, TypeDef from, TypeDef to) {

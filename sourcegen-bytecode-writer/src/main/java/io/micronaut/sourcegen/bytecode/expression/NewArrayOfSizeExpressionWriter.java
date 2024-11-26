@@ -28,7 +28,7 @@ final class NewArrayOfSizeExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         generatorAdapter.push(newArray.size());
         generatorAdapter.newArray(TypeUtils.getType(newArray.type().componentType(), context.objectDef()));
     }

@@ -28,8 +28,8 @@ final class GetPropertyExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         ExpressionDef propertyValue = JavaIdioms.getPropertyValue(getPropertyValue);
-        ExpressionWriter.pushExpression(generatorAdapter, context, propertyValue, getPropertyValue.type());
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, propertyValue, getPropertyValue.type());
     }
 }

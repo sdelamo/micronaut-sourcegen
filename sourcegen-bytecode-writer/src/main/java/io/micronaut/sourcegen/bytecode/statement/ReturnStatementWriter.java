@@ -34,7 +34,7 @@ final class ReturnStatementWriter implements StatementWriter {
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
         aReturn.validate(context.methodDef());
         if (aReturn.expression() != null) {
-            ExpressionWriter.pushExpression(generatorAdapter, context, aReturn.expression(), context.methodDef().getReturnType());
+            ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, aReturn.expression(), context.methodDef().getReturnType());
             pushFinallyStatement(generatorAdapter, context, finallyBlock, context.methodDef().getReturnType());
         } else {
             if (finallyBlock != null) {

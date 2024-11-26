@@ -35,7 +35,7 @@ final class AssignAndDefineStatementWriter implements StatementWriter {
         VariableDef.Local local = assign.variable();
         Type localType = TypeUtils.getType(local.type(), context.objectDef());
         int localIndex = generatorAdapter.newLocal(localType);
-        ExpressionWriter.pushExpression(generatorAdapter, context, assign.expression(), local.type());
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, assign.expression(), local.type());
         generatorAdapter.storeLocal(localIndex, localType);
         context.locals().put(local.name(), localIndex);
     }

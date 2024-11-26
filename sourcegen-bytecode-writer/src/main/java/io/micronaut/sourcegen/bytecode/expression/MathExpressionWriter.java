@@ -29,9 +29,9 @@ final class MathExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
-        ExpressionWriter.pushExpression(generatorAdapter, context, math.left(), math.left().type());
-        ExpressionWriter.pushExpression(generatorAdapter, context, math.right(), math.right().type());
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
+        ExpressionWriter.writeExpression(generatorAdapter, context, math.left());
+        ExpressionWriter.writeExpression(generatorAdapter, context, math.right());
         generatorAdapter.math(getMathOp(math.operator()), TypeUtils.getType(math.left().type(), context.objectDef()));
     }
 

@@ -16,6 +16,7 @@
 package io.micronaut.sourcegen.bytecode.statement;
 
 import io.micronaut.sourcegen.bytecode.MethodContext;
+import io.micronaut.sourcegen.bytecode.expression.AbstractStatementAwareExpressionWriter;
 import io.micronaut.sourcegen.bytecode.expression.ExpressionWriter;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import org.objectweb.asm.commons.GeneratorAdapter;
@@ -29,6 +30,10 @@ final class ExpressionAsStatementWriter implements StatementWriter {
 
     @Override
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
-        ExpressionWriter.pushExpression(generatorAdapter, context, expressionDef, expressionDef.type(), true);
+        ExpressionWriter expressionWriter = ExpressionWriter.of(expressionDef);
+        if (expressionWriter instanceof AbstractStatementAwareExpressionWriter statementAwareExpressionWriter) {
+            statementAwareExpressionWriter.markAsStatement();
+        }
+        expressionWriter.write(generatorAdapter, context);
     }
 }

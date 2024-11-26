@@ -28,7 +28,7 @@ final class SwitchYieldCaseExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         StatementWriter.of(switchYieldCase.statement()).write(generatorAdapter, context, null);
     }
 }

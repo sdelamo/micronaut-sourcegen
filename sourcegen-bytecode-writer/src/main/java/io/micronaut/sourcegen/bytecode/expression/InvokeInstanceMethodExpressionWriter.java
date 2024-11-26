@@ -21,6 +21,7 @@ import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.EnumDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ParameterDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
@@ -31,11 +32,9 @@ import org.objectweb.asm.commons.Method;
 import java.util.Iterator;
 import java.util.Objects;
 
-import static io.micronaut.sourcegen.bytecode.WriterUtils.asMethod;
-import static io.micronaut.sourcegen.bytecode.WriterUtils.popValue;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
 
-final class InvokeInstanceMethodExpressionWriter implements ExpressionWriter {
+final class InvokeInstanceMethodExpressionWriter extends AbstractStatementAwareExpressionWriter implements ExpressionWriter {
     private final ExpressionDef.InvokeInstanceMethod invokeInstanceMethod;
 
     public InvokeInstanceMethodExpressionWriter(ExpressionDef.InvokeInstanceMethod invokeInstanceMethod) {
@@ -43,16 +42,17 @@ final class InvokeInstanceMethodExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         ExpressionDef instance = invokeInstanceMethod.instance();
-        TypeDef instanceType = instance.type();
-        ExpressionWriter.pushExpression(generatorAdapter, context, instance, instanceType);
+        ExpressionWriter.writeExpression(generatorAdapter, context, instance);
         Iterator<ParameterDef> iterator = invokeInstanceMethod.method().getParameters().iterator();
         for (ExpressionDef parameter : invokeInstanceMethod.values()) {
-            ExpressionWriter.pushExpression(generatorAdapter, context, parameter, iterator.next().getType());
+            ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, parameter, iterator.next().getType());
         }
+        TypeDef instanceType = instance.type();
         Type methodOwnerType = TypeUtils.getType(instanceType, context.objectDef());
-        Method method = asMethod(context, invokeInstanceMethod.method());
+        MethodDef methodDef = invokeInstanceMethod.method();
+        Method method = new Method(methodDef.getName(), TypeUtils.getMethodDescriptor(context.objectDef(), methodDef));
         if (invokeInstanceMethod.method().isConstructor()) {
             generatorAdapter.invokeConstructor(methodOwnerType, method);
         } else if (instanceType instanceof ClassTypeDef classTypeDef) {
@@ -85,9 +85,7 @@ final class InvokeInstanceMethodExpressionWriter implements ExpressionWriter {
         } else if (instanceType instanceof TypeDef.Array) {
             generatorAdapter.invokeVirtual(methodOwnerType, method);
         }
-        if (!invokeInstanceMethod.method().getReturnType().equals(TypeDef.VOID) && statement) {
-            popValue(generatorAdapter, invokeInstanceMethod.method().getReturnType());
-        }
+        popValueIfNeeded(generatorAdapter, invokeInstanceMethod.method().getReturnType());
     }
 
 }

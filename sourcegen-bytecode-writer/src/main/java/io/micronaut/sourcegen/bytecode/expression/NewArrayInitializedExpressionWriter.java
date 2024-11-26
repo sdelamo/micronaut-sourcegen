@@ -32,7 +32,7 @@ final class NewArrayInitializedExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         List<? extends ExpressionDef> expressions = newArray.expressions();
         generatorAdapter.push(expressions.size());
         TypeDef.Array arrayType = newArray.type();
@@ -49,7 +49,7 @@ final class NewArrayInitializedExpressionWriter implements ExpressionWriter {
             for (ExpressionDef expression : expressions) {
                 generatorAdapter.dup();
                 generatorAdapter.push(index++);
-                ExpressionWriter.pushExpression(generatorAdapter, context, expression, componentType);
+                ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, expression, componentType);
                 generatorAdapter.arrayStore(type);
             }
         }

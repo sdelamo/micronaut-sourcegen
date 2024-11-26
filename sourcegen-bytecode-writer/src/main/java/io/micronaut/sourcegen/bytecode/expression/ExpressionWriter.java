@@ -28,7 +28,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
  * @author Denis Stepano
  * @since 1.5
  */
-public sealed interface ExpressionWriter permits ArrayElementExpressionWriter, CastExpressionWriter, ConditionExpressionWriter, ConstantExpressionWriter, GetPropertyExpressionWriter, IfElseExpressionWriter, InstanceOfExpressionWriter, InvokeGetClassExpressionWriter, InvokeHashCodeMethodExpressionWriter, InvokeInstanceMethodExpressionWriter, InvokeStaticMethodExpressionWriter, MathExpressionWriter, NewArrayInitializedExpressionWriter, NewArrayOfSizeExpressionWriter, NewInstanceExpressionWriter, SwitchExpressionWriter, SwitchYieldCaseExpressionWriter, VariableExpressionWriter {
+public sealed interface ExpressionWriter permits ArrayElementExpressionWriter, CastExpressionWriter, ConditionExpressionWriter, ConstantExpressionWriter, GetPropertyExpressionWriter, IfElseExpressionWriter, InstanceOfExpressionWriter, InvokeGetClassExpressionWriter, InvokeHashCodeMethodExpressionWriter, InvokeInstanceMethodExpressionWriter, InvokeStaticMethodExpressionWriter, MathExpressionWriter, NewArrayInitializedExpressionWriter, NewArrayOfSizeExpressionWriter, NewInstanceExpressionWriter, AbstractStatementAwareExpressionWriter, SwitchExpressionWriter, SwitchYieldCaseExpressionWriter, VariableExpressionWriter {
 
     /**
      * Create a writer from an expression.
@@ -94,28 +94,30 @@ public sealed interface ExpressionWriter permits ArrayElementExpressionWriter, C
         throw new UnsupportedOperationException("Unrecognized expression: " + expressionDef);
     }
 
-    static void pushExpression(GeneratorAdapter generatorAdapter,
-                               MethodContext context,
-                               ExpressionDef expressionDef,
-                               TypeDef expectedType) {
-        pushExpression(generatorAdapter, context, expressionDef, expectedType, false);
+    static void writeExpression(GeneratorAdapter generatorAdapter,
+                                MethodContext context,
+                                ExpressionDef expressionDef) {
+        ExpressionWriter.of(expressionDef).write(generatorAdapter, context);
     }
 
-    static void pushExpression(GeneratorAdapter generatorAdapter,
-                               MethodContext context,
-                               ExpressionDef expressionDef,
-                               TypeDef expectedType,
-                               boolean statement) {
-        if (expectedType.isPrimitive() &&
-            expressionDef instanceof ExpressionDef.Constant constant
-            && !constant.type().isPrimitive()
-            && constant.value() != null
-            && ReflectionUtils.getPrimitiveType(constant.value().getClass()).isPrimitive()) {
-            expressionDef = ExpressionDef.primitiveConstant(constant.value());
+    static void writeExpressionCheckCast(GeneratorAdapter generatorAdapter,
+                                         MethodContext context,
+                                         ExpressionDef expressionDef,
+                                         TypeDef expectedType) {
+        if (expressionDef instanceof ExpressionDef.Constant constant) {
+            expressionDef = adjustConstant(expressionDef, expectedType, constant);
         }
-        ExpressionWriter.of(expressionDef).write(generatorAdapter, context, statement);
-        TypeDef type = expressionDef.type();
-        CastExpressionWriter.cast(generatorAdapter, context, type, expectedType);
+        ExpressionWriter.of(expressionDef).write(generatorAdapter, context);
+        CastExpressionWriter.cast(generatorAdapter, context, expressionDef.type(), expectedType);
+    }
+
+    private static ExpressionDef adjustConstant(ExpressionDef expressionDef, TypeDef expectedType, ExpressionDef.Constant constant) {
+        if (expectedType.isPrimitive()) {
+            if (!constant.type().isPrimitive() && constant.value() != null && ReflectionUtils.getPrimitiveType(constant.value().getClass()).isPrimitive()) {
+                expressionDef = ExpressionDef.primitiveConstant(constant.value());
+            }
+        }
+        return expressionDef;
     }
 
     /**
@@ -123,10 +125,7 @@ public sealed interface ExpressionWriter permits ArrayElementExpressionWriter, C
      *
      * @param generatorAdapter The adapter
      * @param context          The method context
-     * @param statement        If represented as a statement
      */
-    void write(GeneratorAdapter generatorAdapter,
-               MethodContext context,
-               boolean statement);
+    void write(GeneratorAdapter generatorAdapter, MethodContext context);
 
 }

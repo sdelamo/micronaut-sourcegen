@@ -37,7 +37,7 @@ public abstract class AbstractConditionalWriter {
                                                         Label elseLabel) {
         if (expressionDef instanceof ExpressionDef.ConditionExpressionDef conditionExpressionDef) {
             if (expressionDef instanceof ExpressionDef.InstanceOf instanceOf) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, instanceOf.expression(), instanceOf.expression().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, instanceOf.expression());
                 generatorAdapter.instanceOf(TypeUtils.getType(instanceOf.instanceType(), context.objectDef()));
                 generatorAdapter.push(true);
                 generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, elseLabel);
@@ -57,19 +57,19 @@ public abstract class AbstractConditionalWriter {
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.Condition condition) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, condition.left(), condition.left().type());
-                ExpressionWriter.pushExpression(generatorAdapter, context, condition.right(), condition.right().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, condition.left());
+                ExpressionWriter.writeExpression(generatorAdapter, context, condition.right());
                 Type conditionType = TypeUtils.getType(condition.left().type(), context.objectDef());
                 generatorAdapter.ifCmp(conditionType, getInvertConditionOp(condition.operator()), elseLabel);
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.IsNull isNull) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, isNull.expression(), isNull.expression().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, isNull.expression());
                 generatorAdapter.ifNonNull(elseLabel);
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, isNotNull.expression(), isNotNull.expression().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, isNotNull.expression());
                 generatorAdapter.ifNull(elseLabel);
                 return;
             }
@@ -86,7 +86,7 @@ public abstract class AbstractConditionalWriter {
         if (!expressionDef.type().equals(TypeDef.Primitive.BOOLEAN) && !expressionDef.type().equals(TypeDef.Primitive.BOOLEAN.wrapperType())) {
             throw new IllegalStateException("Conditional expression should produce a boolean: " + expressionDef);
         }
-        ExpressionWriter.pushExpression(generatorAdapter, context, expressionDef, TypeDef.Primitive.BOOLEAN);
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, expressionDef, TypeDef.Primitive.BOOLEAN);
         generatorAdapter.push(true);
         generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, elseLabel);
     }
@@ -97,7 +97,7 @@ public abstract class AbstractConditionalWriter {
                                                     Label ifLabel) {
         if (expressionDef instanceof ExpressionDef.ConditionExpressionDef conditionExpressionDef) {
             if (expressionDef instanceof ExpressionDef.InstanceOf instanceOf) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, instanceOf.expression(), instanceOf.expression().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, instanceOf.expression());
                 generatorAdapter.instanceOf(TypeUtils.getType(instanceOf.instanceType(), context.objectDef()));
                 generatorAdapter.push(true);
                 generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, ifLabel);
@@ -117,19 +117,19 @@ public abstract class AbstractConditionalWriter {
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.Condition condition) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, condition.left(), condition.left().type());
-                ExpressionWriter.pushExpression(generatorAdapter, context, condition.right(), condition.right().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, condition.left());
+                ExpressionWriter.writeExpression(generatorAdapter, context, condition.right());
                 Type conditionType = TypeUtils.getType(condition.left().type(), context.objectDef());
                 generatorAdapter.ifCmp(conditionType, getConditionOp(condition.operator()), ifLabel);
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.IsNull isNull) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, isNull.expression(), isNull.expression().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, isNull.expression());
                 generatorAdapter.ifNull(ifLabel);
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
-                ExpressionWriter.pushExpression(generatorAdapter, context, isNotNull.expression(), isNotNull.expression().type());
+                ExpressionWriter.writeExpression(generatorAdapter, context, isNotNull.expression());
                 generatorAdapter.ifNonNull(ifLabel);
                 return;
             }
@@ -146,7 +146,7 @@ public abstract class AbstractConditionalWriter {
         if (!expressionDef.type().equals(TypeDef.Primitive.BOOLEAN) && !expressionDef.type().equals(TypeDef.Primitive.BOOLEAN.wrapperType())) {
             throw new IllegalStateException("Conditional expression should produce a boolean: " + expressionDef);
         }
-        ExpressionWriter.pushExpression(generatorAdapter, context, expressionDef, TypeDef.Primitive.BOOLEAN);
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, expressionDef, TypeDef.Primitive.BOOLEAN);
         generatorAdapter.push(true);
         generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, ifLabel);
     }
@@ -182,9 +182,9 @@ public abstract class AbstractConditionalWriter {
                                                 Label label,
                                                 int op) {
         TypeDef leftType = left.type();
-        ExpressionWriter.pushExpression(generatorAdapter, context, left, leftType);
+        ExpressionWriter.writeExpression(generatorAdapter, context, left);
         TypeDef rightType = right.type();
-        ExpressionWriter.pushExpression(generatorAdapter, context, right, rightType);
+        ExpressionWriter.writeExpression(generatorAdapter, context, right);
         if (leftType instanceof TypeDef.Primitive p1 && rightType instanceof TypeDef.Primitive) {
             generatorAdapter.ifCmp(TypeUtils.getType(p1), op, label);
         } else {
@@ -193,7 +193,7 @@ public abstract class AbstractConditionalWriter {
     }
 
     private static void pushEqualsStructurally(GeneratorAdapter generatorAdapter, MethodContext context, ExpressionDef.EqualsStructurally equalsStructurally) {
-        ExpressionWriter.pushExpression(generatorAdapter, context, JavaIdioms.equalsStructurally(equalsStructurally), TypeDef.Primitive.BOOLEAN);
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, JavaIdioms.equalsStructurally(equalsStructurally), TypeDef.Primitive.BOOLEAN);
     }
 
     private static int getInvertConditionOp(String op) {

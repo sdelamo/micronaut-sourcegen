@@ -18,7 +18,6 @@ package io.micronaut.sourcegen.bytecode.expression;
 import io.micronaut.sourcegen.bytecode.MethodContext;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.JavaIdioms;
-import io.micronaut.sourcegen.model.TypeDef;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 final class InvokeHashCodeMethodExpressionWriter implements ExpressionWriter {
@@ -29,7 +28,7 @@ final class InvokeHashCodeMethodExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
-        ExpressionWriter.pushExpression(generatorAdapter, context, JavaIdioms.hashCode(invokeHashCodeMethod), TypeDef.Primitive.INT);
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
+        ExpressionWriter.writeExpression(generatorAdapter, context, JavaIdioms.hashCode(invokeHashCodeMethod));
     }
 }

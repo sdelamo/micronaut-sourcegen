@@ -40,7 +40,7 @@ final class SynchronizedStatementWriter implements StatementWriter {
         generatorAdapter.visitTryCatchBlock(synchronizedStart, synchronizedEnd, synchronizedException, null);
         generatorAdapter.visitTryCatchBlock(synchronizedException, synchronizedExceptionEnd, synchronizedException, null);
 
-        ExpressionWriter.pushExpression(generatorAdapter, context, aSynchronized.monitor(), aSynchronized.monitor().type(), false);
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, aSynchronized.monitor(), aSynchronized.monitor().type());
         generatorAdapter.dup();
         Type monitorType = TypeUtils.getType(aSynchronized.monitor().type(), context.objectDef());
         int monitorLocal = generatorAdapter.newLocal(monitorType);

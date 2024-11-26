@@ -50,7 +50,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import static io.micronaut.sourcegen.bytecode.WriterUtils.getMethodDescriptor;
 import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
 import static org.objectweb.asm.Opcodes.ACC_ENUM;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
@@ -341,7 +340,7 @@ public final class ByteCodeWriter {
      */
     public void writeMethod(ClassVisitor classVisitor, @Nullable ObjectDef objectDef, MethodDef methodDef) {
         String name = methodDef.getName();
-        String methodDescriptor = getMethodDescriptor(objectDef, methodDef);
+        String methodDescriptor = TypeUtils.getMethodDescriptor(objectDef, methodDef);
         int access = getModifiersFlag(methodDef.getModifiers());
 
         MethodVisitor methodVisitor = classVisitor.visitMethod(

@@ -29,14 +29,14 @@ final class IfElseExpressionWriter extends AbstractConditionalWriter implements 
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         Label elseLabel = new Label();
         pushElseConditionalExpression(generatorAdapter, context, conditionIfElse.condition(), elseLabel);
         Label end = new Label();
-        ExpressionWriter.pushExpression(generatorAdapter, context, conditionIfElse.expression(), conditionIfElse.type());
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, conditionIfElse.expression(), conditionIfElse.type());
         generatorAdapter.goTo(end);
         generatorAdapter.visitLabel(elseLabel);
-        ExpressionWriter.pushExpression(generatorAdapter, context, conditionIfElse.elseExpression(), conditionIfElse.type());
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, conditionIfElse.elseExpression(), conditionIfElse.type());
         generatorAdapter.visitLabel(end);
     }
 }

@@ -29,7 +29,7 @@ final class ConditionExpressionWriter extends AbstractConditionalWriter implemen
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         Label elseLabel = new Label();
         pushElseConditionalExpression(generatorAdapter, context, expressionDef, elseLabel);
         generatorAdapter.push(true);

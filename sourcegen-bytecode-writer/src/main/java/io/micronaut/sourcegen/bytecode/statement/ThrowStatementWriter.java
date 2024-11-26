@@ -29,7 +29,7 @@ final class ThrowStatementWriter implements StatementWriter {
 
     @Override
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
-        ExpressionWriter.pushExpression(generatorAdapter, context, aThrow.expression(), aThrow.expression().type());
+        ExpressionWriter.writeExpression(generatorAdapter, context, aThrow.expression());
         generatorAdapter.throwException();
     }
 }

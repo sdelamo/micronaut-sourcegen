@@ -17,12 +17,12 @@ package io.micronaut.sourcegen.bytecode.statement;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.sourcegen.bytecode.AbstractSwitchWriter;
 import io.micronaut.sourcegen.bytecode.MethodContext;
 import io.micronaut.sourcegen.bytecode.expression.ExpressionWriter;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.StatementDef;
-import io.micronaut.sourcegen.model.TypeDef;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
@@ -35,10 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.micronaut.sourcegen.bytecode.WriterUtils.pushSwitchExpression;
-import static io.micronaut.sourcegen.bytecode.WriterUtils.toSwitchKey;
-
-final class SwitchStatementWriter implements StatementWriter {
+final class SwitchStatementWriter extends AbstractSwitchWriter implements StatementWriter {
     private final StatementDef.Switch aSwitch;
 
     public SwitchStatementWriter(StatementDef.Switch aSwitch) {
@@ -49,23 +46,22 @@ final class SwitchStatementWriter implements StatementWriter {
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
         boolean isStringSwitch = aSwitch.expression().type() instanceof ClassTypeDef classTypeDef && classTypeDef.getName().equals(String.class.getName());
         if (isStringSwitch) {
-            pushStringSwitch(generatorAdapter, context, finallyBlock, aSwitch);
+            writeStringSwitch(generatorAdapter, context, finallyBlock, aSwitch);
         } else {
-            pushSwitch(generatorAdapter, context, finallyBlock, aSwitch);
+            writeSwitch(generatorAdapter, context, finallyBlock, aSwitch);
         }
     }
 
-    private void pushSwitch(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock, StatementDef.Switch aSwitch) {
+    private void writeSwitch(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock, StatementDef.Switch aSwitch) {
         pushSwitchExpression(generatorAdapter, context, aSwitch.expression());
         Map<Integer, StatementDef> map = aSwitch.cases().entrySet().stream().map(e -> Map.entry(toSwitchKey(e.getKey()), e.getValue())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         tableSwitch(generatorAdapter, context, map, aSwitch.defaultCase(), finallyBlock);
     }
 
-    private void pushStringSwitch(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock, StatementDef.Switch aSwitch) {
+    private void writeStringSwitch(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock, StatementDef.Switch aSwitch) {
         ExpressionDef expression = aSwitch.expression();
-        TypeDef switchExpressionType = expression.type();
 
-        ExpressionWriter.pushExpression(generatorAdapter, context, expression, switchExpressionType);
+        ExpressionWriter.writeExpression(generatorAdapter, context, expression);
 
         Type stringType = Type.getType(String.class);
         int switchValueLocal = generatorAdapter.newLocal(stringType);

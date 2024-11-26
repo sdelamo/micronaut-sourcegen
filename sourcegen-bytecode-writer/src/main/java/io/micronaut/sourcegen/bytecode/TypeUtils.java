@@ -20,11 +20,14 @@ import io.micronaut.inject.processing.JavaModelUtils;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.InterfaceDef;
+import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ObjectDef;
+import io.micronaut.sourcegen.model.ParameterDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import org.objectweb.asm.Type;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +41,17 @@ public final class TypeUtils {
 
     public static final Type OBJECT_TYPE = Type.getType(Object.class);
     private static final Pattern ARRAY_PATTERN = Pattern.compile("(\\[])+$");
+
+    public static String getMethodDescriptor(@Nullable ObjectDef objectDef, MethodDef methodDef) {
+        StringBuilder builder = new StringBuilder();
+        builder.append('(');
+        for (ParameterDef parameterDef : methodDef.getParameters()) {
+            builder.append(TypeUtils.getType(parameterDef.getType(), objectDef));
+        }
+        builder.append(')');
+        builder.append(TypeUtils.getType(Objects.requireNonNullElse(methodDef.getReturnType(), TypeDef.VOID), objectDef));
+        return builder.toString();
+    }
 
     public static Type getType(TypeDef typeDef, @Nullable ObjectDef objectDef) {
         typeDef = ObjectDef.getContextualType(objectDef, typeDef);

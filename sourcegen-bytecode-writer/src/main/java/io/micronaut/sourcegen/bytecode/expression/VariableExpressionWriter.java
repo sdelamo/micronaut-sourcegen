@@ -30,7 +30,7 @@ final class VariableExpressionWriter implements ExpressionWriter {
     }
 
     @Override
-    public void write(GeneratorAdapter generatorAdapter, MethodContext context, boolean statement) {
+    public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         if (variableDef instanceof VariableDef.ExceptionVar exceptionVar) {
             int index = context.locals().get("@exception");
             generatorAdapter.loadLocal(index, TypeUtils.getType(exceptionVar.type(), context.objectDef()));
@@ -58,10 +58,10 @@ final class VariableExpressionWriter implements ExpressionWriter {
             return;
         }
         if (variableDef instanceof VariableDef.Field field) {
-            TypeDef owner = field.instance().type();
 
-            ExpressionWriter.pushExpression(generatorAdapter, context, field.instance(), owner);
+            ExpressionWriter.writeExpression(generatorAdapter, context, field.instance());
             TypeDef fieldType = field.type();
+            TypeDef owner = field.instance().type();
             generatorAdapter.getField(TypeUtils.getType(owner, context.objectDef()), field.name(), TypeUtils.getType(fieldType, context.objectDef()));
             return;
         }

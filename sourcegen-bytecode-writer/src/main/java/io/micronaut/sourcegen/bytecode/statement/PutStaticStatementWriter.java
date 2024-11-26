@@ -32,7 +32,7 @@ final class PutStaticStatementWriter implements StatementWriter {
     @Override
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
         VariableDef.StaticField field = putStaticField.field();
-        ExpressionWriter.pushExpression(generatorAdapter, context, putStaticField.expression(), field.type());
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, putStaticField.expression(), field.type());
         generatorAdapter.putStatic(
             TypeUtils.getType(field.ownerType(), context.objectDef()),
             field.name(),
