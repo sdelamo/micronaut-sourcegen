@@ -174,7 +174,7 @@ public final class EnumDef extends ObjectDef {
          */
         public EnumDefBuilder addConstructor(Collection<ParameterDef> parameterDefs, Modifier... modifiers) {
             return this.addMethod(
-                MethodDef.constructor(ClassTypeDef.of(name), parameterDefs, modifiers)
+                MethodDef.constructor(parameterDefs, modifiers)
             );
         }
 
@@ -193,7 +193,7 @@ public final class EnumDef extends ObjectDef {
                 constructorParameters.add(ParameterDef.of(field.getName(), field.getType()));
             }
             return this.addMethod(
-                MethodDef.constructor(ClassTypeDef.of(name), constructorParameters, modifiers)
+                MethodDef.constructor(constructorParameters, modifiers)
             );
         }
 
@@ -205,7 +205,7 @@ public final class EnumDef extends ObjectDef {
          */
         public EnumDefBuilder addNoFieldsConstructor(Modifier... modifiers) {
             return this.addMethod(
-                MethodDef.constructor(ClassTypeDef.of(name), Collections.emptyList(), modifiers)
+                MethodDef.constructor(Collections.emptyList(), modifiers)
             );
         }
 

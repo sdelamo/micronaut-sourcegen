@@ -15,15 +15,22 @@
  */
 package io.micronaut.sourcegen.model;
 
+import com.github.javaparser.quality.NotNull;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +44,38 @@ import java.util.function.Function;
  */
 @Experimental
 public sealed interface ExpressionDef
-    permits ExpressionDef.And, ExpressionDef.CallInstanceMethod, ExpressionDef.CallStaticMethod, ExpressionDef.Cast, ExpressionDef.Condition, ExpressionDef.Constant, ExpressionDef.Convert, ExpressionDef.EqualsReferentially, ExpressionDef.EqualsStructurally, ExpressionDef.InvokeGetClassMethod, ExpressionDef.GetPropertyValue, ExpressionDef.InvokeHashCodeMethod, ExpressionDef.IfElse, ExpressionDef.NewArrayInitialized, ExpressionDef.NewArrayOfSize, ExpressionDef.NewInstance, ExpressionDef.Or, ExpressionDef.Switch, ExpressionDef.SwitchYieldCase, TypeDef.Primitive.PrimitiveInstance, VariableDef {
+    permits ExpressionDef.Cast, ExpressionDef.ConditionExpressionDef, ExpressionDef.Constant, ExpressionDef.ArrayElement, ExpressionDef.GetPropertyValue, ExpressionDef.IfElse, ExpressionDef.InstanceOf, ExpressionDef.InvokeGetClassMethod, ExpressionDef.InvokeHashCodeMethod, ExpressionDef.InvokeInstanceMethod, ExpressionDef.InvokeStaticMethod, ExpressionDef.MathOp, ExpressionDef.NewArrayInitialized, ExpressionDef.NewArrayOfSize, ExpressionDef.NewInstance, ExpressionDef.Switch, ExpressionDef.SwitchYieldCase, VariableDef {
+
+    /**
+     * Check an array element.
+     *
+     * @param index The index
+     * @return The array element
+     * @since 1.5
+     */
+    default ArrayElement arrayElement(int index) {
+        return new ArrayElement(this, index);
+    }
+
+    /**
+     * Check if the instance is of the type.
+     *
+     * @param instanceType The instance type
+     * @return The instance of expression
+     * @since 1.5
+     */
+    default ExpressionDef.InstanceOf instanceOf(ClassTypeDef instanceType) {
+        return new ExpressionDef.InstanceOf(this, instanceType);
+    }
+
+    /**
+     * Throw an exception.
+     *
+     * @return The throw statement
+     */
+    default StatementDef.Throw doThrow() {
+        return new StatementDef.Throw(this);
+    }
 
     /**
      * The condition of this variable.
@@ -49,6 +87,18 @@ public sealed interface ExpressionDef
      */
     default ExpressionDef asCondition(String op, ExpressionDef expression) {
         return new ExpressionDef.Condition(op, this, expression);
+    }
+
+    /**
+     * The math operation of this variable.
+     *
+     * @param op         The operator
+     * @param expression The expression of this variable
+     * @return The condition expression
+     * @since 1.2
+     */
+    default ExpressionDef math(String op, ExpressionDef expression) {
+        return new ExpressionDef.MathOp(op, this, expression);
     }
 
     /**
@@ -78,7 +128,42 @@ public sealed interface ExpressionDef
      * @since 1.2
      */
     default ExpressionDef isNonNull() {
-        return asCondition(" != ", ExpressionDef.nullValue());
+        return new ExpressionDef.IsNotNull(this);
+    }
+
+    /**
+     * Is not null - if / else expression.
+     *
+     * @param ifExpression   If expression
+     * @param elseExpression Else expression
+     * @return Is not null expression
+     * @since 1.5
+     */
+    default ExpressionDef isNonNull(ExpressionDef ifExpression, ExpressionDef elseExpression) {
+        return isNonNull().asConditionIfElse(ifExpression, elseExpression);
+    }
+
+    /**
+     * Is not null - if statement.
+     *
+     * @param ifStatement If statement
+     * @return Is not null statement
+     * @since 1.5
+     */
+    default StatementDef isNonNull(StatementDef ifStatement) {
+        return isNonNull().asConditionIf(ifStatement);
+    }
+
+    /**
+     * Is not null - if / else statement.
+     *
+     * @param ifStatement   If statement
+     * @param elseStatement Else statement
+     * @return Is not null statement
+     * @since 1.5
+     */
+    default StatementDef isNonNull(StatementDef ifStatement, StatementDef elseStatement) {
+        return isNonNull().asConditionIfElse(ifStatement, elseStatement);
     }
 
     /**
@@ -86,7 +171,58 @@ public sealed interface ExpressionDef
      * @since 1.2
      */
     default ExpressionDef isNull() {
-        return asCondition(" == ", ExpressionDef.nullValue());
+        return new ExpressionDef.IsNull(this);
+    }
+
+    /**
+     * Is null - if / else expression.
+     *
+     * @param ifExpression   If expression
+     * @param elseExpression Else expression
+     * @return Is null expression
+     * @since 1.5
+     */
+    default ExpressionDef isNull(ExpressionDef ifExpression, ExpressionDef elseExpression) {
+        return isNull().asConditionIfElse(ifExpression, elseExpression);
+    }
+
+    /**
+     * Is null - if statement.
+     *
+     * @param ifStatement If statement
+     * @return Is null statement
+     * @since 1.5
+     */
+    default StatementDef isNull(StatementDef ifStatement) {
+        return isNull().asConditionIf(ifStatement);
+    }
+
+    /**
+     * Is null - if / else statement.
+     *
+     * @param ifStatement   If statement
+     * @param elseStatement Else statement
+     * @return Is null statement
+     * @since 1.5
+     */
+    default StatementDef isNull(StatementDef ifStatement, StatementDef elseStatement) {
+        return isNull().asConditionIfElse(ifStatement, elseStatement);
+    }
+
+    /**
+     * @return Is true expression
+     * @since 1.5
+     */
+    default ExpressionDef.ConditionExpressionDef isTrue() {
+        return new ExpressionDef.Condition("==", trueValue(), this);
+    }
+
+    /**
+     * @return Is false expression
+     * @since 1.5
+     */
+    default ExpressionDef.ConditionExpressionDef isFalse() {
+        return new ExpressionDef.Condition("==", falseValue(), this);
     }
 
     /**
@@ -104,7 +240,7 @@ public sealed interface ExpressionDef
      */
     @NonNull
     static ExpressionDef.Constant trueValue() {
-        return new Constant(TypeDef.Primitive.BOOLEAN, true);
+        return TypeDef.Primitive.TRUE;
     }
 
     /**
@@ -113,7 +249,7 @@ public sealed interface ExpressionDef
      */
     @NonNull
     static ExpressionDef.Constant falseValue() {
-        return new Constant(TypeDef.Primitive.BOOLEAN, false);
+        return TypeDef.Primitive.FALSE;
     }
 
     /**
@@ -134,6 +270,18 @@ public sealed interface ExpressionDef
     @NonNull
     default ExpressionDef.Cast cast(TypeDef type) {
         return new Cast(type, this);
+    }
+
+    /**
+     * Cast expression to a different type.
+     *
+     * @param type The type to cast to
+     * @return The cast expression
+     * @since 1.5
+     */
+    @NonNull
+    default ExpressionDef.Cast cast(Class<?> type) {
+        return new Cast(TypeDef.of(type), this);
     }
 
     /**
@@ -199,18 +347,6 @@ public sealed interface ExpressionDef
     }
 
     /**
-     * Turn this expression into an expression switch.
-     *
-     * @param type  The expression type
-     * @param cases The cases
-     * @return A new switch expression
-     * @since 1.2
-     */
-    default ExpressionDef.Switch asExpressionSwitch(TypeDef type, Map<Constant, ExpressionDef> cases) {
-        return new Switch(this, type, cases);
-    }
-
-    /**
      * Turn this expression into a statement switch.
      *
      * @param type  The expression type
@@ -218,8 +354,55 @@ public sealed interface ExpressionDef
      * @return A new switch expression
      * @since 1.2
      */
-    default StatementDef.Switch asStatementSwitch(TypeDef type, Map<Constant, StatementDef> cases) {
-        return new StatementDef.Switch(this, type, cases);
+    default StatementDef asStatementSwitch(TypeDef type, Map<Constant, StatementDef> cases) {
+        return asStatementSwitch(type, cases, null);
+    }
+
+    /**
+     * Turn this expression into an expression switch.
+     *
+     * @param type        The expression type
+     * @param cases       The cases
+     * @param defaultCase The default cae
+     * @return A new switch expression
+     * @since 1.5
+     */
+    default ExpressionDef.Switch asExpressionSwitch(TypeDef type,
+                                                    Map<Constant, ? extends ExpressionDef> cases,
+                                                    ExpressionDef defaultCase) {
+        if (defaultCase == null) {
+            cases = new HashMap<>(cases);
+            defaultCase = cases.remove(nullValue());
+            if (defaultCase == null) {
+                defaultCase = cases.remove(null);
+                if (defaultCase == null) {
+                    throw new IllegalStateException("The expression switch requires a default expression");
+                }
+            }
+        }
+        return new Switch(this, type, cases, defaultCase);
+    }
+
+    /**
+     * Turn this expression into a statement switch.
+     *
+     * @param type  The expression type
+     * @param cases The cases
+     * @param defaultCase The default case
+     * @return A new switch expression
+     * @since 1.2
+     */
+    default StatementDef.Switch asStatementSwitch(TypeDef type,
+                                                  Map<Constant, StatementDef> cases,
+                                                  StatementDef defaultCase) {
+        if (defaultCase == null) {
+            cases = new HashMap<>(cases);
+            defaultCase = cases.remove(nullValue());
+            if (defaultCase == null) {
+                defaultCase = cases.remove(null);
+            }
+        }
+        return new StatementDef.Switch(this, type, cases, defaultCase);
     }
 
     /**
@@ -231,17 +414,6 @@ public sealed interface ExpressionDef
      */
     default StatementDef.While whileLoop(StatementDef statement) {
         return new StatementDef.While(this, statement);
-    }
-
-    /**
-     * Convert this variable to a different type.
-     *
-     * @param typeDef The type
-     * @return the convert expression
-     * @since 1.2
-     */
-    default ExpressionDef convert(TypeDef typeDef) {
-        return new ExpressionDef.Convert(typeDef, this);
     }
 
     /**
@@ -268,44 +440,209 @@ public sealed interface ExpressionDef
     }
 
     /**
+     * Reference the field of this variable.
+     *
+     * @param fieldElement The field definition
+     * @return The field variable
+     * @since 1.5
+     */
+    default VariableDef.Field field(FieldElement fieldElement) {
+        return new VariableDef.Field(this, fieldElement.getName(), TypeDef.of(fieldElement.getType()));
+    }
+
+    /**
+     * The invoke constructor expression.
+     *
+     * @param values The values
+     * @return The call to the instance method
+     * @since 1.5
+     */
+    default InvokeInstanceMethod invokeConstructor(ExpressionDef... values) {
+        return invokeConstructor(Arrays.asList(values));
+    }
+
+    /**
+     * The invoke constructor expression.
+     *
+     * @param values The values
+     * @return The call to the instance method
+     * @since 1.5
+     */
+    default InvokeInstanceMethod invokeConstructor(List<? extends ExpressionDef> values) {
+        return invokeConstructor(values.stream().map(ExpressionDef::type).toList(), values);
+    }
+
+    /**
+     * The invoke constructor expression.
+     *
+     * @param parameterTypes The parameterTypes
+     * @param values         The values
+     * @return The call to the instance method
+     * @since 1.5
+     */
+    default InvokeInstanceMethod invokeConstructor(List<TypeDef> parameterTypes, ExpressionDef... values) {
+        return invokeConstructor(parameterTypes, Arrays.asList(values));
+    }
+
+    /**
+     * The invoke constructor expression.
+     *
+     * @param parameterTypes The parameterTypes
+     * @param values         The values
+     * @return The call to the instance method
+     * @since 1.5
+     */
+    default InvokeInstanceMethod invokeConstructor(List<TypeDef> parameterTypes, List<? extends ExpressionDef> values) {
+        return new InvokeInstanceMethod(this, MethodDef.constructor().addParameters(parameterTypes).build(), values);
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param constructor The constructor
+     * @param values      The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default InvokeInstanceMethod invokeConstructor(Constructor<?> constructor, ExpressionDef... values) {
+        return invokeConstructor(constructor, List.of(values));
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param constructor The constructor
+     * @param values      The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default InvokeInstanceMethod invokeConstructor(Constructor<?> constructor, List<? extends ExpressionDef> values) {
+        return invokeConstructor(Arrays.stream(constructor.getParameterTypes()).map(TypeDef::of).toList(), values);
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param constructor The constructor
+     * @param values      The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default InvokeInstanceMethod invokeConstructor(MethodDef constructor, ExpressionDef... values) {
+        return invokeConstructor(constructor, List.of(values));
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param constructor The constructor
+     * @param values      The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default InvokeInstanceMethod invokeConstructor(MethodDef constructor, List<? extends ExpressionDef> values) {
+        return invokeConstructor(constructor.getParameters().stream().map(ParameterDef::getType).toList(), values);
+    }
+
+    /**
+     * The call the instance method expression.
+     *
+     * @param method The method
+     * @param values The values
+     * @return The call to the instance method
+     * @since 1.2
+     */
+    default InvokeInstanceMethod invoke(MethodDef method, ExpressionDef... values) {
+        return invoke(method, List.of(values));
+    }
+
+    /**
      * The call the instance method expression.
      *
      * @param methodDef The method
+     * @param values    The values
      * @return The call to the instance method
-     * @since 1.2
+     * @since 1.5
      */
-    default CallInstanceMethod invoke(MethodDef methodDef) {
-        return new CallInstanceMethod(this, methodDef);
+    default InvokeInstanceMethod invoke(MethodDef methodDef, List<? extends ExpressionDef> values) {
+        return new InvokeInstanceMethod(this, methodDef, values);
     }
 
     /**
-     * The call the instance method expression.
+     * The invoke the method defined by the reflection.
      *
-     * @param name       The method name
-     * @param parameters The parameters
-     * @param returning  The returning
-     * @return The call to the instance method
-     * @since 1.2
+     * @param method The method
+     * @param values The parameters
+     * @return The invoke method expression
+     * @since 1.5
      */
-    default CallInstanceMethod invoke(String name, TypeDef returning, ExpressionDef... parameters) {
-        return invoke(name, returning, List.of(parameters));
+    default InvokeInstanceMethod invoke(Method method, ExpressionDef... values) {
+        return invoke(method, Arrays.asList(values));
     }
 
     /**
-     * The call the instance method expression.
+     * The invoke the method defined by the reflection.
      *
-     * @param name       The method name
-     * @param parameters The parameters
-     * @param returning  The returning
-     * @return The call to the instance method
-     * @since 1.2
+     * @param method The method
+     * @param values The parameters
+     * @return The invoke method expression
+     * @since 1.5
      */
-    default CallInstanceMethod invoke(String name, TypeDef returning, List<? extends ExpressionDef> parameters) {
-        return new CallInstanceMethod(
+    default InvokeInstanceMethod invoke(Method method, List<? extends ExpressionDef> values) {
+        return new InvokeInstanceMethod(
             this,
+            MethodDef.of(method),
+            method.isDefault(),
+            values
+        );
+    }
+
+    /**
+     * The call the instance method expression.
+     *
+     * @param name      The method name
+     * @param returning The returning
+     * @param values    The parameters
+     * @return The call to the instance method
+     * @since 1.2
+     */
+    default InvokeInstanceMethod invoke(String name, TypeDef returning, ExpressionDef... values) {
+        return invoke(name, returning, List.of(values));
+    }
+
+    /**
+     * The call the instance method expression.
+     *
+     * @param name      The method name
+     * @param returning The returning
+     * @param values    The values
+     * @return The call to the instance method
+     * @since 1.2
+     */
+    default InvokeInstanceMethod invoke(String name, TypeDef returning, List<? extends ExpressionDef> values) {
+        return invoke(
             name,
-            parameters,
-            returning
+            values.stream().map(ExpressionDef::type).toList(),
+            returning,
+            values
+        );
+    }
+
+    /**
+     * The call the instance method expression.
+     *
+     * @param name           The method name
+     * @param parameterTypes The parameterTypes
+     * @param returning      The returning
+     * @param values         The values
+     * @return The call to the instance method
+     * @since 1.5
+     */
+    default InvokeInstanceMethod invoke(String name, List<TypeDef> parameterTypes, TypeDef returning, List<? extends ExpressionDef> values) {
+        return new InvokeInstanceMethod(
+            this,
+            MethodDef.builder(name).addParameters(parameterTypes).returns(returning).build(),
+            values
         );
     }
 
@@ -313,28 +650,28 @@ public sealed interface ExpressionDef
      * The call the instance method expression.
      *
      * @param methodElement The method element
-     * @param parameters    The parameters
+     * @param values        The values
      * @return The call to the instance method
      * @since 1.2
      */
-    default CallInstanceMethod invoke(MethodElement methodElement, ExpressionDef... parameters) {
-        return invoke(methodElement, List.of(parameters));
+    default InvokeInstanceMethod invoke(MethodElement methodElement, ExpressionDef... values) {
+        return invoke(methodElement, List.of(values));
     }
 
     /**
      * The call the instance method expression.
      *
      * @param methodElement The method element
-     * @param parameters    The parameters
+     * @param values        The parameters
      * @return The call to the instance method
      * @since 1.2
      */
-    default CallInstanceMethod invoke(MethodElement methodElement, List<ExpressionDef> parameters) {
-        return new CallInstanceMethod(
+    default InvokeInstanceMethod invoke(MethodElement methodElement, List<? extends ExpressionDef> values) {
+        return new InvokeInstanceMethod(
             this,
-            methodElement.getName(),
-            parameters,
-            TypeDef.of(methodElement.getReturnType())
+            MethodDef.of(methodElement),
+            methodElement.isDefault(),
+            values
         );
     }
 
@@ -404,9 +741,6 @@ public sealed interface ExpressionDef
     @Nullable
     static ExpressionDef constant(ClassElement type, TypeDef typeDef, @Nullable Object value) {
         Objects.requireNonNull(type, "Type cannot be null");
-        if (value == null) {
-            return null;
-        }
         if (type.isPrimitive()) {
             return ClassUtils.getPrimitiveType(type.getName()).flatMap(t ->
                 ConversionService.SHARED.convert(value, t)
@@ -422,9 +756,104 @@ public sealed interface ExpressionDef
             } else {
                 name = value.toString();
             }
-            return new VariableDef.StaticField(typeDef, name, typeDef);
+            return ((ClassTypeDef) typeDef).getStaticField(name, typeDef);
         }
-        return null;
+        return ExpressionDef.nullValue();
+    }
+
+    /**
+     * A new constant.
+     *
+     * @param value The string value
+     * @return The constant
+     * @throws IllegalArgumentException if the constant is not supported.
+     * @since 1.2
+     */
+    @Experimental
+    @Nullable
+    static ExpressionDef.Constant constant(@Nullable Object value) {
+        if (value == null) {
+            return ExpressionDef.nullValue();
+        }
+        TypeDef type;
+        if (value instanceof TypeDef) {
+            type = TypeDef.CLASS;
+        } else {
+            type = TypeDef.of(value.getClass());
+        }
+        return new Constant(type, value);
+    }
+
+    /**
+     * A new constant.
+     *
+     * @param value The value
+     * @return The constant
+     * @since 1.5
+     */
+    @Experimental
+    static ExpressionDef.Constant constant(boolean value) {
+        return new Constant(TypeDef.Primitive.BOOLEAN, value);
+    }
+
+    /**
+     * A new constant.
+     *
+     * @param value The value
+     * @return The constant
+     * @since 1.5
+     */
+    @Experimental
+    static ExpressionDef.Constant constant(int value) {
+        return new Constant(TypeDef.Primitive.INT, value);
+    }
+
+    /**
+     * A new constant.
+     *
+     * @param value The value
+     * @return The constant
+     * @since 1.5
+     */
+    @Experimental
+    static ExpressionDef.Constant constant(long value) {
+        return new Constant(TypeDef.Primitive.LONG, value);
+    }
+
+    /**
+     * A new constant.
+     *
+     * @param value The value
+     * @return The constant
+     * @since 1.4
+     */
+    @Experimental
+    static ExpressionDef.Constant constant(double value) {
+        return new Constant(TypeDef.Primitive.DOUBLE, value);
+    }
+
+    /**
+     * A new constant.
+     *
+     * @param value The value
+     * @return The constant
+     * @since 1.5
+     */
+    @Experimental
+    static ExpressionDef.Constant constant(float value) {
+        return new Constant(TypeDef.Primitive.FLOAT, value);
+    }
+
+    /**
+     * A new constant.
+     *
+     * @param value The value
+     * @return The constant
+     * @since 1.5
+     */
+    @Experimental
+    static ExpressionDef.Constant constant(char value) {
+        return new Constant(TypeDef.Primitive.CHAR, value);
     }
 
     /**
@@ -437,11 +866,9 @@ public sealed interface ExpressionDef
      */
     @Experimental
     @Nullable
-    static ExpressionDef.Constant constant(@Nullable Object value) {
-        if (value == null) {
-            return null;
-        }
-        return new Constant(TypeDef.of(value.getClass()), value);
+    static ExpressionDef.Constant primitiveConstant(@NotNull Object value) {
+        Class<?> primitiveType = ReflectionUtils.getPrimitiveType(value.getClass());
+        return new ExpressionDef.Constant(TypeDef.primitive(primitiveType), value);
     }
 
     /**
@@ -454,97 +881,16 @@ public sealed interface ExpressionDef
     /**
      * The new instance expression.
      *
-     * @param type The type
-     * @return The new instance
-     */
-    @Experimental
-    static NewInstance instantiate(ClassTypeDef type) {
-        return ExpressionDef.instantiate(type, List.of());
-    }
-
-    /**
-     * The new instance expression.
-     *
-     * @param type   The type
-     * @param values The constructor values
-     * @return The new instance
-     */
-    @Experimental
-    static NewInstance instantiate(ClassTypeDef type,
-                                   List<ExpressionDef> values) {
-        return new NewInstance(type, values);
-    }
-
-    /**
-     * The call the instance method expression.
-     *
-     * @param instance   The instance
-     * @param name       The method name
-     * @param parameters The parameters
-     * @param returning  The returning
-     * @return The call to the instance method
-     */
-    @Experimental
-    static CallInstanceMethod invoke(
-        VariableDef instance,
-        String name,
-        List<ExpressionDef> parameters,
-        TypeDef returning) {
-        return new CallInstanceMethod(
-            instance,
-            name,
-            parameters,
-            returning
-        );
-    }
-
-    /**
-     * The call the instance method expression.
-     *
-     * @param typeDef    The class type def
-     * @param name       The method name
-     * @param parameters The parameters
-     * @param returning  The returning
-     * @return The call to the static method
-     */
-    @Experimental
-    static CallStaticMethod invokeStatic(
-        ClassTypeDef typeDef,
-        String name,
-        List<ExpressionDef> parameters,
-        TypeDef returning) {
-        return new CallStaticMethod(
-            typeDef,
-            name,
-            parameters,
-            returning
-        );
-    }
-
-    /**
-     * The new instance expression.
-     *
-     * @param type   The type
-     * @param values The constructor values
+     * @param type           The type
+     * @param parameterTypes The parameterTypes
+     * @param values         The constructor values
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
     record NewInstance(ClassTypeDef type,
-                       List<ExpressionDef> values) implements ExpressionDef {
-    }
-
-    /**
-     * The convert variable expression. (To support Kotlin's nullable -> not-null conversion)
-     *
-     * @param type          The type
-     * @param expressionDef The expression reference
-     * @author Denis Stepanov
-     * @since 1.0
-     */
-    @Experimental
-    record Convert(TypeDef type,
-                   ExpressionDef expressionDef) implements ExpressionDef {
+                       List<TypeDef> parameterTypes,
+                       List<? extends ExpressionDef> values) implements ExpressionDef {
     }
 
     /**
@@ -577,49 +923,51 @@ public sealed interface ExpressionDef
     /**
      * The call an instance method expression.
      *
-     * @param instance      The instance
-     * @param name          The method name
-     * @param parameters    The parameters
-     * @param returningType The returning
+     * @param instance  The instance
+     * @param method    The method
+     * @param isDefault Is default method
+     * @param values    The parameters
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
-    record CallInstanceMethod(ExpressionDef instance,
-                              String name,
-                              List<? extends ExpressionDef> parameters,
-                              TypeDef returningType) implements ExpressionDef, StatementDef {
+    record InvokeInstanceMethod(ExpressionDef instance,
+                                MethodDef method,
+                                boolean isDefault,
+                                List<? extends ExpressionDef> values) implements ExpressionDef, StatementDef {
 
-        public CallInstanceMethod(ExpressionDef instance, MethodDef methodDef) {
-            this(instance, methodDef.name, methodDef.getParameters()
-                    .stream()
-                    .<ExpressionDef>map(ParameterDef::asExpression)
-                    .toList(),
-                methodDef.getReturnType());
+        public InvokeInstanceMethod(ExpressionDef instance, MethodDef method, List<? extends ExpressionDef> values) {
+            this(instance, method, false, values);
+        }
+
+        public InvokeInstanceMethod {
+            if (method.getParameters().size() != values.size()) {
+                throw new IllegalStateException("Method " + method.getName() + " parameters: " + method.getParameters().size() + " doesn't match values provided: " + values.size());
+            }
         }
 
         @Override
         public TypeDef type() {
-            return returningType;
+            return method.getReturnType();
         }
     }
 
     /**
      * The call a static method expression.
      *
-     * @param classDef      The instance
-     * @param name          The method name
-     * @param parameters    The parameters
-     * @param returningType The returning
+     * @param classDef The class
+     * @param method   The method
+     * @param values   The values
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
-    record CallStaticMethod(ClassTypeDef classDef, String name, List<ExpressionDef> parameters,
-                            TypeDef returningType) implements ExpressionDef, StatementDef {
+    record InvokeStaticMethod(ClassTypeDef classDef,
+                              MethodDef method,
+                              List<? extends ExpressionDef> values) implements ExpressionDef, StatementDef {
         @Override
         public TypeDef type() {
-            return returningType;
+            return method.getReturnType();
         }
     }
 
@@ -634,11 +982,45 @@ public sealed interface ExpressionDef
     @Experimental
     record Condition(String operator,
                      ExpressionDef left,
-                     ExpressionDef right) implements ExpressionDef {
+                     ExpressionDef right) implements ConditionExpressionDef {
+    }
+
+    /**
+     * The math operator.
+     *
+     * @param operator The operator
+     * @param left     The left expression
+     * @param right    The right expression
+     * @author Denis Stepanov
+     */
+    @Experimental
+    record MathOp(String operator,
+                  ExpressionDef left,
+                  ExpressionDef right) implements ExpressionDef {
         @Override
         public TypeDef type() {
-            return TypeDef.Primitive.BOOLEAN;
+            return left.type();
         }
+    }
+
+    /**
+     * The IS NULL condition.
+     *
+     * @param expression The expression
+     * @author Denis Stepanov
+     */
+    @Experimental
+    record IsNull(ExpressionDef expression) implements ConditionExpressionDef {
+    }
+
+    /**
+     * The IS NOT NULL condition.
+     *
+     * @param expression The expression
+     * @author Denis Stepanov
+     */
+    @Experimental
+    record IsNotNull(ExpressionDef expression) implements ConditionExpressionDef {
     }
 
     /**
@@ -650,11 +1032,7 @@ public sealed interface ExpressionDef
      * @since 1.3
      */
     @Experimental
-    record And(ExpressionDef left, ExpressionDef right) implements ExpressionDef {
-        @Override
-        public TypeDef type() {
-            return TypeDef.Primitive.BOOLEAN;
-        }
+    record And(ExpressionDef left, ExpressionDef right) implements ConditionExpressionDef {
     }
 
     /**
@@ -666,11 +1044,7 @@ public sealed interface ExpressionDef
      * @since 1.3
      */
     @Experimental
-    record Or(ExpressionDef left, ExpressionDef right) implements ExpressionDef {
-        @Override
-        public TypeDef type() {
-            return TypeDef.Primitive.BOOLEAN;
-        }
+    record Or(ExpressionDef left, ExpressionDef right) implements ConditionExpressionDef {
     }
 
     /**
@@ -693,15 +1067,17 @@ public sealed interface ExpressionDef
      * The switch expression.
      * Note: null constant or null value represents a default case.
      *
-     * @param expression The switch expression
-     * @param type       The switch type
-     * @param cases      The cases
+     * @param expression  The switch expression
+     * @param type        The switch type
+     * @param cases       The cases
+     * @param defaultCase The default case
      * @since 1.2
      */
     @Experimental
     record Switch(ExpressionDef expression,
                   TypeDef type,
-                  Map<Constant, ExpressionDef> cases) implements ExpressionDef {
+                  Map<Constant, ? extends ExpressionDef> cases,
+                  ExpressionDef defaultCase) implements ExpressionDef {
     }
 
     /**
@@ -737,7 +1113,7 @@ public sealed interface ExpressionDef
      */
     @Experimental
     record NewArrayInitialized(TypeDef.Array type,
-                               List<ExpressionDef> expressions) implements ExpressionDef {
+                               List<? extends ExpressionDef> expressions) implements ExpressionDef {
     }
 
     /**
@@ -786,7 +1162,7 @@ public sealed interface ExpressionDef
 
         @Override
         public TypeDef type() {
-            return TypeDef.of(Class.class);
+            return TypeDef.of(int.class);
         }
     }
 
@@ -794,34 +1170,82 @@ public sealed interface ExpressionDef
      * The structurally equals expression.
      *
      * @param instance The instance
-     * @param other The other
+     * @param other    The other
      * @author Denis Stepanov
      * @since 1.3
      */
     @Experimental
-    record EqualsStructurally(ExpressionDef instance, ExpressionDef other) implements ExpressionDef {
-
-        @Override
-        public TypeDef type() {
-            return TypeDef.Primitive.BOOLEAN;
-        }
+    record EqualsStructurally(ExpressionDef instance,
+                              ExpressionDef other) implements ConditionExpressionDef {
     }
 
     /**
      * The referential equals expression.
      *
      * @param instance The instance
-     * @param other The other
+     * @param other    The other
      * @author Denis Stepanov
      * @since 1.3
      */
     @Experimental
-    record EqualsReferentially(ExpressionDef instance, ExpressionDef other) implements ExpressionDef {
+    record EqualsReferentially(ExpressionDef instance,
+                               ExpressionDef other) implements ConditionExpressionDef {
+    }
+
+    /**
+     * The instance of expression.
+     *
+     * @param expression   The expression
+     * @param instanceType The instance type
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record InstanceOf(ExpressionDef expression,
+                      ClassTypeDef instanceType) implements ConditionExpressionDef, ExpressionDef {
+    }
+
+    /**
+     * The get array element expression.
+     *
+     * @param expression The expression
+     * @param type       The component type
+     * @param index      The index
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record ArrayElement(ExpressionDef expression,
+                        TypeDef type,
+                        int index) implements ExpressionDef {
+
+        public ArrayElement(ExpressionDef expression,
+                            int index) {
+            this(expression, findComponentType(expression.type()), index);
+        }
+
+        private static TypeDef findComponentType(TypeDef arrayType) {
+            if (arrayType instanceof TypeDef.Array array) {
+                return array.componentType();
+            }
+            throw new IllegalArgumentException(arrayType + " is not an array");
+        }
+
+    }
+
+    /**
+     * The conditional expression.
+     *
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    sealed interface ConditionExpressionDef extends ExpressionDef {
 
         @Override
-        public TypeDef type() {
+        default TypeDef type() {
             return TypeDef.Primitive.BOOLEAN;
         }
+
     }
 
 }

@@ -46,6 +46,14 @@ public final class InterfaceDef extends ObjectDef {
         this.typeVariables = typeVariables;
     }
 
+    @Override
+    public ClassTypeDef asTypeDef() {
+        if (typeVariables.isEmpty()) {
+            return super.asTypeDef();
+        }
+        return TypeDef.parameterized(super.asTypeDef(), typeVariables.toArray(new TypeDef.TypeVariable[0]));
+    }
+
     public static InterfaceDefBuilder builder(String name) {
         return new InterfaceDefBuilder(name);
     }

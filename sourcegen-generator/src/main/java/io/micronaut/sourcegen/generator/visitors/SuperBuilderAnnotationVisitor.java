@@ -69,20 +69,11 @@ public final class SuperBuilderAnnotationVisitor implements TypeElementVisitor<S
 
             ClassTypeDef abstractBuilderType = ClassTypeDef.of(abstractBuilderClassName);
 
-            TypeDef.TypeVariable selfType = new TypeDef.TypeVariable("B");
-            TypeDef.TypeVariable producingType = new TypeDef.TypeVariable("C");
+            TypeDef.TypeVariable selfType = TypeDef.variable("B");
+            TypeDef.TypeVariable producingType = TypeDef.variable("C");
             ClassDef.ClassDefBuilder abstractBuilder = ClassDef.builder(abstractBuilderClassName)
-                .addTypeVariable(new TypeDef.TypeVariable("C", List.of(TypeDef.of(element))))
-                .addTypeVariable(new TypeDef.TypeVariable("B",
-                        List.of(
-                            TypeDef.parameterized(
-                                abstractBuilderType,
-                                producingType,
-                                selfType
-                            )
-                        )
-                    )
-                )
+                .addTypeVariable(TypeDef.variable("C", TypeDef.of(element)))
+                .addTypeVariable(TypeDef.variable("B", TypeDef.parameterized(abstractBuilderType, producingType, selfType)))
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT);
 
             ClassElement superType = element.getSuperType().orElse(null);
@@ -91,7 +82,7 @@ public final class SuperBuilderAnnotationVisitor implements TypeElementVisitor<S
                     throw new ProcessingException(element, "Super type [" + superType.getName() + "] must be annotated with @" + SuperBuilder.class.getSimpleName());
                 }
                 String abstractSuperBuilderName = getAbstractSuperBuilderName(superType);
-                abstractBuilder.superclass(new ClassTypeDef.Parameterized(
+                abstractBuilder.superclass(TypeDef.parameterized(
                     ClassTypeDef.of(abstractSuperBuilderName),
                     List.of(
                         new TypeDef.TypeVariable("C"),
@@ -105,7 +96,7 @@ public final class SuperBuilderAnnotationVisitor implements TypeElementVisitor<S
                 if (!beanProperty.getDeclaringType().equals(element)) {
                     continue;
                 }
-                createModifyPropertyMethod(abstractBuilder, beanProperty, self -> self.invoke("self", self.type()).convert(selfType).returning());
+                createModifyPropertyMethod(abstractBuilder, beanProperty, self -> self.invoke("self", self.type()).cast(selfType).returning());
             }
 
             abstractBuilder.addMethod(MethodDef.builder("self").addModifiers(Modifier.ABSTRACT).returns(selfType).build());
@@ -119,19 +110,7 @@ public final class SuperBuilderAnnotationVisitor implements TypeElementVisitor<S
             }
 
             processed.add(element.getName());
-            context.visitGeneratedSourceFile(
-                abstractBuilderDef.getPackageName(),
-                abstractBuilderDef.getSimpleName(),
-                element
-            ).ifPresent(sourceFile -> {
-                try {
-                    sourceFile.write(
-                        writer -> sourceGenerator.write(abstractBuilderDef, writer)
-                    );
-                } catch (Exception e) {
-                    throw new ProcessingException(element, "Failed to generate an abstract super builder: " + e.getMessage(), e);
-                }
-            });
+            sourceGenerator.write(abstractBuilderDef, context, element);
 
             if (!element.isAbstract()) {
 
@@ -141,7 +120,7 @@ public final class SuperBuilderAnnotationVisitor implements TypeElementVisitor<S
 
                 ClassDef.ClassDefBuilder builder = ClassDef.builder(builderClassName)
                     .addModifiers(Modifier.PUBLIC)
-                    .superclass(new ClassTypeDef.Parameterized(
+                    .superclass(TypeDef.parameterized(
                             ClassTypeDef.of(abstractBuilderDef),
                             List.of(
                                 ClassTypeDef.of(element),
@@ -153,7 +132,7 @@ public final class SuperBuilderAnnotationVisitor implements TypeElementVisitor<S
 
                 builder.addMethod(MethodDef.constructor().build());
                 if (!properties.isEmpty()) {
-                    builder.addMethod(BuilderAnnotationVisitor.createAllPropertiesConstructor(builderType, properties));
+                    builder.addMethod(BuilderAnnotationVisitor.createAllPropertiesConstructor(properties));
                 }
 
                 builder.addMethod(createSelfMethod());
@@ -161,15 +140,7 @@ public final class SuperBuilderAnnotationVisitor implements TypeElementVisitor<S
                 builder.addMethod(createBuilderMethod(builderType));
 
                 ClassDef builderDef = builder.build();
-                context.visitGeneratedSourceFile(builderDef.getPackageName(), builderDef.getSimpleName(), element).ifPresent(sourceFile -> {
-                    try {
-                        sourceFile.write(
-                            writer -> sourceGenerator.write(builderDef, writer)
-                        );
-                    } catch (Exception e) {
-                        throw new ProcessingException(element, "Failed to generate a super builder: " + e.getMessage(), e);
-                    }
-                });
+                sourceGenerator.write(builderDef, context, element);
             }
         } catch (ProcessingException e) {
             throw e;

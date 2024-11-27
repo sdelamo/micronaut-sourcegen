@@ -46,18 +46,18 @@ import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
 
-import java.util.HashSet;
-import java.util.Set;
 import javax.lang.model.element.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -75,7 +75,7 @@ import static io.micronaut.sourcegen.generator.visitors.Singulars.singularize;
 @Internal
 public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builder, Object> {
 
-    public static final String BUILDER_ANNOTATED_WITH_MEMBER = "annotatedWith";
+    private static final String BUILDER_ANNOTATED_WITH_MEMBER = "annotatedWith";
 
     private final Set<String> processed = new HashSet<>();
 
@@ -116,7 +116,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
 
             builder.addMethod(MethodDef.constructor().build());
             if (!properties.isEmpty()) {
-                builder.addMethod(createAllPropertiesConstructor(builderType, properties));
+                builder.addMethod(createAllPropertiesConstructor(properties));
             }
 
             builder.addMethod(createBuilderMethod(builderType));
@@ -129,19 +129,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
 
             ClassDef builderDef = builder.build();
             processed.add(element.getName());
-            context.visitGeneratedSourceFile(
-                builderDef.getPackageName(),
-                builderDef.getSimpleName(),
-                element
-            ).ifPresent(sourceFile -> {
-                try {
-                    sourceFile.write(
-                        writer -> sourceGenerator.write(builderDef, writer)
-                    );
-                } catch (Exception e) {
-                    throw new ProcessingException(element, "Failed to generate a builder: " + e.getMessage(), e);
-                }
-            });
+            sourceGenerator.write(builderDef, context, element);
         } catch (ProcessingException e) {
             throw e;
         } catch (Exception e) {
@@ -164,69 +152,64 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
             // Apply the default annotation
             builder.addAnnotation(Introspected.class);
         } else {
-            for (AnnotationClassValue<?> value: annotatedWith.get()) {
+            for (AnnotationClassValue<?> value : annotatedWith.get()) {
                 builder.addAnnotation(value.getName());
             }
         }
     }
 
-    static MethodDef createAllPropertiesConstructor(ClassTypeDef builderType, List<PropertyElement> properties) {
+    static MethodDef createAllPropertiesConstructor(List<PropertyElement> properties) {
         MethodDef.MethodDefBuilder builder = MethodDef.constructor()
             .addAnnotation(Creator.class);
-        VariableDef.This self = new VariableDef.This(builderType);
+        int index = 0;
         for (PropertyElement parameter : properties) {
-            ParameterDef parameterDef = ParameterDef.of(parameter.getName(), TypeDef.of(parameter.getType()));
-            builder.addParameter(parameterDef);
-            if (parameter.hasAnnotation(Singular.class)) {
-                if (parameter.getType().getName().equals(Iterable.class.getName())) {
-                    builder.addStatement(
-                        iterableToArrayListStatement(self, parameterDef)
-                    );
-                } else if (parameter.getType().isAssignable(Map.class)) {
-                    builder.addStatement(
-                        mapToArrayListStatement(self, parameterDef)
-                    );
+            int parameterIndex = index++;
+            builder.addParameter(ParameterDef.of(parameter.getName(), TypeDef.of(parameter.getType())));
+            builder.addStatement((aThis, methodParameters) -> {
+                VariableDef.MethodParameter methodParameter = methodParameters.get(parameterIndex);
+                VariableDef.Field propertyField = aThis.field(methodParameter.name(), methodParameter.type());
+                if (parameter.hasAnnotation(Singular.class)) {
+                    if (parameter.getType().getName().equals(Iterable.class.getName())) {
+                        return iterableToArrayListStatement(propertyField, methodParameter);
+                    } else if (parameter.getType().isAssignable(Map.class)) {
+                        return mapToArrayListStatement(propertyField, methodParameter);
+                    } else {
+                        return propertyField.put(ClassTypeDef.of(ArrayList.class).instantiate(methodParameter));
+                    }
                 } else {
-                    builder.addStatement(
-                        self.field(parameterDef.getName(), parameterDef.getType())
-                            .assign(ClassTypeDef.of(ArrayList.class).instantiate(parameterDef.asExpression()))
-                    );
+                    return propertyField.put(methodParameter);
                 }
-            } else {
-                builder.addStatement(
-                    self.field(parameterDef.getName(), parameterDef.getType()).assign(parameterDef)
-                );
-            }
+            });
         }
         return builder.build();
     }
 
-    private static StatementDef iterableToArrayListStatement(VariableDef.This self, ParameterDef parameterDef) {
+    private static StatementDef iterableToArrayListStatement(VariableDef.Field propertyField,
+                                                             VariableDef.MethodParameter parameter) {
         return ClassTypeDef.of(ArrayList.class)
             .instantiate()
-            .newLocal(parameterDef.getName() + "ArrayList", arrayListVar ->
-                parameterDef.asExpression()
+            .newLocal(parameter.name() + "ArrayList", arrayListVar ->
+                parameter
                     .invoke("iterator", ClassTypeDef.of(Iterator.class))
-                    .newLocal(parameterDef.getName() + "Iterator", iteratorVar ->
-                        parameterDef.asExpression().isNonNull().asConditionIf(
+                    .newLocal(parameter.name() + "Iterator", iteratorVar ->
+                        parameter.isNonNull().asConditionIf(
                                 iteratorVar.invoke("hasNext", TypeDef.primitive(boolean.class))
                                     .whileLoop(
                                         arrayListVar.invoke("add", TypeDef.of(boolean.class), iteratorVar.invoke("next", ClassTypeDef.OBJECT))
                                     )
                             )
                             .after(
-                                self.field(parameterDef.getName(), parameterDef.getType()).assign(arrayListVar)
+                                propertyField.assign(arrayListVar)
                             )));
     }
 
-    private static StatementDef mapToArrayListStatement(VariableDef.This self, ParameterDef parameterDef) {
-        return self.field(parameterDef.getName(), parameterDef.getType())
-            .assign(
-                ClassTypeDef.of(ArrayList.class)
-                    .instantiate(
-                        parameterDef.asExpression().invoke("entrySet", ClassTypeDef.of(Map.Entry.class))
-                    )
-            );
+    private static StatementDef mapToArrayListStatement(VariableDef.Field propertyField,
+                                                        VariableDef.MethodParameter parameter) {
+        return propertyField.put(
+            ClassTypeDef.of(ArrayList.class).instantiate(
+                parameter.invoke("entrySet", ClassTypeDef.of(Map.Entry.class))
+            )
+        );
     }
 
     private MethodDef createBuilderMethod(ClassTypeDef builderType) {
@@ -302,7 +285,9 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 .addParameter(propertyName, TypeDef.parameterized(Collection.class, singularTypeDef))
                 .build((self, parameterDefs) -> StatementDef.multi(
                     parameterDefs.get(0).isNull().asConditionIf(
-                        ClassTypeDef.of(NullPointerException.class).doThrow(ExpressionDef.constant(propertyName + " cannot be null"))
+                        ClassTypeDef.of(NullPointerException.class)
+                            .instantiate(ExpressionDef.constant(propertyName + " cannot be null"))
+                            .doThrow()
                     ),
                     self.field(field).isNull().asConditionIf(
                         self.field(field).assign(ClassTypeDef.of(ArrayList.class).instantiate())
@@ -344,7 +329,9 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 .addParameter(propertyName, TypeDef.parameterized(Map.class, keyType, valueType))
                 .build((self, parameterDefs) -> StatementDef.multi(
                     parameterDefs.get(0).isNull().asConditionIf(
-                        ClassTypeDef.of(NullPointerException.class).doThrow(ExpressionDef.constant(propertyName + " cannot be null"))
+                        ClassTypeDef.of(NullPointerException.class)
+                            .instantiate(ExpressionDef.constant(propertyName + " cannot be null"))
+                            .doThrow()
                     ),
                     self.field(field).isNull().asConditionIf(
                         self.field(field).assign(fieldType.instantiate())
@@ -410,7 +397,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                         TypeDef fieldType = TypeDef.of(parameter.getType()).makeNullable();
                         VariableDef.Field field = self.field(parameter.getName(), fieldType);
                         values.add(
-                            valueExpression(propertyElement, field).convert(TypeDef.of(parameter.getType()))
+                            valueExpression(propertyElement, field).cast(TypeDef.of(parameter.getType()))
                         );
                     }
                 }
@@ -425,10 +412,27 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                         Optional<MethodElement> writeMethod = beanProperty.getWriteMethod();
                         if (writeMethod.isPresent()) {
                             String propertyName = beanProperty.getSimpleName();
-                            TypeDef propertyTypeDef = TypeDef.of(beanProperty.getType());
-                            statements.add(
-                                instanceVar.invoke(writeMethod.get(), valueExpression(beanProperty, self.field(propertyName, propertyTypeDef)))
-                            );
+                            TypeDef propertyType = TypeDef.of(beanProperty.getType());
+                            TypeDef fieldType = propertyType.makeNullable();
+                            if (fieldType.isNullable()) {
+                                statements.add(
+                                    self.field(propertyName, fieldType).isNonNull().asConditionIf(
+                                        instanceVar.invoke(
+                                            writeMethod.get(),
+                                            valueExpression(beanProperty, self.field(propertyName, fieldType))
+                                                .cast(propertyType)
+                                        )
+                                    )
+                                );
+                            } else {
+                                statements.add(
+                                    instanceVar.invoke(
+                                        writeMethod.get(),
+                                        valueExpression(beanProperty, self.field(propertyName, fieldType))
+                                            .cast(propertyType)
+                                    )
+                                );
+                            }
                         }
                     }
                     statements.add(instanceVar.returning());
@@ -451,7 +455,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
         ClassTypeDef elementType = propertyElement.getType().getFirstTypeArgument().map(ClassTypeDef::of).orElse(ClassTypeDef.OBJECT);
         TypeDef propertyType = TypeDef.of(propertyElement.getType());
         ExpressionDef collectionSize = field.isNull().asConditionIfElse(
-            ExpressionDef.constant(0),
+            ExpressionDef.primitiveConstant(0),
             field.invoke("size", TypeDef.primitive(int.class))
         );
         if (collectionType.equals(List.class.getName()) || collectionType.equals(Collection.class.getName()) || collectionType.equals(Iterable.class.getName())) {
@@ -463,10 +467,9 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                         // List.of()
                         ExpressionDef.constant(0), javaListType.invokeStatic("of", javaListType),
                         // List.of(single)
-                        ExpressionDef.constant(1), javaListType.invokeStatic("of", javaListType, field.invoke("get", elementType, ExpressionDef.constant(0))),
-                        // List.copyOf(all)
-                        ExpressionDef.nullValue(), javaListType.invokeStatic("copyOf", javaListType, field)
-                    )
+                        ExpressionDef.constant(1), javaListType.invokeStatic("of", javaListType, field.invoke("get", elementType, ExpressionDef.constant(0)))
+                    ),
+                    javaListType.invokeStatic("copyOf", javaListType, field)
                 );
         } else if (collectionType.equals(Set.class.getName())) {
             ClassTypeDef setListType = ClassTypeDef.of(Set.class);
@@ -477,46 +480,44 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                         // Set.of()
                         ExpressionDef.constant(0), setListType.invokeStatic("of", setListType),
                         // Set.of(single)
-                        ExpressionDef.constant(1), setListType.invokeStatic("of", setListType, field.invoke("get", elementType, ExpressionDef.constant(0))),
-                        // Collections.unmodifiableSet(new LinkedHashSet(all))
-                        ExpressionDef.nullValue(), ClassTypeDef.of(Collections.class)
-                            .invokeStatic("unmodifiableSet", propertyType, ClassTypeDef.of(LinkedHashSet.class).instantiate(field))
-                    )
+                        ExpressionDef.constant(1), setListType.invokeStatic("of", setListType, field.invoke("get", elementType, ExpressionDef.constant(0)))
+                    ),
+                    // Collections.unmodifiableSet(new LinkedHashSet(all))
+                    ClassTypeDef.of(Collections.class)
+                        .invokeStatic("unmodifiableSet", propertyType, ClassTypeDef.of(LinkedHashSet.class).instantiate(field))
                 );
         } else if (collectionType.equals(SortedSet.class.getName())) {
             return collectionSize.asExpressionSwitch(
                 propertyType,
                 Map.of(
                     // Collections.emptySortedSet()
-                    ExpressionDef.constant(0), ClassTypeDef.of(Collections.class).invokeStatic("emptySortedSet", propertyType),
-                    // Collections.unmodifiableSortedSet(new TreeSet(all))
-                    ExpressionDef.nullValue(), ClassTypeDef.of(Collections.class)
-                        .invokeStatic("unmodifiableSortedSet", propertyType, TypeDef.parameterized(TreeSet.class, elementType).instantiate(field))
-                )
+                    ExpressionDef.constant(0), ClassTypeDef.of(Collections.class).invokeStatic("emptySortedSet", propertyType)
+                ),
+                // Collections.unmodifiableSortedSet(new TreeSet(all))
+                ClassTypeDef.of(Collections.class)
+                    .invokeStatic("unmodifiableSortedSet", propertyType, TypeDef.parameterized(TreeSet.class, elementType).instantiate(field))
             );
         } else if (collectionType.equals(Map.class.getName())) {
             return collectionSize.asExpressionSwitch(
                 propertyType,
                 Map.of(
                     // Map.of
-                    ExpressionDef.constant(0), ClassTypeDef.of(Map.class).invokeStatic("of", propertyType),
-                    // Create and fill the map
-                    ExpressionDef.nullValue(), new ExpressionDef.SwitchYieldCase(
-                        propertyType,
-                        createMapStatement(propertyElement, field, LinkedHashMap.class, "unmodifiableMap")
-                    )
+                    ExpressionDef.constant(0), ClassTypeDef.of(Map.class).invokeStatic("of", propertyType)
+                ),
+                new ExpressionDef.SwitchYieldCase(
+                    propertyType,
+                    createMapStatement(propertyElement, field, LinkedHashMap.class, "unmodifiableMap")
                 ));
         } else if (collectionType.equals(SortedMap.class.getName())) {
             return collectionSize.asExpressionSwitch(
                 propertyType,
                 Map.of(
                     // Collections.emptySortedMap
-                    ExpressionDef.constant(0), ClassTypeDef.of(Collections.class).invokeStatic("emptySortedMap", propertyType),
-                    // Create and fill the map
-                    ExpressionDef.nullValue(), new ExpressionDef.SwitchYieldCase(
-                        propertyType,
-                        createMapStatement(propertyElement, field, TreeMap.class, "unmodifiableSortedMap")
-                    )
+                    ExpressionDef.constant(0), ClassTypeDef.of(Collections.class).invokeStatic("emptySortedMap", propertyType)
+                ),
+                new ExpressionDef.SwitchYieldCase(
+                    propertyType,
+                    createMapStatement(propertyElement, field, TreeMap.class, "unmodifiableSortedMap")
                 ));
         } else {
             throw new IllegalStateException("Unsupported singular collection type [" + collectionType + "] for property: " + propertyElement.getName());
@@ -537,10 +538,10 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 field.invoke("iterator", TypeDef.parameterized(Iterator.class, entryType))
                     .newLocal(field.name() + "Iterator", iteratorVar ->
                         iteratorVar.invoke("hasNext", TypeDef.primitive(boolean.class)).whileLoop(
-                            iteratorVar.invoke("next", entryType).newLocal(field.name() + "Entry", entryVar ->
+                            iteratorVar.invoke("next", TypeDef.OBJECT).cast(Map.Entry.class).newLocal(field.name() + "Entry", entryVar ->
                                 mapVar.invoke("put", TypeDef.of(boolean.class),
-                                    entryVar.invoke("getKey", keyType),
-                                    entryVar.invoke("getValue", valueType)
+                                    entryVar.invoke("getKey", TypeDef.OBJECT).cast(keyType),
+                                    entryVar.invoke("getValue", TypeDef.OBJECT).cast(valueType)
                                 ))
                         ).after(
                             ClassTypeDef.of(Collections.class).invokeStatic(unmodifiableMethodName, ClassTypeDef.of(propertyType), mapVar)

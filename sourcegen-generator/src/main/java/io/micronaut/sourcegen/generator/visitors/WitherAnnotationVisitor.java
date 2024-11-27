@@ -36,6 +36,7 @@ import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.lang.model.element.Modifier;
@@ -118,19 +119,7 @@ public final class WitherAnnotationVisitor implements TypeElementVisitor<Wither,
 
             InterfaceDef witherDef = wither.build();
             processed.add(recordElement.getName());
-            context.visitGeneratedSourceFile(
-                witherDef.getPackageName(),
-                witherDef.getSimpleName(),
-                recordElement
-            ).ifPresent(sourceFile -> {
-                try {
-                    sourceFile.write(
-                        writer -> sourceGenerator.write(witherDef, writer)
-                    );
-                } catch (Exception e) {
-                    throw new ProcessingException(recordElement, "Failed to generate a wither: " + e.getMessage(), e);
-                }
-            });
+            sourceGenerator.write(witherDef, context, recordElement);
         } catch (ProcessingException e) {
             throw e;
         } catch (Exception e) {
@@ -147,10 +136,9 @@ public final class WitherAnnotationVisitor implements TypeElementVisitor<Wither,
     }
 
     private MethodDef createWithConsumerMethod(ClassTypeDef recordType, ClassTypeDef builderType, MethodDef withMethod) {
-        ClassTypeDef.Parameterized consumableType = new ClassTypeDef.Parameterized(ClassTypeDef.of(Consumer.class), List.of(builderType));
         return MethodDef.builder("with")
             .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
-            .addParameter("consumer", consumableType)
+            .addParameter("consumer", TypeDef.parameterized(ClassTypeDef.of(Consumer.class), builderType))
             .returns(recordType).build((self, parameterDefs) ->
                 self.invoke(withMethod).newLocal("builder", builderVar ->
                     parameterDefs.get(0).invoke("accept", TypeDef.VOID, builderVar)
@@ -164,24 +152,18 @@ public final class WitherAnnotationVisitor implements TypeElementVisitor<Wither,
         return MethodDef.builder("with")
             .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
             .returns(builderType)
-            .build((self, parameterDefs) -> {
-                List<ExpressionDef> expressions = new ArrayList<>();
-                for (ParameterElement parameter : recordElement.getPrimaryConstructor().orElseThrow().getParameters()) {
-                    expressions.add(
-                        self.invoke(propertyAccessMethods.get(parameter.getName()))
-                    );
-                }
-                return builderType.instantiate(expressions).returning();
-            });
+            .build((self, parameterDefs) -> builderType.instantiate(
+                Arrays.stream(recordElement.getPrimaryConstructor().orElseThrow().getParameters())
+                    .<ExpressionDef>map(parameter -> self.invoke(propertyAccessMethods.get(parameter.getName())))
+                    .toList()
+            ).returning());
     }
 
     private MethodDef withMethod(ClassElement recordElement, PropertyElement beanProperty, ClassTypeDef recordType, Map<String, MethodDef> propertyAccessMethods) {
-        String propertyName = beanProperty.getSimpleName();
-        TypeDef propertyTypeDef = TypeDef.of(beanProperty.getType());
-        return MethodDef.builder("with" + NameUtils.capitalize(propertyName))
+        return MethodDef.builder("with" + NameUtils.capitalize(beanProperty.getSimpleName()))
             .addModifiers(Modifier.PUBLIC, Modifier.DEFAULT)
             .returns(recordType)
-            .addParameter(propertyName, propertyTypeDef)
+            .addParameter(beanProperty.getSimpleName(), TypeDef.of(beanProperty.getType()))
             .build((self, parameterDefs) -> {
                 List<ExpressionDef> values = new ArrayList<>();
                 for (ParameterElement parameter : recordElement.getPrimaryConstructor().orElseThrow().getParameters()) {

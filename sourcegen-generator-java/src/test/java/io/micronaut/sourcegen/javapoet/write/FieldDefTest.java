@@ -20,7 +20,7 @@ public class FieldDefTest extends AbstractWriteTest {
 
     @Test
     public void arrayField() throws IOException {
-        TypeDef array = TypeDef.array(TypeDef.primitive("byte"));
+        TypeDef array = TypeDef.array(TypeDef.Primitive.BYTE);
         String result = writeClassWithField(
             FieldDef.builder("byteArray").ofType(array).build()
         );
@@ -31,7 +31,7 @@ public class FieldDefTest extends AbstractWriteTest {
     @Test
     public void twoDimensionalArrayField() throws IOException {
         TypeDef array = TypeDef.array(
-            TypeDef.primitive("byte"), 2
+            TypeDef.Primitive.BYTE, 2
         );
         String result = writeClassWithField(
             FieldDef.builder("byteArray").ofType(array).build()

@@ -31,7 +31,9 @@ import io.micronaut.sourcegen.model.*
 import io.micronaut.sourcegen.model.ExpressionDef.*
 import io.micronaut.sourcegen.model.StatementDef.Assign
 import io.micronaut.sourcegen.model.StatementDef.DefineAndAssign
-import io.micronaut.sourcegen.model.TypeDef.Primitive.PrimitiveInstance
+import io.micronaut.sourcegen.model.StatementDef.PutField
+import io.micronaut.sourcegen.model.TypeDef
+import io.micronaut.sourcegen.model.VariableDef
 import java.io.IOException
 import java.io.Writer
 import java.lang.reflect.Array
@@ -639,7 +641,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     typeDef.typeArguments.map { v: TypeDef -> this.asType(v, objectDef) }
                 )
             } else if (typeDef is TypeDef.Primitive) {
-                when (typeDef.name) {
+                when (typeDef.name()) {
                     "void" -> UNIT
                     "byte" -> com.squareup.javapoet.TypeName.BYTE.toKTypeName()
                     "short" -> com.squareup.javapoet.TypeName.SHORT.toKTypeName()
@@ -649,7 +651,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     "float" -> com.squareup.javapoet.TypeName.FLOAT.toKTypeName()
                     "double" -> com.squareup.javapoet.TypeName.DOUBLE.toKTypeName()
                     "boolean" -> com.squareup.javapoet.TypeName.BOOLEAN.toKTypeName()
-                    else -> throw IllegalStateException("Unrecognized primitive name: " + typeDef.name)
+                    else -> throw IllegalStateException("Unrecognized primitive name: " + typeDef.name())
                 }
             } else if (typeDef is ClassTypeDef) {
                 asClassName(typeDef)
@@ -754,24 +756,18 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 builder.add(renderExpressionCode(objectDef, methodDef, statementDef.expression))
                 builder.add(") {\n")
                 builder.indent()
-                var elseExp: StatementDef? = null
                 for ((key, statement) in statementDef.cases) {
-                    if (key == null || key.value == null) {
-                        elseExp = statement
-                        continue
-                    } else {
-                        builder.add(renderConstantExpression(key, methodDef))
-                    }
+                    builder.add(renderConstantExpression(key, methodDef))
                     builder.add("-> {\n")
                     builder.indent()
                     builder.add(renderStatementCodeBlock(objectDef, methodDef, statement))
                     builder.unindent()
                     builder.add("}\n")
                 }
-                if (elseExp != null) {
+                if (statementDef.defaultCase != null) {
                     builder.add("else -> {\n")
                     builder.indent()
-                    builder.add(renderStatementCodeBlock(objectDef, methodDef, elseExp))
+                    builder.add(renderStatementCodeBlock(objectDef, methodDef, statementDef.defaultCase))
                     builder.unindent()
                     builder.add("}\n")
                 }
@@ -804,7 +800,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             if (statementDef is StatementDef.Throw) {
                 return CodeBlock.builder()
                     .add("throw ")
-                    .add(renderExpressionCode(objectDef, methodDef, statementDef.variableDef))
+                    .add(renderExpressionCode(objectDef, methodDef, statementDef.expression))
                     .build()
             }
             if (statementDef is StatementDef.Return) {
@@ -818,6 +814,21 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     .add("return ")
                     .add(codeBlock)
                     .build()
+            }
+            if (statementDef is PutField) {
+                val field = statementDef.field
+                val variableExp = renderVariable(objectDef, methodDef, field)
+                val codeBuilder = variableExp.toBuilder()
+                codeBuilder.add(" = ")
+                codeBuilder.add(
+                    renderExpressionCode(
+                        objectDef,
+                        methodDef,
+                        statementDef.expression,
+                        field.type()
+                    )
+                )
+                return codeBuilder.build()
             }
             if (statementDef is Assign) {
                 val variableExp = renderVariable(objectDef, methodDef, statementDef.variable)
@@ -903,17 +914,17 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 codeBuilder.add(")")
                 return codeBuilder.build()
             }
-            if (expressionDef is CallInstanceMethod) {
+            if (expressionDef is InvokeInstanceMethod) {
                 val instanceExp = renderExpressionCode(objectDef, methodDef, expressionDef.instance)
                 val codeBuilder = CodeBlock.builder()
                 codeBuilder.add(instanceExp)
-                if (expressionDef.instance is CallInstanceMethod) {
+                if (expressionDef.instance is InvokeInstanceMethod) {
                     codeBuilder.add("\n")
                 }
-                codeBuilder.add(".%N(", expressionDef.name)
-                for ((index, parameter) in expressionDef.parameters.withIndex()) {
+                codeBuilder.add(".%N(", expressionDef.method.name)
+                for ((index, parameter) in expressionDef.values.withIndex()) {
                     codeBuilder.add(renderExpressionCode(objectDef, methodDef, parameter))
-                    if (index != expressionDef.parameters.size - 1) {
+                    if (index != expressionDef.values.size - 1) {
                         codeBuilder.add(", ")
                     }
                 }
@@ -926,20 +937,17 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 codeBuilder.add(".%L", expressionDef.propertyElement.name)
                 return codeBuilder.build()
             }
-            if (expressionDef is CallStaticMethod) {
+            if (expressionDef is InvokeStaticMethod) {
                 val codeBuilder = CodeBlock.builder()
-                codeBuilder.add("%T.%N(", asClassName(expressionDef.classDef), expressionDef.name)
-                for ((index, parameter) in expressionDef.parameters.withIndex()) {
+                codeBuilder.add("%T.%N(", asClassName(expressionDef.classDef), expressionDef.method.name)
+                for ((index, parameter) in expressionDef.values.withIndex()) {
                     codeBuilder.add(renderExpressionCode(objectDef, methodDef, parameter))
-                    if (index != expressionDef.parameters.size - 1) {
+                    if (index != expressionDef.values.size - 1) {
                         codeBuilder.add(", ")
                     }
                 }
                 codeBuilder.add(")")
                 return codeBuilder.build()
-            }
-            if (expressionDef is Convert) {
-                return renderExpressionCode(objectDef, methodDef, expressionDef.expressionDef, expressionDef.type)
             }
             if (expressionDef is Cast) {
                 val codeBuilder = CodeBlock.builder()
@@ -997,14 +1005,8 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 )
                 builder.add(") {\n")
                 builder.indent()
-                var elseExp: ExpressionDef? = null
                 for ((key, value) in expressionDef.cases) {
-                    if (key == null || key.value == null) {
-                        elseExp = value
-                        continue
-                    } else {
-                        builder.add(renderExpressionCode(objectDef, methodDef, key))
-                    }
+                    builder.add(renderExpressionCode(objectDef, methodDef, key))
                     builder.add(" -> ")
                     builder.add(renderExpressionCode(objectDef, methodDef, value))
                     if (value is SwitchYieldCase) {
@@ -1013,9 +1015,9 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                         builder.add(";\n")
                     }
                 }
-                if (elseExp != null) {
+                if (expressionDef.defaultCase != null) {
                     builder.add("else -> ")
-                    builder.add(renderExpressionCode(objectDef, methodDef, elseExp))
+                    builder.add(renderExpressionCode(objectDef, methodDef, expressionDef.defaultCase))
                 }
                 builder.unindent()
                 builder.add("}")
@@ -1039,6 +1041,25 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 val str: String = builder.build().toString()
                 // Render the body to prevent nested statements
                 return CodeBlock.of(str)
+            }
+            if (expressionDef is IsNull) {
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression))
+                    .add(" == null")
+                    .build()
+            }
+            if (expressionDef is IsNotNull) {
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression))
+                    .add(" != null")
+                    .build()
+            }
+            if (expressionDef is MathOp) {
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.left))
+                    .add(expressionDef.operator)
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.right))
+                    .build()
             }
             if (expressionDef is Condition) {
                 return CodeBlock.builder()
@@ -1067,9 +1088,6 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 }
                 builder.add(")")
                 return builder.build()
-            }
-            if (expressionDef is PrimitiveInstance) {
-                return renderExpressionCode(objectDef, methodDef, expressionDef.value)
             }
             if (expressionDef is InvokeGetClassMethod) {
                 val instanceExp = renderExpressionCode(objectDef, methodDef, expressionDef.instance)
@@ -1149,7 +1167,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 )
             }
             if (type is TypeDef.Primitive) {
-                return when (type.name) {
+                return when (type.name()) {
                     "long" -> CodeBlock.of(value.toString() + "l")
                     "float" -> CodeBlock.of(value.toString() + "f")
                     "double" -> CodeBlock.of(value.toString() + "d")
@@ -1176,7 +1194,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     val typeName: String = if (componentType is ClassTypeDef) {
                         componentType.simpleName
                     } else if (componentType is TypeDef.Primitive) {
-                        componentType.name
+                        componentType.name()
                     } else {
                         throw java.lang.IllegalStateException("Unrecognized expression: $constant")
                     }
@@ -1219,7 +1237,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 } else if (objectDef is EnumDef) {
                     objectDef.getField(variableDef.name) // Check if exists
                 } else {
-                    throw IllegalStateException("Field access no supported on the object definition: $objectDef")
+                    throw IllegalStateException("Field access not supported on the object definition: $objectDef")
                 }
                 val codeBlock = renderExpressionCode(objectDef, methodDef, variableDef.instance)
                 val builder = codeBlock.toBuilder()

@@ -100,6 +100,10 @@ public final class CodeBlock {
     }
   }
 
+  public static CodeBlock ofWithoutFormat(String value) {
+    return new Builder().addWithoutFormat(value).build();
+  }
+
   public static CodeBlock of(String format, Object... args) {
     return new Builder().add(format, args).build();
   }
@@ -417,6 +421,11 @@ public final class CodeBlock {
     public Builder add(CodeBlock codeBlock) {
       formatParts.addAll(codeBlock.formatParts);
       args.addAll(codeBlock.args);
+      return this;
+    }
+
+    public Builder addWithoutFormat(String str) {
+      formatParts.add(str);
       return this;
     }
 

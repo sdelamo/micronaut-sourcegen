@@ -58,16 +58,8 @@ public final class GenerateMyEnum1 implements TypeElementVisitor<io.micronaut.so
 
             .addMethod(MethodDef.builder("myName")
                 .addModifiers(Modifier.PUBLIC)
-                .addStatement(new StatementDef.Return(
-                    ExpressionDef.invoke(
-                        new VariableDef.This(enumTypeDef),
-                        "toString",
-                        List.of(),
-                        TypeDef.of(String.class)
-                    )
-                ))
                 .returns(String.class)
-                .build())
+                .build((aThis, methodParameters) -> aThis.invoke("toString", TypeDef.of(String.class)).returning()))
 
             .build();
 
@@ -75,14 +67,7 @@ public final class GenerateMyEnum1 implements TypeElementVisitor<io.micronaut.so
         if (sourceGenerator == null) {
             return;
         }
-        context.visitGeneratedSourceFile(beanDef.getPackageName(), beanDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(beanDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
+        sourceGenerator.write(beanDef, context, element);
     }
 
 }

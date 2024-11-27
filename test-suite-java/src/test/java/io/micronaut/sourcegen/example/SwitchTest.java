@@ -94,4 +94,13 @@ class SwitchTest {
         assertEquals(TimeUnit.HOURS, switch8.test("ZZZZ"));
     }
 
+    @Test
+    public void switch9() {
+        Switch9 switch8 = new Switch9();
+        assertEquals(1, switch8.test(111));
+        assertEquals(2, switch8.test(222));
+        assertEquals(3, switch8.test(999));
+        assertEquals(3, switch8.test(0));
+    }
+
 }

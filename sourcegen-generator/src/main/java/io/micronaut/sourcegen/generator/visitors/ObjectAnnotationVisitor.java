@@ -57,7 +57,18 @@ import java.util.Set;
 @Internal
 public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object, Object> {
 
-    private static final int HASH_MULTIPLIER = 31;
+    private static final ExpressionDef HASH_MULTIPLIER = ExpressionDef.primitiveConstant(31);
+
+    private static final MethodDef APPEND_STRING = MethodDef.builder("append")
+        .returns(StringBuilder.class)
+        .addParameter(String.class)
+        .build();
+
+    private static final MethodDef APPEND_OBJECT = MethodDef.builder("append")
+        .returns(StringBuilder.class)
+        .addParameter(Object.class)
+        .build();
+
     private final Set<String> processed = new HashSet<>();
 
     @Override
@@ -112,19 +123,7 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
 
             ClassDef objectDef = objectBuilder.build();
             processed.add(element.getName());
-            context.visitGeneratedSourceFile(
-                objectDef.getPackageName(),
-                objectDef.getSimpleName(),
-                element
-            ).ifPresent(sourceFile -> {
-                try {
-                    sourceFile.write(
-                        writer -> sourceGenerator.write(objectDef, writer)
-                    );
-                } catch (Exception e) {
-                    throw new ProcessingException(element, "Failed to generate a ObjectBuilder: " + e.getMessage(), e);
-                }
-            });
+            sourceGenerator.write(objectDef, context, element);
         } catch (ProcessingException e) {
             throw e;
         } catch (Exception e) {
@@ -161,14 +160,19 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
                             }
                             ExpressionDef propertyValue = parameterDef.get(0).getPropertyValue(beanProperty);
 
-                            exp = exp.invoke("append", variableDef.type(),
-                                    ExpressionDef.constant(beanProperty.getName() + "="))
-                                .invoke("append", variableDef.type(),
-                                    TypeDef.of(beanProperty.getType()).isArray() ?
-                                        ClassTypeDef.of(Arrays.class).invokeStatic("toString", TypeDef.STRING, propertyValue)
-                                        : propertyValue
-                                ).invoke("append", variableDef.type(),
-                                    ExpressionDef.constant((i == properties.size() - 1) ? "]" : ", "));
+                            exp = exp.invoke(APPEND_STRING, ExpressionDef.constant(beanProperty.getName() + "="));
+                            TypeDef propertyType = TypeDef.of(beanProperty.getType());
+                            if (propertyType.isArray()) {
+                                exp = exp.invoke(APPEND_STRING,
+                                    ClassTypeDef.of(Arrays.class).invokeStatic("toString", TypeDef.STRING, propertyValue)
+                                );
+                            } else if (propertyType.isPrimitive() || propertyType.equals(TypeDef.STRING)) {
+                                exp = exp.invoke("append", variableDef.type(), propertyValue);
+                            } else {
+                                exp = exp.invoke(APPEND_OBJECT, propertyValue);
+                            }
+                            exp = exp.invoke(APPEND_STRING,
+                                ExpressionDef.constant((i == properties.size() - 1) ? "]" : ", "));
                         }
                         return exp.invoke("toString", TypeDef.STRING).returning();
                     })
@@ -246,18 +250,18 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
             .returns(TypeDef.Primitive.INT)
             .build((self, parameterDef) -> {
                     if (!iterator.hasNext()) {
-                        return ExpressionDef.constant(0).returning();
+                        return ExpressionDef.primitiveConstant(0).returning();
                     }
                     VariableDef.MethodParameter instance = parameterDef.get(0);
                 PropertyElement propertyElement1 = iterator.next();
                 return StatementDef.multi(
-                        instance.isNull().asConditionIf(ExpressionDef.constant(0).returning()),
-                        TypeDef.Primitive.INT.initialize(instance.getPropertyValue(propertyElement1).invokeHashCode()).newLocal("hashValue", hashValue -> {
+                        instance.isNull().asConditionIf(ExpressionDef.primitiveConstant(0).returning()),
+                        instance.getPropertyValue(propertyElement1).invokeHashCode().newLocal("hashValue", hashValue -> {
                             List<StatementDef> hashUpdates = new ArrayList<>();
                             while (iterator.hasNext()) {
                                 PropertyElement propertyElement = iterator.next();
-                                ExpressionDef condition = hashValue.asCondition(" * ", ExpressionDef.constant(HASH_MULTIPLIER))
-                                    .asCondition(" + ", instance.getPropertyValue(propertyElement).invokeHashCode());
+                                ExpressionDef condition = hashValue.math(" * ", HASH_MULTIPLIER)
+                                    .math(" + ", instance.getPropertyValue(propertyElement).invokeHashCode());
                                 hashUpdates.add(hashValue.assign(condition));
                             }
                             hashUpdates.add(hashValue.returning());

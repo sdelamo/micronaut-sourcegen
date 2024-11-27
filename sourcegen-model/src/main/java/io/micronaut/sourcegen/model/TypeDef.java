@@ -18,13 +18,14 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.inject.ast.ArrayableClassElement;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.GenericPlaceholderElement;
+import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.ast.WildcardElement;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -37,16 +38,23 @@ import java.util.stream.Stream;
 @Experimental
 public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef.Array, TypeDef.Primitive, TypeDef.TypeVariable, TypeDef.Wildcard {
 
-    TypeDef VOID = primitive("void");
+    Primitive VOID = primitive(void.class);
 
-    TypeDef OBJECT = of(Object.class);
+    ClassTypeDef OBJECT = ClassTypeDef.of(Object.class);
 
-    TypeDef STRING = of(String.class);
+    ClassTypeDef CLASS = ClassTypeDef.of(Class.class);
+
+    ClassTypeDef STRING = ClassTypeDef.of(String.class);
 
     /**
      * A simple type representing a special this-type, in context of a class def, method or field the type will be replaced by the current type.
      */
-    TypeDef THIS = of(ThisType.class);
+    ClassTypeDef THIS = ClassTypeDef.of(ThisType.class);
+
+    /**
+     * A simple type representing a special super-type, in context of a class def, method or field the type will be replaced by the current super type.
+     */
+    ClassTypeDef SUPER = ClassTypeDef.of(SuperType.class);
 
     /**
      * Define a type with annotations.
@@ -71,46 +79,75 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
     }
 
     /**
-     * Instantiate an array of this class.
+     * Create an array type.
      *
-     * @param length The length of the array
-     * @return The instantiate expression
-     * @since 1.2
+     * @return The array type
+     * @since 1.5
      */
-    default ExpressionDef instantiateArray(int length) {
-        return new ExpressionDef.NewArrayOfSize((Array) this, length);
+    default TypeDef.Array array() {
+        return new TypeDef.Array(this, 1, false);
     }
 
     /**
-     * Instantiate an array of this class.
+     * Create an array type.
      *
-     * @param expressions The items expressions
-     * @return The instantiate expression
-     * @since 1.2
+     * @param dimension The dimension of the array
+     * @return The array type
+     * @since 1.5
      */
-    default ExpressionDef instantiateArray(List<ExpressionDef> expressions) {
-        return new ExpressionDef.NewArrayInitialized((Array) this, expressions);
+    default TypeDef.Array array(int dimension) {
+        return new TypeDef.Array(this, dimension, false);
     }
 
     /**
-     * Instantiate an array of this class.
+     * Create a new type definition.
      *
-     * @param expressions The items expressions
-     * @return The instantiate expression
-     * @since 1.2
+     * @param name The type name
+     * @return type definition
+     * @since 1.5
      */
-    default ExpressionDef instantiateArray(ExpressionDef... expressions) {
-        return instantiateArray(List.of(expressions));
+    static TypeDef of(String name) {
+        int dimension = 0;
+        while (name.endsWith("[]")) {
+            dimension++;
+            name = name.substring(0, name.length() - 2);
+        }
+        if (dimension > 0) {
+            return new TypeDef.Array(of(name), dimension, false);
+        }
+        return switch (name) {
+            case "void", "V" -> TypeDef.VOID;
+            case "byte", "B" -> Primitive.BYTE;
+            case "int", "I" -> Primitive.INT;
+            case "boolean", "Z" -> Primitive.BOOLEAN;
+            case "long", "J" -> Primitive.LONG;
+            case "char", "C" -> Primitive.CHAR;
+            case "short", "S" -> Primitive.SHORT;
+            case "double", "D" -> Primitive.DOUBLE;
+            case "float", "F" -> Primitive.FLOAT;
+            default -> ClassTypeDef.of(name);
+        };
     }
 
     /**
      * Creates new primitive type.
      *
-     * @param name The primitive type name
+     * @param type The primitive type
      * @return a new type definition
      */
-    static Primitive primitive(String name) {
-        return new Primitive(name);
+    static Primitive primitive(String type) {
+        return switch (type) {
+            case "void", "V" -> Primitive.VOID;
+            case "byte", "B" -> Primitive.BYTE;
+            case "int", "I" -> Primitive.INT;
+            case "boolean", "Z" -> Primitive.BOOLEAN;
+            case "long", "J" -> Primitive.LONG;
+            case "char", "C" -> Primitive.CHAR;
+            case "short", "S" -> Primitive.SHORT;
+            case "double", "D" -> Primitive.DOUBLE;
+            case "float", "F" -> Primitive.FLOAT;
+            default -> throw new IllegalStateException("Expected a primitive type got: " + type);
+        };
     }
 
     /**
@@ -123,7 +160,7 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
         if (!type.isPrimitive()) {
             throw new IllegalStateException("Expected a primitive type got: " + type);
         }
-        return primitive(type.getName());
+        return new Primitive(type);
     }
 
     static Wildcard wildcard() {
@@ -158,14 +195,12 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
         }
         if (type.isArray()) {
             Class<?> componentType = type.getComponentType();
-            TypeDef typeDef;
-            if (componentType.isArray()) {
-                TypeDef componentArray = of(componentType);
-                typeDef = array(componentArray, 1);
-            } else {
-                typeDef = of(componentType);
+            int dimensions = 1;
+            while (componentType.isArray()) {
+                componentType = componentType.getComponentType();
+                dimensions++;
             }
-            return new Array(typeDef, 1, false);
+            return new Array(TypeDef.of(componentType), dimensions, false);
         }
         return ClassTypeDef.of(type);
     }
@@ -226,59 +261,93 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
     }
 
     /**
+     * Creates a new type variable.
+     *
+     * @param name   The type
+     * @param bounds The bounds
+     * @return a new type variable
+     */
+    static TypeDef.TypeVariable variable(String name, List<TypeDef> bounds) {
+        return new TypeDef.TypeVariable(name, bounds);
+    }
+
+    /**
+     * Creates a new type variable.
+     *
+     * @param name   The type
+     * @param bounds The bounds
+     * @return a new type variable
+     */
+    static TypeDef.TypeVariable variable(String name, TypeDef... bounds) {
+        return new TypeDef.TypeVariable(name, List.of(bounds));
+    }
+
+    /**
      * Creates a new type.
      *
-     * @param classElement The class element
+     * @param typedElement The typed element
      * @return a new type definition
      */
-    static TypeDef of(ClassElement classElement) {
-        if (classElement.isArray()) {
-            int dimensions = classElement.getArrayDimensions();
-            for (int i = 0; i < dimensions; ++i) {
-                classElement = classElement.fromArray();
-            }
-            return array(TypeDef.of(classElement), dimensions);
+    static TypeDef of(TypedElement typedElement) {
+        return of(typedElement, false);
+    }
+
+    /**
+     * Creates a new type erasure.
+     *
+     * @param typedElement The typed element
+     * @return a new type definition
+     */
+    static TypeDef erasure(TypedElement typedElement) {
+        return of(typedElement, true);
+    }
+
+    /**
+     * Creates a new type.
+     *
+     * @param typedElement The typed element
+     * @param erasure Is erasure type required
+     * @return a new type definition
+     */
+    private static TypeDef of(TypedElement typedElement, boolean erasure) {
+        int dimensions = 0;
+        while (typedElement.isArray()) {
+            ArrayableClassElement arrayableClassElement = (ArrayableClassElement) typedElement;
+            typedElement = arrayableClassElement.fromArray();
+            dimensions++;
         }
-        if (classElement.isPrimitive()) {
-            return primitive(classElement.getName());
+        if (dimensions > 0) {
+            return array(of(typedElement), dimensions);
         }
-        if (classElement instanceof GenericPlaceholderElement placeholderElement) {
-            return new TypeVariable(
+        if (typedElement.isPrimitive()) {
+            return primitive(typedElement.getName());
+        }
+        if (erasure && typedElement instanceof ClassElement classElement) {
+            return ClassTypeDef.of(classElement);
+        }
+        if (typedElement instanceof GenericPlaceholderElement placeholderElement) {
+            return TypeDef.variable(
                 placeholderElement.getVariableName(),
                 placeholderElement.getBounds().stream().map(TypeDef::of).toList()
             );
         }
-        if (classElement instanceof WildcardElement wildcardElement) {
+        if (typedElement instanceof WildcardElement wildcardElement) {
             return new Wildcard(
                 wildcardElement.getUpperBounds().stream().map(TypeDef::of).toList(),
                 wildcardElement.getLowerBounds().stream().map(TypeDef::of).toList()
             );
         }
-        return toTypeDef(classElement);
-    }
-
-    private static TypeDef toTypeDef(ClassElement classElement) {
-        if (classElement.getFirstTypeArgument().isPresent()) {
-            Map<String, ClassElement> nextArguments = classElement.getTypeArguments();
-            List<? extends GenericPlaceholderElement> placeHolders = classElement.getDeclaredGenericPlaceholders();
-            return new ClassTypeDef.Parameterized(
-                ClassTypeDef.of(classElement),
-                toTypeArguments(placeHolders, nextArguments)
-            );
-        } else {
-            return ClassTypeDef.of(classElement);
+        if (typedElement instanceof ClassElement classElement) {
+            if (classElement.getFirstTypeArgument().isPresent()) {
+                return TypeDef.parameterized(
+                    ClassTypeDef.of(classElement),
+                    classElement.getBoundGenericTypes().stream().map(TypeDef::of).toList()
+                );
+            } else {
+                return ClassTypeDef.of(classElement);
+            }
         }
-    }
-
-    private static List<TypeDef> toTypeArguments(
-        List<? extends GenericPlaceholderElement> declaredTypeVariables,
-        Map<String, ClassElement> typeArguments) {
-        return declaredTypeVariables
-            .stream().map(v -> {
-                String variableName = v.getVariableName();
-                ClassElement classElement = typeArguments.get(variableName);
-                return TypeDef.of(classElement != null ? classElement : v.getType());
-            }).toList();
+        throw new IllegalStateException("Unknown typed element: " + typedElement);
     }
 
     /**
@@ -312,12 +381,12 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
     /**
      * The primitive type name.
      *
-     * @param name The primitive type name
+     * @param clazz The primitive clazz
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
-    record Primitive(String name) implements TypeDef {
+    record Primitive(Class<?> clazz) implements TypeDef {
 
         public static final Primitive INT = primitive(int.class);
         public static final Primitive BOOLEAN = primitive(boolean.class);
@@ -327,6 +396,13 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
         public static final Primitive SHORT = primitive(short.class);
         public static final Primitive DOUBLE = primitive(double.class);
         public static final Primitive FLOAT = primitive(float.class);
+
+        public static final ExpressionDef.Constant TRUE = BOOLEAN.constant(true);
+        public static final ExpressionDef.Constant FALSE = BOOLEAN.constant(false);
+
+        public String name() {
+            return clazz.getName();
+        }
 
         @Override
         public boolean isPrimitive() {
@@ -344,47 +420,22 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
         }
 
         public ClassTypeDef wrapperType() {
-            Class<?> primitiveType = ClassUtils.getPrimitiveType(name).orElseThrow(() -> new IllegalStateException("Unrecognized primitive type: " + name));
+            Class<?> primitiveType = ClassUtils.getPrimitiveType(name()).orElseThrow(() -> new IllegalStateException("Unrecognized primitive type: " + name()));
             return ClassTypeDef.of(
                 ReflectionUtils.getWrapperType(primitiveType)
             );
         }
 
         /**
-         * The new instance expression for primitives.
+         * A primitive constant expression.
          *
-         * @param value The initial value
+         * @param value The constant value
          * @return The new instance
          * @since 1.3
          */
         @Experimental
-        public PrimitiveInstance initialize(ExpressionDef value) {
-            return new PrimitiveInstance(this, value);
-        }
-
-        /**
-         * The new instance expression for primitives.
-         *
-         * @param constant The constant
-         * @return The new instance
-         * @since 1.3
-         */
-        @Experimental
-        public PrimitiveInstance initialize(Object constant) {
-            return new PrimitiveInstance(this, new ExpressionDef.Constant(this, constant));
-        }
-
-        /**
-         * The new instance expression.
-         *
-         * @param type   The type
-         * @param value The initial value
-         * @author Elif Kurtay
-         * @since 1.3
-         */
-        @Experimental
-        public record PrimitiveInstance(Primitive type,
-                                        ExpressionDef value) implements ExpressionDef {
+        public ExpressionDef.Constant constant(Object value) {
+            return new ExpressionDef.Constant(this, value);
         }
     }
 
@@ -408,21 +459,31 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
         public boolean isArray() {
             return false;
         }
+
+        @Override
+        public TypeDef makeNullable() {
+            return this;
+        }
     }
 
     /**
      * The type variable ref.
      *
-     * @param name   The variable name
-     * @param bounds The bounds
+     * @param name     The variable name
+     * @param bounds   The bounds
+     * @param nullable The nullable
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
-    record TypeVariable(String name, List<TypeDef> bounds) implements TypeDef {
+    record TypeVariable(String name, List<TypeDef> bounds, boolean nullable) implements TypeDef {
 
         public TypeVariable(String name) {
             this(name, List.of());
+        }
+
+        public TypeVariable(String name, List<TypeDef> bounds) {
+            this(name, bounds, false);
         }
 
         public static TypeVariable of(String name, ClassElement classElement) {
@@ -436,6 +497,10 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
             }
         }
 
+        @Override
+        public TypeDef makeNullable() {
+            return new TypeVariable(name, bounds, true);
+        }
     }
 
     /**
@@ -449,6 +514,55 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
      */
     @Experimental
     record Array(TypeDef componentType, int dimensions, boolean nullable) implements TypeDef {
+
+        public Array {
+            if (componentType instanceof Array) {
+                throw new IllegalArgumentException("Arrays can't have arrays");
+            }
+        }
+
+        @Override
+        public Array array() {
+            return new Array(componentType, dimensions + 1, nullable);
+        }
+
+        @Override
+        public Array array(int dimension) {
+            return new Array(componentType, this.dimensions + dimension, nullable);
+        }
+
+        /**
+         * Instantiate an array of this class.
+         *
+         * @param size The size of the array
+         * @return The instantiate expression
+         * @since 1.5
+         */
+        public ExpressionDef.NewArrayOfSize instantiate(int size) {
+            return new ExpressionDef.NewArrayOfSize(this, size);
+        }
+
+        /**
+         * Instantiate an array of this class.
+         *
+         * @param expressions The expressions
+         * @return The instantiate expression
+         * @since 1.5
+         */
+        public ExpressionDef.NewArrayInitialized instantiate(List<? extends ExpressionDef> expressions) {
+            return new ExpressionDef.NewArrayInitialized(this, expressions);
+        }
+
+        /**
+         * Instantiate an array of this class.
+         *
+         * @param expressions The items expressions
+         * @return The instantiate expression
+         * @since 1.5
+         */
+        public ExpressionDef instantiate(ExpressionDef... expressions) {
+            return instantiate(List.of(expressions));
+        }
 
         @Override
         public boolean isNullable() {

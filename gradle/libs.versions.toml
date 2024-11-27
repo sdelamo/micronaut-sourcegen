@@ -12,6 +12,8 @@ google-compile-testing = "0.21.0"
 google-jimfs = "1.3.0"
 kotlin = '1.9.25'
 ksp = '1.9.24-1.0.20'
+asm = "9.7"
+intellij-java-decompiler = "242.23726.103"
 
 [libraries]
 # Core
@@ -20,6 +22,11 @@ micronaut-data = { module = 'io.micronaut.data:micronaut-data-bom', version.ref 
 micronaut-validation = { module = "io.micronaut.validation:micronaut-validation-bom", version.ref = "micronaut-validation" }
 managed-kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "managed-kotlinpoet" }
 managed-kotlinpoet-javapoet = { module = "com.squareup:kotlinpoet-javapoet", version.ref = "managed-kotlinpoet" }
+
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
+asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
 
 # Testing
 google-truth = { module = "com.google.truth:truth", version.ref = "google-truth" }
@@ -30,3 +37,4 @@ junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 micronaut-gradle-plugin = { module = "io.micronaut.gradle:micronaut-gradle-plugin", version.ref="micronaut-gradle-plugin" }
 kotlin-gradle-plugin = { module = 'org.jetbrains.kotlin:kotlin-gradle-plugin', version.ref = 'kotlin' }
 kotlin-gradle-allopen = { module = 'org.jetbrains.kotlin:kotlin-allopen', version.ref = 'kotlin' }
+intellij-java-decompiler = { module = 'com.jetbrains.intellij.java:java-decompiler-engine', version.ref = 'intellij-java-decompiler' }

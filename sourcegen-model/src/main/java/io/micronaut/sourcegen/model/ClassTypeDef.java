@@ -18,7 +18,13 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -37,6 +43,12 @@ public sealed interface ClassTypeDef extends TypeDef {
      * @return The type name
      */
     String getName();
+
+    /**
+     * @return The type name
+     * @since 1.5
+     */
+    String getCanonicalName();
 
     /**
      * @return The simple name
@@ -64,85 +76,286 @@ public sealed interface ClassTypeDef extends TypeDef {
     }
 
     /**
-     * Instantiate this class.
-     *
-     * @return The instantiate expression
+     * @return True if interface
+     * @since 1.5
      */
-    default ExpressionDef instantiate() {
-        return ExpressionDef.instantiate(this);
+    default boolean isInterface() {
+        return false;
     }
 
     /**
-     * Throw an exception.
-     *
-     * @param parameters The exception constructor parameters
-     * @return The instantiate expression
-     * @since 1.2
+     * @return True if inner
+     * @since 1.5
      */
-    default StatementDef doThrow(List<ExpressionDef> parameters) {
-        return new StatementDef.Throw(instantiate(parameters));
+    default boolean isInner() {
+        return false;
     }
 
     /**
-     * Throw an exception.
-     *
-     * @param parameters The exception constructor parameters
-     * @return The instantiate expression
-     * @since 1.2
-     */
-    default StatementDef doThrow(ExpressionDef... parameters) {
-        return new StatementDef.Throw(instantiate(parameters));
-    }
-
-    /**
-     * Instantiate this class.
-     *
-     * @param parameters The constructor parameters
-     * @return The instantiate expression
-     */
-    default ExpressionDef instantiate(List<ExpressionDef> parameters) {
-        return ExpressionDef.instantiate(this, parameters);
-    }
-
-    /**
-     * Instantiate this class.
+     * The new instance expression.
      *
      * @param values The constructor values
-     * @return The instantiate expression
-     * @since 1.2
+     * @return The new instance
      */
-    default ExpressionDef instantiate(ExpressionDef... values) {
+    @Experimental
+    default ExpressionDef.NewInstance instantiate(ExpressionDef... values) {
         return instantiate(List.of(values));
     }
 
     /**
-     * Invoke static method.
+     * The new instance expression.
      *
-     * @param name          The method name
-     * @param parameters    The parameters
-     * @param returningType The return type
-     * @return the invoke static method expression
-     * @since 1.2
+     * @param values The constructor values
+     * @return The new instance
      */
-    default ExpressionDef.CallStaticMethod invokeStatic(String name,
-                                                        TypeDef returningType,
-                                                        ExpressionDef... parameters) {
-        return invokeStatic(name, returningType, List.of(parameters));
+    @Experimental
+    default ExpressionDef.NewInstance instantiate(List<? extends ExpressionDef> values) {
+        return instantiate(values.stream().map(ExpressionDef::type).toList(), values);
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param parameterTypes The constructor parameter types
+     * @param values         The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default ExpressionDef.NewInstance instantiate(List<TypeDef> parameterTypes, ExpressionDef... values) {
+        return instantiate(parameterTypes, List.of(values));
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param parameterTypes The constructor parameter types
+     * @param values         The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default ExpressionDef.NewInstance instantiate(List<TypeDef> parameterTypes, List<? extends ExpressionDef> values) {
+        return new ExpressionDef.NewInstance(this, parameterTypes, values);
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param constructor The constructor
+     * @param values      The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default ExpressionDef.NewInstance instantiate(Constructor<?> constructor, ExpressionDef... values) {
+        return instantiate(constructor, List.of(values));
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param constructor The constructor
+     * @param values      The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default ExpressionDef.NewInstance instantiate(Constructor<?> constructor, List<? extends ExpressionDef> values) {
+        return instantiate(Arrays.stream(constructor.getParameterTypes()).map(TypeDef::of).toList(), values);
+    }
+
+    /**
+     * The new instance expression.
+     *
+     * @param methodElement The method element
+     * @param values        The constructor values
+     * @return The new instance
+     */
+    @Experimental
+    default ExpressionDef.NewInstance instantiate(MethodElement methodElement, List<? extends ExpressionDef> values) {
+        return instantiate(Arrays.stream(methodElement.getSuspendParameters()).map(ParameterElement::getType).map(TypeDef::erasure).toList(), values);
+    }
+
+    /**
+     * Get static field.
+     *
+     * @param name The field name
+     * @param type The field type
+     * @return the get static field expression
+     * @since 1.5
+     */
+    default VariableDef.StaticField getStaticField(String name,
+                                                   TypeDef type) {
+        return new VariableDef.StaticField(this, name, type);
+    }
+
+    /**
+     * Get static field.
+     *
+     * @param field The field
+     * @return the get static field expression
+     * @since 1.5
+     */
+    default VariableDef.StaticField getStaticField(FieldDef field) {
+        return getStaticField(field.getName(), field.getType());
+    }
+
+    /**
+     * Get static field.
+     *
+     * @param field The field
+     * @return the get static field expression
+     * @since 1.5
+     */
+    default VariableDef.StaticField getStaticField(Field field) {
+        return getStaticField(field.getName(), TypeDef.of(field.getType()));
     }
 
     /**
      * Invoke static method.
      *
      * @param name          The method name
-     * @param parameters    The parameters
      * @param returningType The return type
+     * @param values        The values
      * @return the invoke static method expression
      * @since 1.2
      */
-    default ExpressionDef.CallStaticMethod invokeStatic(String name,
-                                                        TypeDef returningType,
-                                                        List<ExpressionDef> parameters) {
-        return new ExpressionDef.CallStaticMethod(this, name, parameters, returningType);
+    default ExpressionDef.InvokeStaticMethod invokeStatic(String name,
+                                                          TypeDef returningType,
+                                                          List<? extends ExpressionDef> values) {
+        return invokeStatic(name, values.stream().map(ExpressionDef::type).toList(), returningType, values);
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param name           The method name
+     * @param parameterTypes The parameter types
+     * @param returningType  The return type
+     * @param values         The values
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(String name,
+                                                          List<TypeDef> parameterTypes,
+                                                          TypeDef returningType,
+                                                          List<? extends ExpressionDef> values) {
+        return new ExpressionDef.InvokeStaticMethod(this,
+            MethodDef.builder(name)
+                .addParameters(parameterTypes)
+                .returns(returningType)
+                .build(),
+            values);
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param name          The method name
+     * @param returningType The return type
+     * @param values        The parameters
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(String name,
+                                                          TypeDef returningType,
+                                                          ExpressionDef... values) {
+        return invokeStatic(name, returningType, List.of(values));
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param name          The method name
+     * @param parameterTypes The parameter types
+     * @param returningType The return type
+     * @param values    The parameters
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(String name,
+                                                          List<TypeDef> parameterTypes,
+                                                          TypeDef returningType,
+                                                          ExpressionDef... values) {
+        return invokeStatic(name, parameterTypes, returningType, List.of(values));
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param method The method
+     * @param values The values
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(MethodDef method, ExpressionDef... values) {
+        return invokeStatic(method, List.of(values));
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param method The method
+     * @param values The values
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(Method method, ExpressionDef... values) {
+        return invokeStatic(method, List.of(values));
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param method The method
+     * @param values The values
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(Method method, List<? extends ExpressionDef> values) {
+        return invokeStatic(
+            method.getName(),
+            Arrays.stream(method.getParameters()).map(p -> TypeDef.of(p.getType())).toList(),
+            TypeDef.of(method.getReturnType()),
+            values);
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param methodElement The method element
+     * @param values The values
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(MethodElement methodElement, ExpressionDef... values) {
+        return invokeStatic(methodElement, List.of(values));
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param methodElement The method element
+     * @param values The values
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(MethodElement methodElement, List<? extends ExpressionDef> values) {
+        return invokeStatic(
+            methodElement.getName(),
+            Arrays.stream(methodElement.getSuspendParameters()).map(p -> TypeDef.erasure(p.getType())).toList(),
+            methodElement.isSuspend() ? TypeDef.OBJECT : TypeDef.of(methodElement.getReturnType()),
+            values
+        );
+    }
+
+    /**
+     * Invoke static method.
+     *
+     * @param method The method
+     * @param values The values
+     * @return the invoke static method expression
+     * @since 1.5
+     */
+    default ExpressionDef.InvokeStaticMethod invokeStatic(MethodDef method, List<? extends ExpressionDef> values) {
+        return new ExpressionDef.InvokeStaticMethod(this, method, values);
     }
 
     /**
@@ -165,7 +378,19 @@ public sealed interface ClassTypeDef extends TypeDef {
      * @return type definition
      */
     static ClassTypeDef of(String className) {
-        return new ClassName(className, false);
+        return of(className, false);
+    }
+
+    /**
+     * Create a new type definition.
+     *
+     * @param className The class name
+     * @param isInner   Is inner type
+     * @return type definition
+     * @since 1.5
+     */
+    static ClassTypeDef of(String className, boolean isInner) {
+        return new ClassName(className, isInner, false);
     }
 
     /**
@@ -228,6 +453,11 @@ public sealed interface ClassTypeDef extends TypeDef {
 
         @Override
         public String getName() {
+            return type.getName();
+        }
+
+        @Override
+        public String getCanonicalName() {
             return type.getCanonicalName();
         }
 
@@ -245,22 +475,46 @@ public sealed interface ClassTypeDef extends TypeDef {
         public boolean isEnum() {
             return type.isEnum();
         }
+
+        @Override
+        public boolean isInterface() {
+            return type.isInterface();
+        }
+
+        @Override
+        public boolean isInner() {
+            return type.isMemberClass();
+        }
     }
 
     /**
      * The class name type.
      *
      * @param className The class name
+     * @param isInner   Is inner
      * @param nullable  Is nullable
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
-    record ClassName(String className, boolean nullable) implements ClassTypeDef {
+    record ClassName(String className, boolean isInner, boolean nullable) implements ClassTypeDef {
 
         @Override
         public String getName() {
             return className;
+        }
+
+        @Override
+        public String getCanonicalName() {
+            if (isInner) {
+                return className.replace("$", ".");
+            }
+            return className;
+        }
+
+        @Override
+        public boolean isInner() {
+            return isInner;
         }
 
         @Override
@@ -270,7 +524,7 @@ public sealed interface ClassTypeDef extends TypeDef {
 
         @Override
         public ClassTypeDef makeNullable() {
-            return new ClassName(className, true);
+            return new ClassName(className,  isInner, true);
         }
 
     }
@@ -288,11 +542,12 @@ public sealed interface ClassTypeDef extends TypeDef {
 
         @Override
         public String getName() {
-            String name = classElement.getName();
-            if (classElement.isInner()) {
-                return name.replace("$", ".");
-            }
             return classElement.getName();
+        }
+
+        @Override
+        public String getCanonicalName() {
+            return classElement.getCanonicalName();
         }
 
         @Override
@@ -308,6 +563,16 @@ public sealed interface ClassTypeDef extends TypeDef {
         @Override
         public boolean isEnum() {
             return classElement.isEnum();
+        }
+
+        @Override
+        public boolean isInterface() {
+            return classElement.isInterface();
+        }
+
+        @Override
+        public boolean isInner() {
+            return classElement.isInner();
         }
     }
 
@@ -325,6 +590,11 @@ public sealed interface ClassTypeDef extends TypeDef {
         @Override
         public String getName() {
             return classDef.getName();
+        }
+
+        @Override
+        public String getCanonicalName() {
+            return classDef.getName().replace("$", ".");
         }
 
         @Override
@@ -356,6 +626,11 @@ public sealed interface ClassTypeDef extends TypeDef {
         }
 
         @Override
+        public String getCanonicalName() {
+            return rawType.getCanonicalName();
+        }
+
+        @Override
         public boolean isNullable() {
             return rawType.isNullable();
         }
@@ -364,6 +639,17 @@ public sealed interface ClassTypeDef extends TypeDef {
         public ClassTypeDef makeNullable() {
             return new Parameterized(rawType.makeNullable(), typeArguments);
         }
+
+        @Override
+        public boolean isInner() {
+            return rawType.isInner();
+        }
+
+        @Override
+        public boolean isInterface() {
+            return rawType.isInterface();
+        }
+
     }
 
     /**

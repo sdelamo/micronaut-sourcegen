@@ -1,0 +1,489 @@
+/*
+ * Copyright 2017-2024 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.sourcegen.bytecode;
+
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.naming.NameUtils;
+import io.micronaut.sourcegen.bytecode.statement.StatementWriter;
+import io.micronaut.sourcegen.model.AnnotationDef;
+import io.micronaut.sourcegen.model.ClassDef;
+import io.micronaut.sourcegen.model.EnumDef;
+import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.FieldDef;
+import io.micronaut.sourcegen.model.InterfaceDef;
+import io.micronaut.sourcegen.model.MethodDef;
+import io.micronaut.sourcegen.model.ObjectDef;
+import io.micronaut.sourcegen.model.ParameterDef;
+import io.micronaut.sourcegen.model.PropertyDef;
+import io.micronaut.sourcegen.model.RecordDef;
+import io.micronaut.sourcegen.model.StatementDef;
+import io.micronaut.sourcegen.model.TypeDef;
+import io.micronaut.sourcegen.model.VariableDef;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.util.CheckClassAdapter;
+
+import javax.lang.model.element.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static org.objectweb.asm.Opcodes.ACC_ENUM;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_RECORD;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.V17;
+
+/**
+ * Generates the classes directly by writing the bytecode.
+ *
+ * @author Denis Stepanov
+ * @since 1.5
+ */
+public final class ByteCodeWriter {
+
+    private final boolean checkClass;
+    private final boolean visitMaxs;
+
+    public ByteCodeWriter() {
+        this(true, true);
+    }
+
+    public ByteCodeWriter(boolean checkClass, boolean visitMaxs) {
+        this.checkClass = checkClass;
+        this.visitMaxs = visitMaxs;
+    }
+
+    private ClassWriter generateClassBytes(ObjectDef objectDef) {
+        ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        ClassVisitor classVisitor = classWriter;
+        if (checkClass) {
+            classVisitor = new CheckClassAdapter(classVisitor);
+        }
+        writeObject(classVisitor, objectDef);
+        classVisitor.visitEnd();
+        return classWriter;
+    }
+
+    /**
+     * Write an object.
+     *
+     * @param classVisitor The class visitor
+     * @param objectDef    The object definition
+     */
+    public void writeObject(ClassVisitor classVisitor, ObjectDef objectDef) {
+        if (objectDef instanceof ClassDef classDef) {
+            writeClass(classVisitor, classDef);
+        } else if (objectDef instanceof RecordDef recordDef) {
+            writeRecord(classVisitor, recordDef);
+        } else if (objectDef instanceof InterfaceDef interfaceDef) {
+            writeInterface(classVisitor, interfaceDef);
+        } else if (objectDef instanceof EnumDef enumDef) {
+            writeClass(classVisitor, EnumGenUtils.toClassDef(enumDef));
+        } else {
+            throw new UnsupportedOperationException("Unknown object definition: " + objectDef);
+        }
+    }
+
+    private MethodDef createStaticInitializer(StatementDef statement) {
+        return MethodDef.builder("<clinit>")
+            .returns(TypeDef.VOID)
+            .addModifiers(Modifier.STATIC)
+            .addStatement(statement)
+            .build();
+    }
+
+    /**
+     * Write an enum.
+     *
+     * @param classVisitor The class visitor
+     * @param objectDef    The object definition
+     * @param fieldDef     The field definition
+     */
+    public void writeField(ClassVisitor classVisitor, ObjectDef objectDef, FieldDef fieldDef) {
+        int modifiersFlag = getModifiersFlag(fieldDef.getModifiers());
+        if (EnumGenUtils.isEnumField(objectDef, fieldDef)) {
+            modifiersFlag |= ACC_ENUM;
+        }
+        FieldVisitor fieldVisitor = classVisitor.visitField(
+            modifiersFlag,
+            fieldDef.getName(),
+            TypeUtils.getType(fieldDef.getType(), objectDef).getDescriptor(),
+            SignatureWriterUtils.getFieldSignature(objectDef, fieldDef),
+            null
+        );
+        for (AnnotationDef annotation : fieldDef.getAnnotations()) {
+            AnnotationVisitor annotationVisitor = fieldVisitor.visitAnnotation(TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
+            visitAnnotation(annotation, annotationVisitor);
+        }
+        fieldVisitor.visitEnd();
+    }
+
+    /**
+     * Write an interface.
+     *
+     * @param classVisitor The class visitor
+     * @param interfaceDef The interface definition
+     */
+    public void writeInterface(ClassVisitor classVisitor, InterfaceDef interfaceDef) {
+        classVisitor.visit(V17,
+            ACC_INTERFACE | ACC_ABSTRACT | getModifiersFlag(interfaceDef.getModifiers()),
+            TypeUtils.getType(interfaceDef.asTypeDef()).getInternalName(),
+            SignatureWriterUtils.getInterfaceSignature(interfaceDef),
+            TypeUtils.OBJECT_TYPE.getInternalName(),
+            interfaceDef.getSuperinterfaces().stream().map(i -> TypeUtils.getType(i, interfaceDef)).map(Type::getInternalName).toArray(String[]::new)
+        );
+        for (AnnotationDef annotation : interfaceDef.getAnnotations()) {
+            AnnotationVisitor annotationVisitor = classVisitor.visitAnnotation(TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
+            visitAnnotation(annotation, annotationVisitor);
+        }
+        for (MethodDef method : interfaceDef.getMethods()) {
+            writeMethod(classVisitor, interfaceDef, method);
+        }
+        for (PropertyDef property : interfaceDef.getProperties()) {
+            writeProperty(classVisitor, interfaceDef, property);
+        }
+    }
+
+    /**
+     * Write an interface.
+     *
+     * @param classVisitor The class visitor
+     * @param recordDef    The record definition
+     */
+    public void writeRecord(ClassVisitor classVisitor, RecordDef recordDef) {
+        classVisitor.visit(
+            V17,
+            ACC_RECORD | getModifiersFlag(recordDef.getModifiers()),
+            TypeUtils.getType(recordDef.asTypeDef()).getInternalName(),
+            SignatureWriterUtils.getRecordSignature(recordDef),
+            Type.getType(Record.class).getInternalName(),
+            recordDef.getSuperinterfaces().stream().map(i -> TypeUtils.getType(i, recordDef)).map(Type::getInternalName).toArray(String[]::new)
+        );
+    }
+
+    /**
+     * Write an interface.
+     *
+     * @param classVisitor The class visitor
+     * @param classDef     The class definition
+     */
+    public void writeClass(ClassVisitor classVisitor, ClassDef classDef) {
+        TypeDef superclass = Objects.requireNonNullElse(classDef.getSuperclass(), TypeDef.OBJECT);
+
+        int modifiersFlag = getModifiersFlag(classDef.getModifiers());
+
+        if (EnumGenUtils.isEnum(classDef)) {
+            modifiersFlag |= ACC_ENUM;
+        }
+
+        classVisitor.visit(
+            V17,
+            modifiersFlag,
+            TypeUtils.getType(classDef.asTypeDef()).getInternalName(),
+            SignatureWriterUtils.getClassSignature(classDef),
+            TypeUtils.getType(superclass, null).getInternalName(),
+            classDef.getSuperinterfaces().stream().map(i -> TypeUtils.getType(i, classDef)).map(Type::getInternalName).toArray(String[]::new)
+        );
+
+        for (AnnotationDef annotation : classDef.getAnnotations()) {
+            AnnotationVisitor annotationVisitor = classVisitor.visitAnnotation(
+                TypeUtils.getType(annotation.getType(), null).getDescriptor(),
+                true);
+            visitAnnotation(annotation, annotationVisitor);
+        }
+
+        List<StatementDef> staticInitStatements = new ArrayList<>();
+        for (FieldDef field : classDef.getFields()) {
+            writeField(classVisitor, classDef, field);
+            field.getInitializer().ifPresent(expressionDef -> {
+                if (field.getModifiers().contains(Modifier.STATIC)) {
+                    staticInitStatements.add(classDef.asTypeDef().getStaticField(field).put(expressionDef));
+                }
+            });
+        }
+
+        StatementDef staticInitializer = classDef.getStaticInitializer();
+        if (staticInitializer != null) {
+            staticInitStatements.add(staticInitializer);
+        }
+        if (!staticInitStatements.isEmpty()) {
+            writeMethod(classVisitor, null, createStaticInitializer(StatementDef.multi(staticInitStatements)));
+        }
+
+        if (classDef.getMethods().stream().noneMatch(MethodDef::isConstructor)) {
+            // Add default constructor
+            writeMethod(classVisitor, classDef, MethodDef.constructor()
+                .build((aThis, methodParameters) -> aThis.superRef().invokeConstructor(methodParameters)));
+        }
+
+        for (PropertyDef property : classDef.getProperties()) {
+            writeProperty(classVisitor, classDef, property);
+        }
+        for (MethodDef method : classDef.getMethods()) {
+            writeMethod(classVisitor, classDef, method);
+        }
+    }
+
+    private void visitAnnotation(AnnotationDef annotation, AnnotationVisitor annotationVisitor) {
+        for (Map.Entry<String, Object> entry : annotation.getValues().entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            visitAnnotation(annotationVisitor, key, value);
+        }
+        annotationVisitor.visitEnd();
+    }
+
+    private void visitAnnotation(AnnotationVisitor annotationVisitor, String name, Object value) {
+        if (value instanceof VariableDef.StaticField staticField) {
+            annotationVisitor.visitEnum(
+                name,
+                TypeUtils.getType(staticField.ownerType(), null).getDescriptor(),
+                staticField.name()
+            );
+        } else if (value instanceof AnnotationDef nestedAnnotation) {
+            visitAnnotation(
+                nestedAnnotation,
+                annotationVisitor.visitAnnotation(name, TypeUtils.getType(nestedAnnotation.getType(), null).getDescriptor())
+            );
+        } else if (value instanceof AnnotationDef[] annotations) {
+            AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
+            for (AnnotationDef annotationDef : annotations) {
+                visitAnnotation(
+                    annotationDef,
+                    annotationVisitor.visitAnnotation(name, TypeUtils.getType(annotationDef.getType(), null).getDescriptor())
+                );
+            }
+            arrayVisitor.visitEnd();
+        } else if (value instanceof Collection<?> coll) {
+            AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
+            for (Object object : coll) {
+                visitAnnotation(arrayVisitor, name, object);
+            }
+            arrayVisitor.visitEnd();
+        } else if (value instanceof Object[] array) {
+            AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
+            for (Object object : array) {
+                visitAnnotation(arrayVisitor, name, object);
+            }
+            arrayVisitor.visitEnd();
+        } else {
+            annotationVisitor.visit(name, value);
+        }
+    }
+
+    private void writeProperty(ClassVisitor classWriter, ObjectDef objectDef, PropertyDef property) {
+        FieldDef propertyField = FieldDef.builder(property.getName(), property.getType())
+            .addModifiers(Modifier.PRIVATE)
+            .addAnnotations(property.getAnnotations())
+            .build();
+
+        writeField(classWriter, objectDef, propertyField);
+
+        String capitalizedPropertyName = NameUtils.capitalize(property.getName());
+
+        boolean isAbstract = objectDef instanceof InterfaceDef;
+
+        MethodDef.MethodDefBuilder getterBuilder = MethodDef.builder("get" + capitalizedPropertyName)
+            .addModifiers(property.getModifiersArray());
+
+        if (!isAbstract) {
+            getterBuilder.addStatement((aThis, methodParameters) -> aThis.field(propertyField).returning());
+        }
+
+        writeMethod(classWriter, objectDef, getterBuilder.build());
+
+        MethodDef.MethodDefBuilder setterBuilder = MethodDef.builder("set" + capitalizedPropertyName)
+            .addParameter(ParameterDef.of(property.getName(), property.getType()))
+            .addModifiers(property.getModifiersArray());
+
+        if (!isAbstract) {
+            setterBuilder.addStatement((aThis, methodParameters) -> aThis.field(propertyField).assign(methodParameters.get(0)));
+        }
+
+        writeMethod(classWriter, objectDef, setterBuilder.build());
+    }
+
+    /**
+     * Write an interface.
+     *
+     * @param classVisitor The class visitor
+     * @param objectDef    The object definition
+     * @param methodDef    The method definition
+     */
+    public void writeMethod(ClassVisitor classVisitor, @Nullable ObjectDef objectDef, MethodDef methodDef) {
+        String name = methodDef.getName();
+        String methodDescriptor = TypeUtils.getMethodDescriptor(objectDef, methodDef);
+        int access = getModifiersFlag(methodDef.getModifiers());
+
+        MethodVisitor methodVisitor = classVisitor.visitMethod(
+            access,
+            name,
+            methodDescriptor,
+            SignatureWriterUtils.getMethodSignature(objectDef, methodDef),
+            null
+        );
+        GeneratorAdapter generatorAdapter = new GeneratorAdapter(methodVisitor, access, name, methodDescriptor);
+        for (AnnotationDef annotation : methodDef.getAnnotations()) {
+            methodVisitor.visitAnnotation(TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
+        }
+
+        if (methodDef.getParameters().stream().anyMatch(p -> !p.getAnnotations().isEmpty())) {
+            methodVisitor.visitAnnotableParameterCount(methodDef.getParameters().size(), true);
+        }
+
+        int parameterIndex = 0;
+        for (ParameterDef parameter : methodDef.getParameters()) {
+            for (AnnotationDef annotation : parameter.getAnnotations()) {
+                AnnotationVisitor annotationVisitor = methodVisitor.visitParameterAnnotation(parameterIndex, TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
+                visitAnnotation(annotation, annotationVisitor);
+            }
+            parameterIndex++;
+        }
+
+        MethodContext context = new MethodContext(objectDef, methodDef);
+        List<StatementDef> statements = methodDef.getStatements();
+        if (methodDef.isConstructor()) {
+            statements = adjustConstructorStatements(objectDef, statements);
+        }
+        if (!statements.isEmpty()) {
+            methodVisitor.visitCode();
+            for (StatementDef statement : statements) {
+                StatementWriter.of(statement).write(generatorAdapter, context, null);
+            }
+            StatementDef statementDef = statements.get(statements.size() - 1);
+            if (!hasReturnStatement(statementDef)) {
+                if (methodDef.getReturnType().equals(TypeDef.VOID)) {
+                    generatorAdapter.returnValue();
+                } else {
+                    throw new IllegalStateException("The method: " + (objectDef == null ? "" : objectDef.getName()) + " " + methodDef.getName() + " doesn't return the result!");
+                }
+            }
+        }
+        if (visitMaxs && !statements.isEmpty()) {
+            methodVisitor.visitMaxs(20, 20);
+        }
+        methodVisitor.visitEnd();
+    }
+
+    private List<StatementDef> adjustConstructorStatements(ObjectDef objectDef, List<StatementDef> statements) {
+        if (!(objectDef instanceof ClassDef classDef)) {
+            return statements;
+        }
+        List<StatementDef> fieldInitializers = classDef.getFields().stream().filter(fieldDef -> !fieldDef.getModifiers().contains(Modifier.STATIC))
+            .flatMap(fieldDef -> fieldDef.getInitializer().<StatementDef>map(initializer -> new VariableDef.This().field(fieldDef).assign(initializer)).stream())
+            .toList();
+        Optional<StatementDef> constructorInvocation = statements.stream().filter(this::isConstructorInvocation).findFirst();
+        if (constructorInvocation.isEmpty() || !fieldInitializers.isEmpty()) {
+            // Add the constructor or reshuffle the statements to have the field initializers right after the constructor call
+            List<StatementDef> newStatements = new ArrayList<>();
+            // Constructor call
+            newStatements.add(constructorInvocation.orElseGet(this::superConstructorInvocation));
+            // Fields initializer
+            newStatements.addAll(fieldInitializers);
+            // Statements
+            if (constructorInvocation.isPresent()) {
+                // Remove constructor moved to the front
+                List<StatementDef> statementsWithoutConstructor = new ArrayList<>(statements);
+                statementsWithoutConstructor.remove(constructorInvocation.get());
+                newStatements.addAll(statementsWithoutConstructor);
+            } else {
+                newStatements.addAll(statements);
+            }
+            statements = newStatements;
+        }
+        return statements;
+    }
+
+    private boolean hasReturnStatement(StatementDef statement) {
+        List<StatementDef> statements = statement.flatten();
+        StatementDef statementDef = statements.get(statements.size() - 1);
+        if (statementDef instanceof StatementDef.IfElse ifElse) {
+            return hasReturnStatement(ifElse.statement()) && hasReturnStatement(ifElse.elseStatement());
+        }
+        if (statementDef instanceof StatementDef.Try aTry) {
+            return hasReturnStatement(aTry.statement());
+        }
+        if (statementDef instanceof StatementDef.Synchronized aSynchronized) {
+            return hasReturnStatement(aSynchronized.statement());
+        }
+        if (statementDef instanceof StatementDef.Switch switchStatement) {
+            if (switchStatement.defaultCase() == null) {
+                return false;
+            }
+            return switchStatement.cases().values().stream().allMatch(this::hasReturnStatement);
+        }
+        return statementDef instanceof StatementDef.Return || statementDef instanceof StatementDef.Throw;
+    }
+
+    private StatementDef superConstructorInvocation() {
+        return MethodDef.constructor().build((aThis, methodParameters) -> aThis.superRef().invokeConstructor())
+            .getStatements()
+            .get(0);
+    }
+
+    private boolean isConstructorInvocation(StatementDef statement) {
+        return statement instanceof ExpressionDef.InvokeInstanceMethod call && call.method().isConstructor();
+    }
+
+    private int getModifiersFlag(Set<Modifier> modifiers) {
+        int access = 0;
+        if (modifiers.contains(Modifier.PUBLIC)) {
+            access |= ACC_PUBLIC;
+        }
+        if (modifiers.contains(Modifier.PRIVATE)) {
+            access |= ACC_PRIVATE;
+        }
+        if (modifiers.contains(Modifier.PROTECTED)) {
+            access |= ACC_PROTECTED;
+        }
+        if (modifiers.contains(Modifier.FINAL)) {
+            access |= ACC_FINAL;
+        }
+        if (modifiers.contains(Modifier.ABSTRACT)) {
+            access |= ACC_ABSTRACT;
+        }
+        if (modifiers.contains(Modifier.STATIC)) {
+            access |= ACC_STATIC;
+        }
+        return access;
+    }
+
+    /**
+     * Writes the bytecode of generated class.
+     *
+     * @param objectDef The object definition.
+     * @return The bytes
+     */
+    public byte[] write(ObjectDef objectDef) {
+        return generateClassBytes(objectDef).toByteArray();
+    }
+
+}
