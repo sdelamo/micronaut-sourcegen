@@ -118,7 +118,7 @@ implements <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.mod
 <h2>Field Summary</h2>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.sourcegen.model.TypeDef">Fields inherited from interface&nbsp;io.micronaut.sourcegen.model.<a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></h3>
-<code><a href="TypeDef.html#OBJECT">OBJECT</a>, <a href="TypeDef.html#STRING">STRING</a>, <a href="TypeDef.html#THIS">THIS</a>, <a href="TypeDef.html#VOID">VOID</a></code></div>
+<code><a href="TypeDef.html#CLASS">CLASS</a>, <a href="TypeDef.html#OBJECT">OBJECT</a>, <a href="TypeDef.html#STRING">STRING</a>, <a href="TypeDef.html#SUPER">SUPER</a>, <a href="TypeDef.html#THIS">THIS</a>, <a href="TypeDef.html#VOID">VOID</a></code></div>
 </section>
 </li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -169,14 +169,17 @@ implements <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.mod
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-lowerBounds"><code>lowerBounds</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#makeNullable()" class="member-name-link">makeNullable</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#upperBounds()" class="member-name-link">upperBounds</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#upperBounds()" class="member-name-link">upperBounds</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-upperBounds"><code>upperBounds</code></a> record component.</div>
 </div>
 </div>
@@ -187,7 +190,7 @@ implements <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.mod
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.sourcegen.model.TypeDef">Methods inherited from interface&nbsp;io.micronaut.sourcegen.model.<a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></h3>
-<code><a href="TypeDef.html#annotated(io.micronaut.sourcegen.model.AnnotationDef...)">annotated</a>, <a href="TypeDef.html#annotated(java.util.List)">annotated</a>, <a href="TypeDef.html#instantiateArray(int)">instantiateArray</a>, <a href="TypeDef.html#instantiateArray(io.micronaut.sourcegen.model.ExpressionDef...)">instantiateArray</a>, <a href="TypeDef.html#instantiateArray(java.util.List)">instantiateArray</a>, <a href="TypeDef.html#isNullable()">isNullable</a>, <a href="TypeDef.html#makeNullable()">makeNullable</a></code></div>
+<code><a href="TypeDef.html#annotated(io.micronaut.sourcegen.model.AnnotationDef...)">annotated</a>, <a href="TypeDef.html#annotated(java.util.List)">annotated</a>, <a href="TypeDef.html#array()">array</a>, <a href="TypeDef.html#array(int)">array</a>, <a href="TypeDef.html#isNullable()">isNullable</a></code></div>
 </section>
 </li>
 </ul>
@@ -241,6 +244,18 @@ implements <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.mod
 <dd><code><a href="TypeDef.html#isArray()">isArray</a></code>&nbsp;in interface&nbsp;<code><a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></code></dd>
 <dt>Returns:</dt>
 <dd>Is Array type</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="makeNullable()">
+<h3>makeNullable</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></span>&nbsp;<span class="element-name">makeNullable</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="TypeDef.html#makeNullable()">makeNullable</a></code>&nbsp;in interface&nbsp;<code><a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></code></dd>
+<dt>Returns:</dt>
+<dd>A new nullable type</dd>
 </dl>
 </section>
 </li>
