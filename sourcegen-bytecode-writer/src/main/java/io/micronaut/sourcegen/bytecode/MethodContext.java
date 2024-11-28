@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.bytecode;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ObjectDef;
@@ -29,6 +30,7 @@ import java.util.Map;
  * @param methodDef The current method definition.
  * @param locals    The locals
  */
+@Internal
 public record MethodContext(@Nullable ObjectDef objectDef,
                             MethodDef methodDef,
                             Map<String, Integer> locals) {

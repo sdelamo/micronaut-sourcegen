@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.custom.example.GenerateAnnotatedType;
@@ -65,13 +64,6 @@ public final class GenerateAnnotatedTypeVisitor implements TypeElementVisitor<Ge
                 .addAnnotation(Introspected.class)
                 .addProperty(propertyDef).build();
 
-        context.visitGeneratedSourceFile(recordDef.getPackageName(), recordDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(recordDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
+        sourceGenerator.write(recordDef, context, element);
     }
 }

@@ -37,9 +37,9 @@ import java.util.List;
 public sealed class AbstractElementBuilder<ThisType> permits ObjectDefBuilder, FieldDef.FieldDefBuilder, MethodDef.MethodDefBuilder, ParameterDef.ParameterDefBuilder, PropertyDef.PropertyDefBuilder {
 
     protected final String name;
-    protected EnumSet<Modifier> modifiers = EnumSet.noneOf(Modifier.class);
-    protected List<AnnotationDef> annotations = new ArrayList<>();
-    protected List<String> javadoc = new ArrayList<>();
+    protected final EnumSet<Modifier> modifiers = EnumSet.noneOf(Modifier.class);
+    protected final List<AnnotationDef> annotations = new ArrayList<>();
+    protected final List<String> javadoc = new ArrayList<>();
     protected final ThisType thisInstance;
 
     protected AbstractElementBuilder(String name) {
@@ -53,6 +53,18 @@ public sealed class AbstractElementBuilder<ThisType> permits ObjectDefBuilder, F
     }
 
     public final ThisType addModifiers(Modifier... modifiers) {
+        Collections.addAll(this.modifiers, modifiers);
+        return thisInstance;
+    }
+
+    /**
+     * Overrides the modifiers.
+     *
+     * @param modifiers The modifier
+     * @return this type
+     */
+    public final ThisType overrideModifiers(Modifier... modifiers) {
+        this.modifiers.clear();
         Collections.addAll(this.modifiers, modifiers);
         return thisInstance;
     }

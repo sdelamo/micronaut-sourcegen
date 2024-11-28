@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static java.lang.String.join;
@@ -44,7 +45,7 @@ public final class EnumDef extends ObjectDef {
     private final List<FieldDef> fields;
     private final LinkedHashMap<String, List<ExpressionDef>> enumConstants;
 
-    private EnumDef(String name,
+    private EnumDef(ClassTypeDef type,
                     EnumSet<Modifier> modifiers,
                     List<FieldDef> fields,
                     List<MethodDef> methods,
@@ -54,9 +55,14 @@ public final class EnumDef extends ObjectDef {
                     LinkedHashMap<String, List<ExpressionDef>> enumConstants,
                     List<TypeDef> superinterfaces,
                     List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+        super(type, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
         this.enumConstants = enumConstants;
+    }
+
+    @Override
+    public EnumDef withType(ClassTypeDef type) {
+        return new EnumDef(type, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
     }
 
     public static EnumDefBuilder builder(String name) {
@@ -123,11 +129,12 @@ public final class EnumDef extends ObjectDef {
 
         public EnumDefBuilder addEnumConstant(String name) {
             String constName = getConstantName(name);
-            enumConstants.put(constName, null);
+            enumConstants.put(constName, List.of());
             return this;
         }
 
         public EnumDefBuilder addEnumConstant(String name, ExpressionDef... values) {
+            Objects.requireNonNull(values, "Values cannot be null");
             String constName = getConstantName(name);
             enumConstants.put(constName, List.of(values));
             return this;
@@ -137,7 +144,7 @@ public final class EnumDef extends ObjectDef {
             if (!enumConstants.isEmpty()) {
                 Set<Integer> valueCount = new HashSet<>();
                 for (Map.Entry<String, List<ExpressionDef>> entry : enumConstants.entrySet()) {
-                    if (entry.getValue() == null) {
+                    if (entry.getValue() == null || entry.getValue().isEmpty()) {
                         continue;
                     }
 
@@ -162,7 +169,7 @@ public final class EnumDef extends ObjectDef {
                     }
                 }
             }
-            return new EnumDef(name, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
+            return new EnumDef(ClassTypeDef.of(name), modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
         }
 
         /**

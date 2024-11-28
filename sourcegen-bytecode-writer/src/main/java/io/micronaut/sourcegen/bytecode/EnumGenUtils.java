@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.bytecode;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
@@ -24,9 +25,12 @@ import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ObjectDef;
 import io.micronaut.sourcegen.model.ParameterDef;
+import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 
 import javax.lang.model.element.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,9 +41,12 @@ import java.util.Optional;
  * @author Denis Stepanov
  * @since 1.5
  */
+@Internal
 public class EnumGenUtils {
 
     private static final java.lang.reflect.Method CLONE_METHOD = ReflectionUtils.getRequiredMethod(Object.class, "clone");
+    private static final java.lang.reflect.Method ENUM_VALUE_OF_METHOD = ReflectionUtils.getRequiredMethod(Enum.class, "valueOf", Class.class, String.class);
+    private static final java.lang.reflect.Constructor<?> ENUM_CONSTRUCTOR = ReflectionUtils.getRequiredInternalConstructor(Enum.class, String.class, int.class);
 
     /**
      * Generate the {@link ClassDef} from {@link EnumDef}.
@@ -48,36 +55,49 @@ public class EnumGenUtils {
      * @return The class definition
      */
     public static ClassDef toClassDef(EnumDef enumDef) {
-        ClassTypeDef enumTypeDef = enumDef.asTypeDef();
+        ClassTypeDef enumTypeDef = ClassTypeDef.of(enumDef.getName());
 
         ClassTypeDef baseEnumTypeDef = ClassTypeDef.of(Enum.class);
 
         ClassDef.ClassDefBuilder classDefBuilder = ClassDef.builder(enumDef.getName())
+            .addFields(enumDef.getFields())
             .addModifiers(enumDef.getModifiers())
             .addModifiers(Modifier.FINAL)
-            .superclass(TypeDef.parameterized(baseEnumTypeDef, ClassTypeDef.of(enumDef.getName())))
-            .addSuperinterfaces(enumDef.getSuperinterfaces());
+            .superclass(TypeDef.parameterized(baseEnumTypeDef, enumTypeDef))
+            .addSuperinterfaces(enumDef.getSuperinterfaces())
+            .addInnerType(enumDef.getInnerTypes());
 
         int i = 0;
         for (Map.Entry<String, List<ExpressionDef>> e : enumDef.getEnumConstants().entrySet()) {
 
+            List<ExpressionDef> values = new ArrayList<>();
+            values.add(ExpressionDef.constant(e.getKey()));
+            values.add(TypeDef.Primitive.INT.constant(i++));
+            values.addAll(e.getValue());
+
             FieldDef enumField = FieldDef.builder(e.getKey(), enumTypeDef)
                 .addModifiers(Modifier.FINAL, Modifier.STATIC, Modifier.PUBLIC)
-                .initializer(enumTypeDef.instantiate(
-                    ExpressionDef.constant(e.getKey()),
-                    TypeDef.Primitive.INT.constant(i++)
-                ))
+                .initializer(enumTypeDef.instantiate(values))
                 .build();
 
             classDefBuilder.addField(enumField);
         }
 
-        classDefBuilder.addMethod(
-            MethodDef.constructor()
-                .addParameter(ParameterDef.of("name", TypeDef.STRING))
-                .addParameter(ParameterDef.of("ordinal", TypeDef.Primitive.INT))
-                .build((aThis, methodParameters) -> aThis.superRef().invokeConstructor(methodParameters.get(0), methodParameters.get(1)))
-        );
+        int constructorIndex = 0;
+        boolean constructorAdded = false;
+        for (MethodDef method : enumDef.getMethods()) {
+            if (!method.isConstructor()) {
+                continue;
+            }
+            addEnumConstructor(classDefBuilder, method, constructorIndex);
+            constructorAdded = true;
+        }
+        if (!constructorAdded) {
+            classDefBuilder.addMethod(MethodDef.override(ENUM_CONSTRUCTOR)
+                .overrideModifiers(Modifier.PRIVATE)
+                .build((aThis, methodParameters) ->
+                    aThis.superRef().invokeConstructor(ENUM_CONSTRUCTOR, methodParameters.get(0), methodParameters.get(1))));
+        }
 
         MethodDef internalValuesMethod = MethodDef.builder("$values")
             .addModifiers(Modifier.STATIC, Modifier.PRIVATE)
@@ -113,15 +133,35 @@ public class EnumGenUtils {
         classDefBuilder.addMethod(MethodDef.builder("valueOf")
             .addParameter(ParameterDef.of("value", TypeDef.STRING))
             .addModifiers(Modifier.STATIC, Modifier.PUBLIC)
-            .build((aThis1, methodParameters1) ->
+            .build((aThis, methodParameters) ->
                 baseEnumTypeDef
-                    .invokeStatic("valueOf", baseEnumTypeDef, ExpressionDef.constant(enumTypeDef), methodParameters1.get(0))
+                    .invokeStatic(ENUM_VALUE_OF_METHOD, ExpressionDef.constant(enumTypeDef), methodParameters.get(0))
                     .cast(enumTypeDef)
                     .returning()));
 
-        classDefBuilder.addMethods(enumDef.getMethods());
+        enumDef.getMethods().stream().filter(m -> !m.isConstructor()).forEach(classDefBuilder::addMethod);
 
         return classDefBuilder.build();
+    }
+
+    private static void addEnumConstructor(ClassDef.ClassDefBuilder classDefBuilder, MethodDef method, int constructorIndex) {
+        // To avoid modifying the created constructor, we will create a method and invoke it from the modified enum constructor
+        MethodDef constructorMethod = MethodDef.builder("$constructor" + constructorIndex)
+            .addModifiers(Modifier.PRIVATE)
+            .addParameters(method.getParameters())
+            .returns(TypeDef.VOID)
+            .addStatements(method.getStatements())
+            .build();
+        classDefBuilder.addMethod(constructorMethod);
+
+        classDefBuilder.addMethod(MethodDef.constructor()
+            .addModifiers(Modifier.PRIVATE)
+            .addParameters(ENUM_CONSTRUCTOR.getParameterTypes())
+            .addParameters(method.getParameters())
+            .build((aThis, methodParameters) -> StatementDef.multi(
+                aThis.superRef().invokeConstructor(ENUM_CONSTRUCTOR, methodParameters.get(0), methodParameters.get(1)),
+                aThis.invoke(constructorMethod, methodParameters.subList(2, methodParameters.size()))
+            )));
     }
 
     /**

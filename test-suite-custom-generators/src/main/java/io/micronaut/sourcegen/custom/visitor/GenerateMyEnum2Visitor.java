@@ -18,7 +18,6 @@ package io.micronaut.sourcegen.custom.visitor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.custom.example.GenerateMyEnum2;
@@ -63,14 +62,7 @@ public final class GenerateMyEnum2Visitor implements TypeElementVisitor<Generate
         if (sourceGenerator == null) {
             return;
         }
-        context.visitGeneratedSourceFile(beanDef.getPackageName(), beanDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(beanDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
+        sourceGenerator.write(beanDef, context, element);
     }
 
 }

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Experimental;
 
 import javax.lang.model.element.Modifier;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -32,13 +33,13 @@ import java.util.Set;
 abstract sealed class AbstractElement permits ObjectDef, FieldDef, MethodDef, ParameterDef, PropertyDef {
 
     protected final String name;
-    protected final Set<Modifier> modifiers;
-    private final List<AnnotationDef> annotations;
-    private final List<String> javadoc;
+    protected final EnumSet<Modifier> modifiers;
+    protected final List<AnnotationDef> annotations;
+    protected final List<String> javadoc;
 
-    AbstractElement(String name, Set<Modifier> modifiers, List<AnnotationDef> annotations, List<String> javadoc) {
+    AbstractElement(String name, EnumSet<Modifier> modifiers, List<AnnotationDef> annotations, List<String> javadoc) {
         this.name = name;
-        this.modifiers = Collections.unmodifiableSet(modifiers);
+        this.modifiers = modifiers;
         this.annotations = Collections.unmodifiableList(annotations);
         this.javadoc = Collections.unmodifiableList(javadoc);
     }
@@ -48,7 +49,7 @@ abstract sealed class AbstractElement permits ObjectDef, FieldDef, MethodDef, Pa
     }
 
     public final Set<Modifier> getModifiers() {
-        return modifiers;
+        return Collections.unmodifiableSet(modifiers);
     }
 
     public final Modifier[] getModifiersArray() {

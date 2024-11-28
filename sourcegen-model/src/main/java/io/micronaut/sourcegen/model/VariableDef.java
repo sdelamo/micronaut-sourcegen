@@ -164,7 +164,7 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Ex
         }
 
         @Override
-        public TypeDef type() {
+        public ClassTypeDef type() {
             return TypeDef.THIS;
         }
     }

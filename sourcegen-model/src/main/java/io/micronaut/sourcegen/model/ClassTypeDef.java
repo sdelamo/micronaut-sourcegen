@@ -16,7 +16,6 @@
 package io.micronaut.sourcegen.model;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -26,6 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 
 /**
  * The class type definition.
@@ -54,14 +54,24 @@ public sealed interface ClassTypeDef extends TypeDef {
      * @return The simple name
      */
     default String getSimpleName() {
-        return NameUtils.getSimpleName(getName());
+        String name = getCanonicalName();
+        int i = name.lastIndexOf('.');
+        if (i == -1) {
+            return name;
+        }
+        return name.substring(i + 1);
     }
 
     /**
      * @return The package name
      */
     default String getPackageName() {
-        return NameUtils.getPackageName(getName());
+        String name = getCanonicalName();
+        int i = name.lastIndexOf('.');
+        if (i == -1) {
+            return "";
+        }
+        return name.substring(0, i);
     }
 
     @Override
@@ -457,6 +467,11 @@ public sealed interface ClassTypeDef extends TypeDef {
         }
 
         @Override
+        public String getSimpleName() {
+            return type.getSimpleName();
+        }
+
+        @Override
         public String getCanonicalName() {
             return type.getCanonicalName();
         }
@@ -546,6 +561,11 @@ public sealed interface ClassTypeDef extends TypeDef {
         }
 
         @Override
+        public String getSimpleName() {
+            return classElement.getSimpleName();
+        }
+
+        @Override
         public String getCanonicalName() {
             return classElement.getCanonicalName();
         }
@@ -593,6 +613,11 @@ public sealed interface ClassTypeDef extends TypeDef {
         }
 
         @Override
+        public String getSimpleName() {
+            return classDef.getSimpleName();
+        }
+
+        @Override
         public String getCanonicalName() {
             return classDef.getName().replace("$", ".");
         }
@@ -623,6 +648,11 @@ public sealed interface ClassTypeDef extends TypeDef {
         @Override
         public String getName() {
             return rawType.getName();
+        }
+
+        @Override
+        public String getSimpleName() {
+            return rawType.getSimpleName();
         }
 
         @Override

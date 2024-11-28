@@ -33,7 +33,7 @@ public final class RecordDef extends ObjectDef {
 
     private final List<TypeDef.TypeVariable> typeVariables;
 
-    private RecordDef(String name,
+    private RecordDef(ClassTypeDef type,
                       EnumSet<Modifier> modifiers,
                       List<MethodDef> methods,
                       List<PropertyDef> properties,
@@ -42,8 +42,13 @@ public final class RecordDef extends ObjectDef {
                       List<TypeDef.TypeVariable> typeVariables,
                       List<TypeDef> superinterfaces,
                       List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+        super(type, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.typeVariables = typeVariables;
+    }
+
+    @Override
+    public RecordDef withType(ClassTypeDef type) {
+        return new RecordDef(type, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
     }
 
     public static RecordDefBuilder builder(String name) {
@@ -75,7 +80,7 @@ public final class RecordDef extends ObjectDef {
         }
 
         public RecordDef build() {
-            return new RecordDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
+            return new RecordDef(ClassTypeDef.of(name), modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
         }
 
     }

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.inject.ast.MethodElement;
 
 import javax.lang.model.element.Modifier;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -148,6 +149,20 @@ public final class MethodDef extends AbstractElement {
             .addModifiers(toOverrideModifiers(method.getModifiers()))
             .addParameters(Arrays.stream(method.getParameters()).map(p -> TypeDef.of(p.getType())).toList())
             .returns(TypeDef.of(method.getReturnType()));
+    }
+
+    /**
+     * Creates a constructor definition builder from {@link Method}.
+     *
+     * @param constructor The method
+     * @return The method definition builder
+     * @since 1.5
+     */
+    @NonNull
+    public static MethodDefBuilder override(@NonNull Constructor<?> constructor) {
+        return MethodDef.constructor()
+            .addModifiers(toOverrideModifiers(constructor.getModifiers()))
+            .addParameters(Arrays.stream(constructor.getParameters()).map(p -> TypeDef.of(p.getType())).toList());
     }
 
     private static Modifier[] toOverrideModifiers(int modifiers) {
@@ -325,6 +340,19 @@ public final class MethodDef extends AbstractElement {
         public MethodDefBuilder addParameter(@NonNull ParameterDef parameterDef) {
             Objects.requireNonNull(parameterDef, "Parameter cannot be null");
             parameters.add(parameterDef);
+            return this;
+        }
+
+        /**
+         * Add parameters.
+         *
+         * @param parameters The parameters
+         * @return a builder
+         * @since 1.5
+         */
+        @NonNull
+        public MethodDefBuilder addParameters(@NonNull Collection<ParameterDef> parameters) {
+            parameters.forEach(this::addParameter);
             return this;
         }
 

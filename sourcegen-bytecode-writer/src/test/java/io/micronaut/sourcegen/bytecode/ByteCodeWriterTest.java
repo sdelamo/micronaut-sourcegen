@@ -1,6 +1,8 @@
 package io.micronaut.sourcegen.bytecode;
 
 import io.micronaut.context.BeanResolutionContext;
+import io.micronaut.inject.visitor.VisitorContext;
+import io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInEnumVisitor;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.EnumDef;
@@ -228,8 +230,8 @@ final enum MyEnum extends java/lang/Enum {
     PUTSTATIC MyEnum.$VALUES : [LMyEnum;
     RETURN
 
-  // access flags 0x0
-  <init>(Ljava/lang/String;I)V
+  // access flags 0x2
+  private <init>(Ljava/lang/String;I)V
     ALOAD 0
     ALOAD 1
     ILOAD 2
@@ -825,6 +827,192 @@ class MyClass {
          default:
             return 444;
       }
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testInnerClass() {
+        ClassDef classDef = ClassDef.builder("test.MyClass")
+            .addMethod(
+                MethodDef.builder("hello")
+                    .build((aThis, methodParameters) -> ExpressionDef.constant("world").returning())
+            ).addInnerType(ClassDef.builder("Inner")
+                .addMethod(
+                    MethodDef.builder("hi")
+                        .build((aThis, methodParameters) -> ExpressionDef.constant("hello").returning())
+                ).build())
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: test/MyClass
+class test/MyClass {
+
+  // access flags 0x9
+  public static INNERCLASS test/MyClass$Inner test/MyClass Inner
+  NESTMEMBER test/MyClass$Inner
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  hello()Ljava/lang/String;
+    LDC "world"
+    ARETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package test;
+
+class MyClass {
+   String hello() {
+      return "world";
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testInnerEnum() {
+        EnumDef enumDef = GenerateInnerTypeInEnumVisitor.getEnumDef("example", VisitorContext.Language.JAVA);
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(enumDef, bytecodeWriter);
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x4011
+// signature Ljava/lang/Enum<Lexample/MyEnumWithInnerTypes;>;
+// declaration: example/MyEnumWithInnerTypes extends java.lang.Enum<example.MyEnumWithInnerTypes>
+public final enum example/MyEnumWithInnerTypes extends java/lang/Enum {
+
+  // access flags 0x4019
+  public final static enum INNERCLASS example/MyEnumWithInnerTypes$InnerEnum example/MyEnumWithInnerTypes InnerEnum
+  NESTMEMBER example/MyEnumWithInnerTypes$InnerEnum
+  // access flags 0x9
+  public static INNERCLASS example/MyEnumWithInnerTypes$InnerRecord example/MyEnumWithInnerTypes InnerRecord
+  NESTMEMBER example/MyEnumWithInnerTypes$InnerRecord
+  // access flags 0x9
+  public static INNERCLASS example/MyEnumWithInnerTypes$InnerClass example/MyEnumWithInnerTypes InnerClass
+  NESTMEMBER example/MyEnumWithInnerTypes$InnerClass
+  // access flags 0x609
+  public static abstract INNERCLASS example/MyEnumWithInnerTypes$InnerInterface example/MyEnumWithInnerTypes InnerInterface
+  NESTMEMBER example/MyEnumWithInnerTypes$InnerInterface
+
+  // access flags 0x4019
+  public final static enum Lexample/MyEnumWithInnerTypes; A
+
+  // access flags 0x4019
+  public final static enum Lexample/MyEnumWithInnerTypes; B
+
+  // access flags 0x4019
+  public final static enum Lexample/MyEnumWithInnerTypes; C
+
+  // access flags 0xA
+  private static [Lexample/MyEnumWithInnerTypes; $VALUES
+
+  // access flags 0x8
+  static <clinit>()V
+    NEW example/MyEnumWithInnerTypes
+    DUP
+    LDC "A"
+    ICONST_0
+    INVOKESPECIAL example/MyEnumWithInnerTypes.<init> (Ljava/lang/String;I)V
+    PUTSTATIC example/MyEnumWithInnerTypes.A : Lexample/MyEnumWithInnerTypes;
+    NEW example/MyEnumWithInnerTypes
+    DUP
+    LDC "B"
+    ICONST_1
+    INVOKESPECIAL example/MyEnumWithInnerTypes.<init> (Ljava/lang/String;I)V
+    PUTSTATIC example/MyEnumWithInnerTypes.B : Lexample/MyEnumWithInnerTypes;
+    NEW example/MyEnumWithInnerTypes
+    DUP
+    LDC "C"
+    ICONST_2
+    INVOKESPECIAL example/MyEnumWithInnerTypes.<init> (Ljava/lang/String;I)V
+    PUTSTATIC example/MyEnumWithInnerTypes.C : Lexample/MyEnumWithInnerTypes;
+    INVOKESTATIC example/MyEnumWithInnerTypes.$values ()[Lexample/MyEnumWithInnerTypes;
+    PUTSTATIC example/MyEnumWithInnerTypes.$VALUES : [Lexample/MyEnumWithInnerTypes;
+    RETURN
+
+  // access flags 0x2
+  private <init>(Ljava/lang/String;I)V
+    ALOAD 0
+    ALOAD 1
+    ILOAD 2
+    INVOKESPECIAL java/lang/Enum.<init> (Ljava/lang/String;I)V
+    RETURN
+
+  // access flags 0xA
+  private static $values()[Lexample/MyEnumWithInnerTypes;
+    ICONST_3
+    ANEWARRAY example/MyEnumWithInnerTypes
+    DUP
+    ICONST_0
+    GETSTATIC example/MyEnumWithInnerTypes.A : Lexample/MyEnumWithInnerTypes;
+    AASTORE
+    DUP
+    ICONST_1
+    GETSTATIC example/MyEnumWithInnerTypes.B : Lexample/MyEnumWithInnerTypes;
+    AASTORE
+    DUP
+    ICONST_2
+    GETSTATIC example/MyEnumWithInnerTypes.C : Lexample/MyEnumWithInnerTypes;
+    AASTORE
+    ARETURN
+
+  // access flags 0x9
+  public static values()[Lexample/MyEnumWithInnerTypes;
+    GETSTATIC example/MyEnumWithInnerTypes.$VALUES : [Lexample/MyEnumWithInnerTypes;
+    INVOKEVIRTUAL [Lexample/MyEnumWithInnerTypes;.clone ()Ljava/lang/Object;
+    CHECKCAST [Lexample/MyEnumWithInnerTypes;
+    ARETURN
+
+  // access flags 0x9
+  public static valueOf(Ljava/lang/String;)Lexample/MyEnumWithInnerTypes;
+    LDC Lexample/MyEnumWithInnerTypes;.class
+    ALOAD 0
+    INVOKESTATIC java/lang/Enum.valueOf (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
+    CHECKCAST example/MyEnumWithInnerTypes
+    ARETURN
+
+  // access flags 0x1
+  public myName()Ljava/lang/String;
+    ALOAD 0
+    INVOKEVIRTUAL example/MyEnumWithInnerTypes.toString ()Ljava/lang/String;
+    ARETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public enum MyEnumWithInnerTypes {
+   A,
+   B,
+   C;
+
+   private static MyEnumWithInnerTypes[] $VALUES = $values();
+
+   private static MyEnumWithInnerTypes[] $values() {
+      return new MyEnumWithInnerTypes[]{A, B, C};
+   }
+
+   public String myName() {
+      return this.toString();
    }
 }
 """, decompileToJava(bytes));

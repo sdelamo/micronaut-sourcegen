@@ -17,6 +17,7 @@ dependencies {
     testImplementation(mn.micronaut.core.processor)
     testImplementation(libs.junit.jupiter.engine)
     testImplementation(libs.intellij.java.decompiler)
+    testImplementation(projects.testSuiteCustomGenerators)
 }
 
 tasks.withType<Test> {

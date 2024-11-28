@@ -18,11 +18,10 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.naming.NameUtils;
 
 import javax.lang.model.element.Modifier;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * The abstract class representing a type: class, enum, interface or record.
@@ -33,18 +32,20 @@ import java.util.Set;
 @Experimental
 public abstract sealed class ObjectDef extends AbstractElement permits ClassDef, EnumDef, InterfaceDef, RecordDef {
 
-    private final List<MethodDef> methods;
-    private final List<PropertyDef> properties;
-    private final List<TypeDef> superinterfaces;
-    private final List<ObjectDef> innerTypes;
+    protected final ClassTypeDef type;
+    protected final List<MethodDef> methods;
+    protected final List<PropertyDef> properties;
+    protected final List<TypeDef> superinterfaces;
+    protected final List<ObjectDef> innerTypes;
 
     ObjectDef(
-        String name, Set<Modifier> modifiers, List<AnnotationDef> annotations,
+        ClassTypeDef type, EnumSet<Modifier> modifiers, List<AnnotationDef> annotations,
         List<String> javadoc, List<MethodDef> methods, List<PropertyDef> properties,
         List<TypeDef> superinterfaces,
         List<ObjectDef> innerTypes
     ) {
-        super(name, modifiers, annotations, javadoc);
+        super(type.getName(), modifiers, annotations, javadoc);
+        this.type = type;
         this.methods = methods;
         this.properties = properties;
         this.superinterfaces = superinterfaces;
@@ -64,11 +65,11 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
     }
 
     public final String getPackageName() {
-        return NameUtils.getPackageName(getName());
+        return type.getPackageName();
     }
 
     public final String getSimpleName() {
-        return NameUtils.getSimpleName(getName());
+        return type.getSimpleName();
     }
 
     public final List<ObjectDef> getInnerTypes() {
@@ -76,12 +77,20 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
     }
 
     /**
+     * Creates a copy of this definition with a specific type.
+     * @param type The type
+     * @return the copy of this object definition with a new name
+     * @since 1.5
+     */
+    public abstract ObjectDef withType(ClassTypeDef type);
+
+    /**
      * Get the type definition for this type.
      *
      * @return The type definition
      */
     public ClassTypeDef asTypeDef() {
-        return ClassTypeDef.of(getName());
+        return type;
     }
 
     /**
