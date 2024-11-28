@@ -115,7 +115,7 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel">
 <div class="summary-table three-column-summary" aria-labelledby="method-summary-table-tab0">
 <div class="table-header col-first">Modifier and Type</div>
@@ -129,17 +129,6 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="AnnotationDef.html" title="class in io.micronaut.sourcegen.model">AnnotationDef</a>&gt;</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAnnotations()" class="member-name-link">getAnnotations</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getContextualType(io.micronaut.sourcegen.model.TypeDef)" class="member-name-link">getContextualType</a><wbr>(@NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a>&nbsp;typeDef)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Get the actual contextual type.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static @NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getContextualType(io.micronaut.sourcegen.model.ObjectDef,io.micronaut.sourcegen.model.TypeDef)" class="member-name-link">getContextualType</a><wbr>(@Nullable <a href="ObjectDef.html" title="class in io.micronaut.sourcegen.model">ObjectDef</a>&nbsp;objectDef,
- @NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a>&nbsp;typeDef)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Get a contextual type (converts this or super type to appropriate one).</div>
-</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ObjectDef.html" title="class in io.micronaut.sourcegen.model">ObjectDef</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getInnerTypes()" class="member-name-link">getInnerTypes</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -251,43 +240,6 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The type definition</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getContextualType(io.micronaut.sourcegen.model.TypeDef)">
-<h3>getContextualType</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public</span>&nbsp;<span class="return-type">@NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></span>&nbsp;<span class="element-name">getContextualType</span><wbr><span class="parameters">(@NonNull
- @NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a>&nbsp;typeDef)</span></div>
-<div class="block">Get the actual contextual type.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>typeDef</code> - The type</dd>
-<dt>Returns:</dt>
-<dd>The contextual type or original type</dd>
-<dt>Since:</dt>
-<dd>1.5</dd>
-</dl>
-</section>
-</li>
-<li>
-<section class="detail" id="getContextualType(io.micronaut.sourcegen.model.ObjectDef,io.micronaut.sourcegen.model.TypeDef)">
-<h3>getContextualType</h3>
-<div class="member-signature"><span class="annotations">@NonNull
-</span><span class="modifiers">public static</span>&nbsp;<span class="return-type">@NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></span>&nbsp;<span class="element-name">getContextualType</span><wbr><span class="parameters">(@Nullable
- @Nullable <a href="ObjectDef.html" title="class in io.micronaut.sourcegen.model">ObjectDef</a>&nbsp;objectDef,
- @NonNull
- @NonNull <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a>&nbsp;typeDef)</span></div>
-<div class="block">Get a contextual type (converts this or super type to appropriate one).</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>objectDef</code> - The object def</dd>
-<dd><code>typeDef</code> - The type def</dd>
-<dt>Returns:</dt>
-<dd>the contextual type or type def provider</dd>
-<dt>Since:</dt>
-<dd>1.4</dd>
 </dl>
 </section>
 </li>
