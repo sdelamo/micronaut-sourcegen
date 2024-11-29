@@ -75,7 +75,8 @@ loadScripts(document, 'script');</script>
 </div>
 <section class="class-description" id="class-description">
 <hr>
-<div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">TypeUtils</span>
+<div class="type-signature"><span class="annotations">@Internal
+</span><span class="modifiers">public final class </span><span class="element-name type-name-label">TypeUtils</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Internal bytecode type utils.</div>
 <dl class="notes">
@@ -141,9 +142,12 @@ loadScripts(document, 'script');</script>
  @Nullable <a href="../model/ObjectDef.html" title="class in io.micronaut.sourcegen.model">ObjectDef</a>&nbsp;objectDef)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static org.objectweb.asm.Type</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getType(java.lang.String,org.objectweb.asm.Type...)" class="member-name-link">getType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className,
- org.objectweb.asm.Type...&nbsp;genericTypes)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getType(java.lang.String)" class="member-name-link">getType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static org.objectweb.asm.Type</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#getType(java.lang.String,org.objectweb.asm.Type...)" class="member-name-link">getType</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className,
+ org.objectweb.asm.Type...&nbsp;genericTypes)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -222,6 +226,12 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getType(io.micronaut.sourcegen.model.ClassTypeDef)">
 <h3>getType</h3>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">org.objectweb.asm.Type</span>&nbsp;<span class="element-name">getType</span><wbr><span class="parameters">(<a href="../model/ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a>&nbsp;classTypeDef)</span></div>
+</section>
+</li>
+<li>
+<section class="detail" id="getType(java.lang.String)">
+<h3>getType</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">org.objectweb.asm.Type</span>&nbsp;<span class="element-name">getType</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className)</span></div>
 </section>
 </li>
 </ul>

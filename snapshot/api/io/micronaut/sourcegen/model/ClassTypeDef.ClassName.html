@@ -79,6 +79,7 @@ loadScripts(document, 'script');</script>
 <dl class="notes">
 <dt>Record Components:</dt>
 <dd><code><span id="param-className">className</span></code> - The class name</dd>
+<dd><code><span id="param-isInner">isInner</span></code> - Is inner</dd>
 <dd><code><span id="param-nullable">nullable</span></code> - Is nullable</dd>
 </dl>
 <dl class="notes">
@@ -90,7 +91,7 @@ loadScripts(document, 'script');</script>
 <dd><a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">ClassTypeDef.ClassName</span>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className, boolean&nbsp;nullable)
+<div class="type-signature"><span class="modifiers">public static record </span><span class="element-name type-name-label">ClassTypeDef.ClassName</span>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className, boolean&nbsp;isInner, boolean&nbsp;nullable)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a>
 implements <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></span></div>
 <div class="block">The class name type.</div>
@@ -124,7 +125,7 @@ implements <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcege
 <code><a href="ClassTypeDef.html#OBJECT">OBJECT</a></code></div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.sourcegen.model.TypeDef">Fields inherited from interface&nbsp;io.micronaut.sourcegen.model.<a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></h3>
-<code><a href="TypeDef.html#STRING">STRING</a>, <a href="TypeDef.html#THIS">THIS</a>, <a href="TypeDef.html#VOID">VOID</a></code></div>
+<code><a href="TypeDef.html#CLASS">CLASS</a>, <a href="TypeDef.html#STRING">STRING</a>, <a href="TypeDef.html#SUPER">SUPER</a>, <a href="TypeDef.html#THIS">THIS</a>, <a href="TypeDef.html#VOID">VOID</a></code></div>
 </section>
 </li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -135,7 +136,8 @@ implements <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcege
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean)" class="member-name-link">ClassName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,boolean,boolean)" class="member-name-link">ClassName</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className,
+ boolean&nbsp;isInner,
  boolean&nbsp;nullable)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>ClassName</code> record class.</div>
@@ -165,12 +167,20 @@ implements <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcege
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCanonicalName()" class="member-name-link">getCanonicalName</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final int</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#hashCode()" class="member-name-link">hashCode</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isInner()" class="member-name-link">isInner</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-isInner"><code>isInner</code></a> record component.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNullable()" class="member-name-link">isNullable</a>()</code></div>
@@ -196,10 +206,10 @@ implements <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcege
 <code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.sourcegen.model.ClassTypeDef">Methods inherited from interface&nbsp;io.micronaut.sourcegen.model.<a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></h3>
-<code><a href="ClassTypeDef.html#annotated(io.micronaut.sourcegen.model.AnnotationDef...)">annotated</a>, <a href="ClassTypeDef.html#annotated(java.util.List)">annotated</a>, <a href="ClassTypeDef.html#doThrow(io.micronaut.sourcegen.model.ExpressionDef...)">doThrow</a>, <a href="ClassTypeDef.html#doThrow(java.util.List)">doThrow</a>, <a href="ClassTypeDef.html#getPackageName()">getPackageName</a>, <a href="ClassTypeDef.html#getSimpleName()">getSimpleName</a>, <a href="ClassTypeDef.html#instantiate()">instantiate</a>, <a href="ClassTypeDef.html#instantiate(io.micronaut.sourcegen.model.ExpressionDef...)">instantiate</a>, <a href="ClassTypeDef.html#instantiate(java.util.List)">instantiate</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.String,io.micronaut.sourcegen.model.TypeDef,io.micronaut.sourcegen.model.ExpressionDef...)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.String,io.micronaut.sourcegen.model.TypeDef,java.util.List)">invokeStatic</a>, <a href="ClassTypeDef.html#isEnum()">isEnum</a></code></div>
+<code><a href="ClassTypeDef.html#annotated(io.micronaut.sourcegen.model.AnnotationDef...)">annotated</a>, <a href="ClassTypeDef.html#annotated(java.util.List)">annotated</a>, <a href="ClassTypeDef.html#getPackageName()">getPackageName</a>, <a href="ClassTypeDef.html#getSimpleName()">getSimpleName</a>, <a href="ClassTypeDef.html#getStaticField(io.micronaut.sourcegen.model.FieldDef)">getStaticField</a>, <a href="ClassTypeDef.html#getStaticField(java.lang.reflect.Field)">getStaticField</a>, <a href="ClassTypeDef.html#getStaticField(java.lang.String,io.micronaut.sourcegen.model.TypeDef)">getStaticField</a>, <a href="ClassTypeDef.html#instantiate(io.micronaut.inject.ast.MethodElement,java.util.List)">instantiate</a>, <a href="ClassTypeDef.html#instantiate(io.micronaut.sourcegen.model.ExpressionDef...)">instantiate</a>, <a href="ClassTypeDef.html#instantiate(java.lang.reflect.Constructor,io.micronaut.sourcegen.model.ExpressionDef...)">instantiate</a>, <a href="ClassTypeDef.html#instantiate(java.lang.reflect.Constructor,java.util.List)">instantiate</a>, <a href="ClassTypeDef.html#instantiate(java.util.List)">instantiate</a>, <a href="ClassTypeDef.html#instantiate(java.util.List,io.micronaut.sourcegen.model.ExpressionDef...)">instantiate</a>, <a href="ClassTypeDef.html#instantiate(java.util.List,java.util.List)">instantiate</a>, <a href="ClassTypeDef.html#invokeStatic(io.micronaut.inject.ast.MethodElement,io.micronaut.sourcegen.model.ExpressionDef...)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(io.micronaut.inject.ast.MethodElement,java.util.List)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(io.micronaut.sourcegen.model.MethodDef,io.micronaut.sourcegen.model.ExpressionDef...)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(io.micronaut.sourcegen.model.MethodDef,java.util.List)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.reflect.Method,io.micronaut.sourcegen.model.ExpressionDef...)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.reflect.Method,java.util.List)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.String,io.micronaut.sourcegen.model.TypeDef,io.micronaut.sourcegen.model.ExpressionDef...)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.String,io.micronaut.sourcegen.model.TypeDef,java.util.List)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.String,java.util.List,io.micronaut.sourcegen.model.TypeDef,io.micronaut.sourcegen.model.ExpressionDef...)">invokeStatic</a>, <a href="ClassTypeDef.html#invokeStatic(java.lang.String,java.util.List,io.micronaut.sourcegen.model.TypeDef,java.util.List)">invokeStatic</a>, <a href="ClassTypeDef.html#isEnum()">isEnum</a>, <a href="ClassTypeDef.html#isInterface()">isInterface</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.sourcegen.model.TypeDef">Methods inherited from interface&nbsp;io.micronaut.sourcegen.model.<a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></h3>
-<code><a href="TypeDef.html#instantiateArray(int)">instantiateArray</a>, <a href="TypeDef.html#instantiateArray(io.micronaut.sourcegen.model.ExpressionDef...)">instantiateArray</a>, <a href="TypeDef.html#instantiateArray(java.util.List)">instantiateArray</a>, <a href="TypeDef.html#isArray()">isArray</a>, <a href="TypeDef.html#isPrimitive()">isPrimitive</a></code></div>
+<code><a href="TypeDef.html#array()">array</a>, <a href="TypeDef.html#array(int)">array</a>, <a href="TypeDef.html#isArray()">isArray</a>, <a href="TypeDef.html#isPrimitive()">isPrimitive</a></code></div>
 </section>
 </li>
 </ul>
@@ -212,14 +222,16 @@ implements <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcege
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,boolean)">
+<section class="detail" id="&lt;init&gt;(java.lang.String,boolean,boolean)">
 <h3>ClassName</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">ClassName</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;className,
+ boolean&nbsp;isInner,
  boolean&nbsp;nullable)</span></div>
 <div class="block">Creates an instance of a <code>ClassName</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>className</code> - the value for the <a href="#param-className"><code>className</code></a> record component</dd>
+<dd><code>isInner</code> - the value for the <a href="#param-isInner"><code>isInner</code></a> record component</dd>
 <dd><code>nullable</code> - the value for the <a href="#param-nullable"><code>nullable</code></a> record component</dd>
 </dl>
 </section>
@@ -241,6 +253,31 @@ implements <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcege
 <dd><code><a href="ClassTypeDef.html#getName()">getName</a></code>&nbsp;in interface&nbsp;<code><a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></code></dd>
 <dt>Returns:</dt>
 <dd>The type name</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getCanonicalName()">
+<h3>getCanonicalName</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getCanonicalName</span>()</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="ClassTypeDef.html#getCanonicalName()">getCanonicalName</a></code>&nbsp;in interface&nbsp;<code><a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></code></dd>
+<dt>Returns:</dt>
+<dd>The type name</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="isInner()">
+<h3>isInner</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isInner</span>()</div>
+<div class="block">Returns the value of the <a href="#param-isInner"><code>isInner</code></a> record component.</div>
+<dl class="notes">
+<dt>Specified by:</dt>
+<dd><code><a href="ClassTypeDef.html#isInner()">isInner</a></code>&nbsp;in interface&nbsp;<code><a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></code></dd>
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-isInner"><code>isInner</code></a> record component</dd>
 </dl>
 </section>
 </li>
