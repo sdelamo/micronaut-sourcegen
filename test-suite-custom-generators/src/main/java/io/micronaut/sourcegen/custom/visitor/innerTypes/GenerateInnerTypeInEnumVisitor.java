@@ -18,7 +18,6 @@ package io.micronaut.sourcegen.custom.visitor.innerTypes;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.Builder;
@@ -52,20 +51,13 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
             return;
         }
 
-        EnumDef enumDef = getEnumDef(element, context.getLanguage());
+        EnumDef enumDef = getEnumDef(element.getPackageName(), context.getLanguage());
 
-        context.visitGeneratedSourceFile(enumDef.getPackageName(), enumDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(enumDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
+        sourceGenerator.write(enumDef, context, element);
     }
 
-    private static EnumDef getEnumDef(ClassElement element, VisitorContext.Language language) {
-        String enumClassName = element.getPackageName() + ".MyEnumWithInnerTypes";
+    public static EnumDef getEnumDef(String packageName, VisitorContext.Language language) {
+        String enumClassName = packageName + ".MyEnumWithInnerTypes";
 
         EnumDef innerEnum = getInnerEnumDef();
 
@@ -94,7 +86,7 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
     }
 
     public static InterfaceDef getInnerInterfaceDef() {
-        InterfaceDef innerInterface = InterfaceDef.builder("InnerInterface")
+        return InterfaceDef.builder("InnerInterface")
             .addModifiers(Modifier.PUBLIC)
             .addMethod(MethodDef.builder("findLong")
                 .addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
@@ -106,7 +98,6 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
                 .returns(TypeDef.VOID)
                 .build())
             .build();
-        return innerInterface;
     }
 
     public static ClassDef getInnerClassDef(VisitorContext.Language language) {
@@ -127,7 +118,7 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
     }
 
     public static RecordDef getInnerRecordDef() {
-        RecordDef innerRecord = RecordDef.builder("InnerRecord")
+        return RecordDef.builder("InnerRecord")
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation(Builder.class)
             .addProperty(PropertyDef
@@ -135,11 +126,10 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
                 .ofType(TypeDef.Primitive.INT)
                 .build())
             .build();
-        return innerRecord;
     }
 
     public static EnumDef getInnerEnumDef() {
-        EnumDef innerEnum = EnumDef.builder("InnerEnum")
+        return EnumDef.builder("InnerEnum")
             .addEnumConstant("SINGLE")
             .addEnumConstant("MARRIED")
             .addMethod(MethodDef.builder("myName")
@@ -148,6 +138,5 @@ public final class GenerateInnerTypeInEnumVisitor implements TypeElementVisitor<
                     .build((aThis, parameters) ->
                             aThis.invoke("toString", TypeDef.STRING, List.of()).returning()))
             .build();
-        return innerEnum;
     }
 }

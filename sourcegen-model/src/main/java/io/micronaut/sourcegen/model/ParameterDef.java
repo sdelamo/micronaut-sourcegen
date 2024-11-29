@@ -18,8 +18,8 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.Experimental;
 
 import javax.lang.model.element.Modifier;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * The parameter definition.
@@ -32,7 +32,7 @@ public final class ParameterDef extends AbstractElement {
 
     private final TypeDef type;
 
-    private ParameterDef(String name, Set<Modifier> modifiers,
+    private ParameterDef(String name, EnumSet<Modifier> modifiers,
                          List<AnnotationDef> annotations,
                          List<String> javadoc,
                          TypeDef type) {

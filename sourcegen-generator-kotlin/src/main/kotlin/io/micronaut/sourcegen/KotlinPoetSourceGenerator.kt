@@ -297,7 +297,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             .forEach { annotationSpec: AnnotationSpec -> enumBuilder.addAnnotation(annotationSpec) }
 
         enumDef.enumConstants.forEach { (name: String?, exps: List<ExpressionDef>?) ->
-            if (exps != null) {
+            if (exps != null && exps.isNotEmpty()) {
                 val expBuilder: CodeBlock.Builder = CodeBlock.builder()
                 for (i in exps.indices) {
                     expBuilder.add(renderExpressionCode(null,

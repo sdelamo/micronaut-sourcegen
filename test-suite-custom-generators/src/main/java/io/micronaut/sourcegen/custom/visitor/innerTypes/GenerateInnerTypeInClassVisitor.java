@@ -18,7 +18,6 @@ package io.micronaut.sourcegen.custom.visitor.innerTypes;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.custom.example.GenerateInnerTypes;
@@ -55,14 +54,7 @@ public final class GenerateInnerTypeInClassVisitor implements TypeElementVisitor
 
         ClassDef objectDef = getClassDef(element, context.getLanguage());
 
-        context.visitGeneratedSourceFile(objectDef.getPackageName(), objectDef.getSimpleName(), element)
-            .ifPresent(generatedFile -> {
-                try {
-                    generatedFile.write(writer -> sourceGenerator.write(objectDef, writer));
-                } catch (Exception e) {
-                    throw new ProcessingException(element, e.getMessage(), e);
-                }
-            });
+        sourceGenerator.write(objectDef, context, element);
     }
 
     private static ClassDef getClassDef(ClassElement element, VisitorContext.Language language) {

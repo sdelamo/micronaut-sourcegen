@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.bytecode;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.inject.processing.JavaModelUtils;
 import io.micronaut.sourcegen.model.ClassDef;
@@ -38,6 +39,7 @@ import java.util.Objects;
  * @author Denis Stepanov
  * @since 1.5
  */
+@Internal
 final class SignatureWriterUtils {
 
     @Nullable

@@ -107,12 +107,29 @@ public sealed class ObjectDefBuilder<ThisType>
     /**
      * Add an inner type.
      *
-     * @param innerType The inner type.
+     * @param innerDef The inner definition.
      * @return The builder
      */
     @NonNull
-    public final ThisType addInnerType(@NonNull ObjectDef innerType) {
-        innerTypes.add(innerType);
+    public final ThisType addInnerType(@NonNull ObjectDef innerDef) {
+        ClassTypeDef innerType = innerDef.asTypeDef();
+        ClassTypeDef newType = ClassTypeDef.of(
+            ClassTypeDef.of(name).getCanonicalName() + "$" + innerType.getSimpleName(),
+            true
+        );
+        innerTypes.add(innerDef.withType(newType));
+        return thisInstance;
+    }
+
+    /**
+     * Add an inner types.
+     *
+     * @param innerDefs The inner definitions.
+     * @return The builder
+     */
+    @NonNull
+    public final ThisType addInnerType(@NonNull Collection<ObjectDef> innerDefs) {
+        innerDefs.forEach(this::addInnerType);
         return thisInstance;
     }
 

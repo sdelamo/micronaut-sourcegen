@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.bytecode;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.sourcegen.bytecode.expression.ExpressionWriter;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.JavaIdioms;
@@ -29,6 +30,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
  * @author Denis Stepanov
  * @since 1.5
  */
+@Internal
 public abstract class AbstractConditionalWriter {
 
     protected static void pushElseConditionalExpression(GeneratorAdapter generatorAdapter,

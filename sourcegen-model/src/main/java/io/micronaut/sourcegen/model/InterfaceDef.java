@@ -33,7 +33,7 @@ public final class InterfaceDef extends ObjectDef {
 
     private final List<TypeDef.TypeVariable> typeVariables;
 
-    private InterfaceDef(String name,
+    private InterfaceDef(ClassTypeDef type,
                          EnumSet<Modifier> modifiers,
                          List<MethodDef> methods,
                          List<PropertyDef> properties,
@@ -42,8 +42,13 @@ public final class InterfaceDef extends ObjectDef {
                          List<TypeDef.TypeVariable> typeVariables,
                          List<TypeDef> superinterfaces,
                          List<ObjectDef> innerTypes) {
-        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+        super(type, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.typeVariables = typeVariables;
+    }
+
+    @Override
+    public InterfaceDef withType(ClassTypeDef type) {
+        return new InterfaceDef(type, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
     }
 
     @Override
@@ -83,7 +88,7 @@ public final class InterfaceDef extends ObjectDef {
         }
 
         public InterfaceDef build() {
-            return new InterfaceDef(name, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
+            return new InterfaceDef(ClassTypeDef.of(name), modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
         }
 
     }

@@ -18,12 +18,14 @@ package io.micronaut.sourcegen.example;
 
 import io.micronaut.sourcegen.custom.example.GenerateArray;
 import io.micronaut.sourcegen.custom.example.GenerateIfsPredicate;
+import io.micronaut.sourcegen.custom.example.GenerateInnerTypes;
 import io.micronaut.sourcegen.custom.example.GenerateMethodInvocation;
 import io.micronaut.sourcegen.custom.example.GenerateMyBean1;
 import io.micronaut.sourcegen.custom.example.GenerateMyBean2;
 import io.micronaut.sourcegen.custom.example.GenerateMyBean3;
 import io.micronaut.sourcegen.custom.example.GenerateMyEnum1;
 import io.micronaut.sourcegen.custom.example.GenerateInterface;
+import io.micronaut.sourcegen.custom.example.GenerateMyEnum2;
 import io.micronaut.sourcegen.custom.example.GenerateMyRecord1;
 import io.micronaut.sourcegen.custom.example.GenerateMyRecord3;
 import io.micronaut.sourcegen.custom.example.GenerateMyRepository1;
@@ -37,9 +39,11 @@ import io.micronaut.sourcegen.custom.example.GenerateSwitch;
 @GenerateInterface
 @GenerateMyRepository1
 @GenerateMyEnum1
+@GenerateMyEnum2
 @GenerateIfsPredicate
 @GenerateSwitch
 @GenerateArray
 @GenerateMethodInvocation
+@GenerateInnerTypes
 public class Trigger {
 }

@@ -20,6 +20,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.sourcegen.bytecode.statement.StatementWriter;
 import io.micronaut.sourcegen.model.AnnotationDef;
 import io.micronaut.sourcegen.model.ClassDef;
+import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.EnumDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.FieldDef;
@@ -81,13 +82,13 @@ public final class ByteCodeWriter {
         this.visitMaxs = visitMaxs;
     }
 
-    private ClassWriter generateClassBytes(ObjectDef objectDef) {
+    private ClassWriter createClassWriterAndWriteObject(ObjectDef objectDef, @Nullable ClassTypeDef outerType) {
         ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         ClassVisitor classVisitor = classWriter;
         if (checkClass) {
             classVisitor = new CheckClassAdapter(classVisitor);
         }
-        writeObject(classVisitor, objectDef);
+        writeObject(classVisitor, objectDef, outerType);
         classVisitor.visitEnd();
         return classWriter;
     }
@@ -99,14 +100,25 @@ public final class ByteCodeWriter {
      * @param objectDef    The object definition
      */
     public void writeObject(ClassVisitor classVisitor, ObjectDef objectDef) {
+        writeObject(classVisitor, objectDef, null);
+    }
+
+    /**
+     * Write an object.
+     *
+     * @param classVisitor The class visitor
+     * @param objectDef    The object definition
+     * @param outerType    The outer type
+     */
+    public void writeObject(ClassVisitor classVisitor, ObjectDef objectDef, @Nullable ClassTypeDef outerType) {
         if (objectDef instanceof ClassDef classDef) {
-            writeClass(classVisitor, classDef);
+            writeClass(classVisitor, classDef, outerType);
         } else if (objectDef instanceof RecordDef recordDef) {
-            writeRecord(classVisitor, recordDef);
+            writeRecord(classVisitor, recordDef, outerType);
         } else if (objectDef instanceof InterfaceDef interfaceDef) {
-            writeInterface(classVisitor, interfaceDef);
+            writeInterface(classVisitor, interfaceDef, outerType);
         } else if (objectDef instanceof EnumDef enumDef) {
-            writeClass(classVisitor, EnumGenUtils.toClassDef(enumDef));
+            writeClass(classVisitor, EnumGenUtils.toClassDef(enumDef), outerType);
         } else {
             throw new UnsupportedOperationException("Unknown object definition: " + objectDef);
         }
@@ -151,8 +163,9 @@ public final class ByteCodeWriter {
      *
      * @param classVisitor The class visitor
      * @param interfaceDef The interface definition
+     * @param outerType The outer type
      */
-    public void writeInterface(ClassVisitor classVisitor, InterfaceDef interfaceDef) {
+    public void writeInterface(ClassVisitor classVisitor, InterfaceDef interfaceDef, @Nullable ClassTypeDef outerType) {
         classVisitor.visit(V17,
             ACC_INTERFACE | ACC_ABSTRACT | getModifiersFlag(interfaceDef.getModifiers()),
             TypeUtils.getType(interfaceDef.asTypeDef()).getInternalName(),
@@ -160,6 +173,7 @@ public final class ByteCodeWriter {
             TypeUtils.OBJECT_TYPE.getInternalName(),
             interfaceDef.getSuperinterfaces().stream().map(i -> TypeUtils.getType(i, interfaceDef)).map(Type::getInternalName).toArray(String[]::new)
         );
+        writeOuterInner(classVisitor, interfaceDef.asTypeDef(), interfaceDef, outerType);
         for (AnnotationDef annotation : interfaceDef.getAnnotations()) {
             AnnotationVisitor annotationVisitor = classVisitor.visitAnnotation(TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
             visitAnnotation(annotation, annotationVisitor);
@@ -179,6 +193,17 @@ public final class ByteCodeWriter {
      * @param recordDef    The record definition
      */
     public void writeRecord(ClassVisitor classVisitor, RecordDef recordDef) {
+        writeRecord(classVisitor, recordDef, null);
+    }
+
+    /**
+     * Write an interface.
+     *
+     * @param classVisitor The class visitor
+     * @param recordDef    The record definition
+     * @param outerType     The outer type
+     */
+    public void writeRecord(ClassVisitor classVisitor, RecordDef recordDef, @Nullable ClassTypeDef outerType) {
         classVisitor.visit(
             V17,
             ACC_RECORD | getModifiersFlag(recordDef.getModifiers()),
@@ -187,6 +212,7 @@ public final class ByteCodeWriter {
             Type.getType(Record.class).getInternalName(),
             recordDef.getSuperinterfaces().stream().map(i -> TypeUtils.getType(i, recordDef)).map(Type::getInternalName).toArray(String[]::new)
         );
+        writeOuterInner(classVisitor, recordDef.asTypeDef(), recordDef, outerType);
     }
 
     /**
@@ -196,22 +222,33 @@ public final class ByteCodeWriter {
      * @param classDef     The class definition
      */
     public void writeClass(ClassVisitor classVisitor, ClassDef classDef) {
-        TypeDef superclass = Objects.requireNonNullElse(classDef.getSuperclass(), TypeDef.OBJECT);
+        writeClass(classVisitor, classDef, null);
+    }
+
+    /**
+     * Write an interface.
+     *
+     * @param classVisitor The class visitor
+     * @param classDef     The class definition
+     * @param outerType     The outer type
+     */
+    public void writeClass(ClassVisitor classVisitor, ClassDef classDef, @Nullable ClassTypeDef outerType) {
+        ClassTypeDef typeDef = classDef.asTypeDef();
 
         int modifiersFlag = getModifiersFlag(classDef.getModifiers());
 
         if (EnumGenUtils.isEnum(classDef)) {
             modifiersFlag |= ACC_ENUM;
         }
-
         classVisitor.visit(
             V17,
             modifiersFlag,
             TypeUtils.getType(classDef.asTypeDef()).getInternalName(),
             SignatureWriterUtils.getClassSignature(classDef),
-            TypeUtils.getType(superclass, null).getInternalName(),
+            TypeUtils.getType(Objects.requireNonNullElse(classDef.getSuperclass(), TypeDef.OBJECT), null).getInternalName(),
             classDef.getSuperinterfaces().stream().map(i -> TypeUtils.getType(i, classDef)).map(Type::getInternalName).toArray(String[]::new)
         );
+        writeOuterInner(classVisitor, classDef.asTypeDef(), classDef, outerType);
 
         for (AnnotationDef annotation : classDef.getAnnotations()) {
             AnnotationVisitor annotationVisitor = classVisitor.visitAnnotation(
@@ -225,7 +262,7 @@ public final class ByteCodeWriter {
             writeField(classVisitor, classDef, field);
             field.getInitializer().ifPresent(expressionDef -> {
                 if (field.getModifiers().contains(Modifier.STATIC)) {
-                    staticInitStatements.add(classDef.asTypeDef().getStaticField(field).put(expressionDef));
+                    staticInitStatements.add(typeDef.getStaticField(field).put(expressionDef));
                 }
             });
         }
@@ -235,7 +272,7 @@ public final class ByteCodeWriter {
             staticInitStatements.add(staticInitializer);
         }
         if (!staticInitStatements.isEmpty()) {
-            writeMethod(classVisitor, null, createStaticInitializer(StatementDef.multi(staticInitStatements)));
+            writeMethod(classVisitor, classDef, createStaticInitializer(StatementDef.multi(staticInitStatements)));
         }
 
         if (classDef.getMethods().stream().noneMatch(MethodDef::isConstructor)) {
@@ -250,6 +287,50 @@ public final class ByteCodeWriter {
         for (MethodDef method : classDef.getMethods()) {
             writeMethod(classVisitor, classDef, method);
         }
+    }
+
+    private void writeOuterInner(ClassVisitor classVisitor, ClassTypeDef thisType, ObjectDef thisDef, @Nullable ClassTypeDef outerType) {
+        if (outerType != null) {
+            String outerInternalName = TypeUtils.getType(outerType).getInternalName();
+            classVisitor.visitNestHost(outerInternalName);
+            classVisitor.visitInnerClass(
+                TypeUtils.getType(thisType).getInternalName(),
+                outerInternalName,
+                thisType.getSimpleName(),
+                getModifiersFlag(thisDef)
+            );
+        }
+        writeInnerTypes(classVisitor, thisType, thisDef.getInnerTypes());
+    }
+
+    private void writeInnerTypes(ClassVisitor outerClassVisitor, ClassTypeDef outerType, List<ObjectDef> innerTypes) {
+        for (ObjectDef innerDef : innerTypes) {
+            String outerClassInternalName = TypeUtils.getType(outerType).getInternalName();
+
+            ClassTypeDef interType = innerDef.asTypeDef();
+            int access =  getModifiersFlag(innerDef);
+            access |= ACC_PUBLIC | ACC_STATIC; // Javac always adds public and static
+            outerClassVisitor.visitInnerClass(
+                TypeUtils.getType(innerDef.asTypeDef()).getInternalName(),
+                outerClassInternalName,
+                interType.getSimpleName(),
+                access
+            );
+            outerClassVisitor.visitNestMember(TypeUtils.getType(innerDef.asTypeDef()).getInternalName());
+        }
+    }
+
+    private int getModifiersFlag(ObjectDef objectDef) {
+        if (objectDef instanceof EnumDef enumDef) {
+            return ACC_ENUM | getModifiersFlag(EnumGenUtils.toClassDef(enumDef));
+        }
+        if (objectDef instanceof InterfaceDef interfaceDef) {
+            return ACC_INTERFACE | ACC_ABSTRACT | getModifiersFlag(interfaceDef.getModifiers());
+        }
+        if (objectDef instanceof RecordDef recordDef) {
+            return getModifiersFlag(recordDef.getModifiers());
+        }
+        return getModifiersFlag(objectDef.getModifiers());
     }
 
     private void visitAnnotation(AnnotationDef annotation, AnnotationVisitor annotationVisitor) {
@@ -483,7 +564,18 @@ public final class ByteCodeWriter {
      * @return The bytes
      */
     public byte[] write(ObjectDef objectDef) {
-        return generateClassBytes(objectDef).toByteArray();
+        return write(objectDef, null);
+    }
+
+    /**
+     * Writes the bytecode of generated class.
+     *
+     * @param objectDef The object definition.
+     * @param outerType The outer type.
+     * @return The bytes
+     */
+    public byte[] write(ObjectDef objectDef, @Nullable ClassTypeDef outerType) {
+        return createClassWriterAndWriteObject(objectDef, outerType).toByteArray();
     }
 
 }

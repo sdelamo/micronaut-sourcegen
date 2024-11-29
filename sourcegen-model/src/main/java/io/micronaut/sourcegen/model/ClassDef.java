@@ -40,7 +40,7 @@ public final class ClassDef extends ObjectDef {
     private final ClassTypeDef superclass;
     private final StatementDef staticInitializer;
 
-    private ClassDef(String name,
+    private ClassDef(ClassTypeDef type,
                      EnumSet<Modifier> modifiers,
                      List<FieldDef> fields,
                      List<MethodDef> methods,
@@ -52,11 +52,16 @@ public final class ClassDef extends ObjectDef {
                      ClassTypeDef superclass,
                      List<ObjectDef> innerTypes,
                      StatementDef staticInitializer) {
-        super(name, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+        super(type, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
         this.typeVariables = typeVariables;
         this.superclass = superclass;
         this.staticInitializer = staticInitializer;
+    }
+
+    @Override
+    public ClassDef withType(ClassTypeDef type) {
+        return new ClassDef(type, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
     }
 
     @Override
@@ -172,6 +177,17 @@ public final class ClassDef extends ObjectDef {
             return this;
         }
 
+        /**
+         * Adds fields.
+         * @param fields The fields
+         * @return the builder
+         * @since 1.5
+         */
+        public ClassDefBuilder addFields(Collection<FieldDef> fields) {
+            fields.forEach(this::addField);
+            return this;
+        }
+
         public ClassDefBuilder addTypeVariable(TypeDef.TypeVariable typeVariable) {
             typeVariables.add(typeVariable);
             return this;
@@ -183,7 +199,7 @@ public final class ClassDef extends ObjectDef {
         }
 
         public ClassDef build() {
-            return new ClassDef(name, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
+            return new ClassDef(ClassTypeDef.of(name), modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
         }
 
         /**

@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.bytecode;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.inject.processing.JavaModelUtils;
 import io.micronaut.sourcegen.model.ClassDef;
@@ -37,6 +38,7 @@ import java.util.regex.Pattern;
  * @author Denis Stepanov
  * @since 1.5
  */
+@Internal
 public final class TypeUtils {
 
     public static final Type OBJECT_TYPE = Type.getType(Object.class);
@@ -142,7 +144,11 @@ public final class TypeUtils {
     }
 
     public static Type getType(ClassTypeDef classTypeDef) {
-        return Type.getType(getTypeDescriptor(classTypeDef.getName()));
+        return getType(classTypeDef.getName());
+    }
+
+    public static Type getType(String className) {
+        return Type.getType(getTypeDescriptor(className));
     }
 
     private static String getInternalName(String className) {
