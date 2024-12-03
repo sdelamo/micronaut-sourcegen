@@ -74,7 +74,7 @@ public final class ByteCodeWriter {
     private final boolean visitMaxs;
 
     public ByteCodeWriter() {
-        this(true, true);
+        this(false, true);
     }
 
     public ByteCodeWriter(boolean checkClass, boolean visitMaxs) {
