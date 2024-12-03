@@ -16,11 +16,9 @@
 package io.micronaut.sourcegen.bytecode.statement;
 
 import io.micronaut.sourcegen.bytecode.MethodContext;
-import io.micronaut.sourcegen.bytecode.TypeUtils;
 import io.micronaut.sourcegen.bytecode.expression.ExpressionWriter;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.VariableDef;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 final class AssignVariableStatementWriter implements StatementWriter {
@@ -33,10 +31,9 @@ final class AssignVariableStatementWriter implements StatementWriter {
 
     @Override
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
-        VariableDef.Local local = assign.variable();
-        Type localType = TypeUtils.getType(local.type(), context.objectDef());
-        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, assign.expression(), local.type());
-        Integer localIndex = context.locals().get(local.name());
-        generatorAdapter.storeLocal(localIndex, localType);
+        VariableDef.Local var = assign.variable();
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, assign.expression(), var.type());
+        MethodContext.LocalData local = context.locals().get(var.name());
+        generatorAdapter.storeLocal(local.index(), local.type());
     }
 }

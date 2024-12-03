@@ -26,7 +26,12 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
-final class TryCatchStatementWriter implements StatementWriter {
+/**
+ * The try-catch statement.
+ * @since 1.5
+ */
+public final class TryCatchStatementWriter implements StatementWriter {
+    public static final String EXCEPTION_NAME = "$exception";
     private final StatementDef.Try aTry;
 
     public TryCatchStatementWriter(StatementDef.Try aTry) {
@@ -77,8 +82,8 @@ final class TryCatchStatementWriter implements StatementWriter {
 
         generatorAdapter.visitLabel(tryStart);
 
-        Runnable thisFinallyBlock = aTry.finallyStatement() == null ? null : () -> StatementWriter.of(aTry.finallyStatement()).write(generatorAdapter, context, finallyBlock);
-        StatementWriter.of(aTry.statement()).write(generatorAdapter, context, thisFinallyBlock);
+        Runnable thisFinallyBlock = aTry.finallyStatement() == null ? null : () -> StatementWriter.of(aTry.finallyStatement()).writeScoped(generatorAdapter, context, finallyBlock);
+        StatementWriter.of(aTry.statement()).writeScoped(generatorAdapter, context, thisFinallyBlock);
 
         generatorAdapter.visitLabel(tryEnd);
         generatorAdapter.goTo(end);
@@ -90,18 +95,19 @@ final class TryCatchStatementWriter implements StatementWriter {
             Type exceptionType = TypeUtils.getType(aCatch.exception(), context.objectDef());
             int local = generatorAdapter.newLocal(exceptionType);
             generatorAdapter.storeLocal(local);
-            context.locals().put("@exception", local);
+            String varName = EXCEPTION_NAME;
+            context.locals().put(varName, new MethodContext.LocalData(varName, exceptionType, catchBlock.from, local));
 
-            StatementWriter.of(aCatch.statement()).write(generatorAdapter, context, thisFinallyBlock);
+            StatementWriter.of(aCatch.statement()).writeScoped(generatorAdapter, context, thisFinallyBlock);
 
-            context.locals().remove("@exception");
+            context.locals().remove(varName);
 
             if (catchBlock.to != null) {
                 generatorAdapter.visitLabel(catchBlock.to);
             }
 
             if (aTry.finallyStatement() != null) {
-                StatementWriter.of(aTry.finallyStatement()).write(generatorAdapter, context, thisFinallyBlock);
+                StatementWriter.of(aTry.finallyStatement()).writeScoped(generatorAdapter, context, thisFinallyBlock);
             }
 
             generatorAdapter.goTo(end);
@@ -114,7 +120,7 @@ final class TryCatchStatementWriter implements StatementWriter {
             int local = generatorAdapter.newLocal(exceptionType);
             generatorAdapter.storeLocal(local);
 
-            StatementWriter.of(aTry.finallyStatement()).write(generatorAdapter, context, finallyBlock);
+            StatementWriter.of(aTry.finallyStatement()).writeScoped(generatorAdapter, context, finallyBlock);
 
             generatorAdapter.loadLocal(local);
             generatorAdapter.throwException();

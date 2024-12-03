@@ -633,6 +633,9 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
     }
 
     private CodeBlock renderExpression(@Nullable ObjectDef objectDef, MethodDef methodDef, ExpressionDef expressionDef) {
+        if (expressionDef instanceof ExpressionDef.ConditionExpressionDef conditionExpressionDef) {
+            return renderCondition(objectDef, methodDef, conditionExpressionDef);
+        }
         if (expressionDef instanceof ExpressionDef.NewInstance newInstance) {
             return CodeBlock.concat(
                 CodeBlock.of("new $L(", asType(newInstance.type(), objectDef)),
@@ -660,6 +663,9 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             return builder.build();
         }
         if (expressionDef instanceof ExpressionDef.Cast castExpressionDef) {
+            if (castExpressionDef.type().equals(castExpressionDef.expressionDef().type())) {
+                return renderExpression(objectDef, methodDef, castExpressionDef.expressionDef());
+            }
             if (castExpressionDef.expressionDef() instanceof VariableDef variableDef) {
                 return CodeBlock.concat(
                     CodeBlock.of("($T) ", asType(castExpressionDef.type(), objectDef)),
@@ -701,38 +707,11 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         if (expressionDef instanceof ExpressionDef.GetPropertyValue getPropertyValue) {
             return renderExpression(objectDef, methodDef, JavaIdioms.getPropertyValue(getPropertyValue));
         }
-        if (expressionDef instanceof ExpressionDef.IsNull isNull) {
-            return renderExpression(objectDef, methodDef, new ExpressionDef.Condition("==", isNull.expression(), ExpressionDef.nullValue()));
-        }
-        if (expressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
-            return renderExpression(objectDef, methodDef, new ExpressionDef.Condition("!=", isNotNull.expression(), ExpressionDef.nullValue()));
-        }
         if (expressionDef instanceof ExpressionDef.MathOp mathOp) {
             return CodeBlock.concat(
-                renderCondition(objectDef, methodDef, mathOp.left()),
+                renderExpressionWithParentheses(objectDef, methodDef, mathOp.left()),
                 CodeBlock.of(mathOp.operator()),
-                renderCondition(objectDef, methodDef, mathOp.right())
-            );
-        }
-        if (expressionDef instanceof ExpressionDef.Condition condition) {
-            return CodeBlock.concat(
-                renderCondition(objectDef, methodDef, condition.left()),
-                CodeBlock.of(condition.operator()),
-                renderCondition(objectDef, methodDef, condition.right())
-            );
-        }
-        if (expressionDef instanceof ExpressionDef.And andExpressionDef) {
-            return CodeBlock.concat(
-                renderCondition(objectDef, methodDef, andExpressionDef.left()),
-                CodeBlock.of(" && "),
-                renderCondition(objectDef, methodDef, andExpressionDef.right())
-            );
-        }
-        if (expressionDef instanceof ExpressionDef.Or orExpressionDef) {
-            return CodeBlock.concat(
-                renderCondition(objectDef, methodDef, orExpressionDef.left()),
-                CodeBlock.of(" || "),
-                renderCondition(objectDef, methodDef, orExpressionDef.right())
+                renderExpressionWithParentheses(objectDef, methodDef, mathOp.right())
             );
         }
         if (expressionDef instanceof ExpressionDef.IfElse condition) {
@@ -806,6 +785,67 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         if (expressionDef instanceof ExpressionDef.InvokeHashCodeMethod invokeHashCodeMethod) {
             return renderExpression(objectDef, methodDef, JavaIdioms.hashCode(invokeHashCodeMethod));
         }
+        throw new IllegalStateException("Unrecognized expression: " + expressionDef);
+    }
+
+    private CodeBlock renderExpressionWithParentheses(@Nullable ObjectDef objectDef, MethodDef methodDef, ExpressionDef expressionDef) {
+        var rendered = renderExpression(objectDef, methodDef, expressionDef);
+        while (expressionDef instanceof ExpressionDef.Cast cast) {
+            expressionDef = cast.expressionDef();
+        }
+        if (expressionDef instanceof StatementDef || expressionDef instanceof VariableDef || expressionDef instanceof ExpressionDef.And || expressionDef instanceof ExpressionDef.Constant) {
+            return rendered;
+        }
+        return addParentheses(rendered);
+    }
+
+    private CodeBlock addParentheses(CodeBlock rendered) {
+        return CodeBlock.concat(
+            CodeBlock.of("("),
+            rendered,
+            CodeBlock.of(")")
+        );
+    }
+
+    private CodeBlock renderCondition(@Nullable ObjectDef objectDef, MethodDef methodDef, ExpressionDef.ConditionExpressionDef expressionDef) {
+        if (expressionDef instanceof ExpressionDef.IsNull isNull) {
+            return renderCondition(objectDef, methodDef, new ExpressionDef.Condition("==", isNull.expression(), ExpressionDef.nullValue()));
+        }
+        if (expressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
+            return renderCondition(objectDef, methodDef, new ExpressionDef.Condition("!=", isNotNull.expression(), ExpressionDef.nullValue()));
+        }
+        if (expressionDef instanceof ExpressionDef.IsTrue isTrue) {
+            return renderExpressionWithParentheses(objectDef, methodDef, isTrue.expression());
+        }
+        if (expressionDef instanceof ExpressionDef.IsFalse isFalse) {
+            return CodeBlock.concat(
+                CodeBlock.of("!"),
+                renderExpressionWithParentheses(objectDef, methodDef, isFalse.expression())
+            );
+        }
+        if (expressionDef instanceof ExpressionDef.Condition condition) {
+            return CodeBlock.concat(
+                renderExpressionWithParentheses(objectDef, methodDef, condition.left()),
+                CodeBlock.of(condition.operator()),
+                renderExpressionWithParentheses(objectDef, methodDef, condition.right())
+            );
+        }
+        if (expressionDef instanceof ExpressionDef.And andExpressionDef) {
+            return CodeBlock.concat(
+                renderCondition(objectDef, methodDef, andExpressionDef.left()),
+                CodeBlock.of(" && "),
+                renderCondition(objectDef, methodDef, andExpressionDef.right())
+            );
+        }
+        if (expressionDef instanceof ExpressionDef.Or orExpressionDef) {
+            return addParentheses(
+                CodeBlock.concat(
+                    renderCondition(objectDef, methodDef, orExpressionDef.left()),
+                    CodeBlock.of(" || "),
+                    renderCondition(objectDef, methodDef, orExpressionDef.right())
+                )
+            );
+        }
         if (expressionDef instanceof ExpressionDef.EqualsStructurally equalsStructurally) {
             ExpressionDef left = equalsStructurally.instance();
             TypeDef leftType = left.type();
@@ -814,34 +854,22 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             if (leftType.isPrimitive() || rightType.isPrimitive()) {
                 return renderEqualsReferentially(objectDef, methodDef, left, right);
             }
-            return renderExpression(objectDef, methodDef, JavaIdioms.equalsStructurally(equalsStructurally));
+            return renderExpressionWithParentheses(objectDef, methodDef, JavaIdioms.equalsStructurally(equalsStructurally));
         }
         if (expressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {
             ExpressionDef left = equalsReferentially.instance();
             ExpressionDef right = equalsReferentially.other();
             return renderEqualsReferentially(objectDef, methodDef, left, right);
         }
-        throw new IllegalStateException("Unrecognized expression: " + expressionDef);
+        throw new IllegalStateException("Unrecognized condition: " + expressionDef);
     }
 
     private CodeBlock renderEqualsReferentially(ObjectDef objectDef, MethodDef methodDef, ExpressionDef left, ExpressionDef right) {
         return CodeBlock.builder()
-            .add(renderExpression(objectDef, methodDef, left))
+            .add(renderExpressionWithParentheses(objectDef, methodDef, left))
             .add(" == ")
-            .add(renderExpression(objectDef, methodDef, right))
+            .add(renderExpressionWithParentheses(objectDef, methodDef, right))
             .build();
-    }
-
-    private CodeBlock renderCondition(@Nullable ObjectDef objectDef, MethodDef methodDef, ExpressionDef expressionDef) {
-        var rendered = renderExpression(objectDef, methodDef, expressionDef);
-        if (expressionDef instanceof StatementDef || expressionDef instanceof VariableDef || expressionDef instanceof ExpressionDef.And || expressionDef instanceof ExpressionDef.Constant) {
-            return rendered;
-        }
-        return CodeBlock.concat(
-            CodeBlock.of("("),
-            rendered,
-            CodeBlock.of(")")
-        );
     }
 
     private void renderYield(CodeBlock.Builder builder, MethodDef methodDef, StatementDef statementDef, ObjectDef objectDef) {

@@ -38,7 +38,7 @@ final class WhileLoopStatementWriter implements StatementWriter {
         ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, aWhile.expression(), TypeDef.Primitive.BOOLEAN);
         generatorAdapter.push(true);
         generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, end);
-        StatementWriter.of(aWhile.statement()).write(generatorAdapter, context, finallyBlock);
+        StatementWriter.of(aWhile.statement()).writeScoped(generatorAdapter, context, finallyBlock);
         generatorAdapter.goTo(whileLoop);
         generatorAdapter.visitLabel(end);
     }

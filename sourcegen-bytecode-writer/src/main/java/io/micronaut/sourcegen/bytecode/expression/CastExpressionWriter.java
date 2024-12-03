@@ -34,7 +34,15 @@ final class CastExpressionWriter implements ExpressionWriter {
     @Override
     public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         ExpressionDef exp = castExpressionDef.expressionDef();
+        while (exp instanceof ExpressionDef.Cast cast) {
+            // Only keep the last cast
+            exp = cast.expressionDef();
+        }
         ExpressionWriter.writeExpression(generatorAdapter, context, exp);
+        if (exp instanceof ExpressionDef.Constant constant && constant.value() == null) {
+            // Avoid casting null to anything
+            return;
+        }
         cast(generatorAdapter, context, exp.type(), castExpressionDef.type());
     }
 

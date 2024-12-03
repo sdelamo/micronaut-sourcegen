@@ -75,6 +75,18 @@ public abstract class AbstractConditionalWriter {
                 generatorAdapter.ifNull(elseLabel);
                 return;
             }
+            if (conditionExpressionDef instanceof ExpressionDef.IsTrue isTrue) {
+                ExpressionWriter.writeExpression(generatorAdapter, context, isTrue.expression());
+                generatorAdapter.push(true);
+                generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, elseLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.IsFalse isFalse) {
+                ExpressionWriter.writeExpression(generatorAdapter, context, isFalse.expression());
+                generatorAdapter.push(true);
+                generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, elseLabel);
+                return;
+            }
             if (conditionExpressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {
                 pushEqualsReferentially(generatorAdapter, context, equalsReferentially, elseLabel, GeneratorAdapter.NE);
                 return;
@@ -133,6 +145,18 @@ public abstract class AbstractConditionalWriter {
             if (conditionExpressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
                 ExpressionWriter.writeExpression(generatorAdapter, context, isNotNull.expression());
                 generatorAdapter.ifNonNull(ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.IsTrue isTrue) {
+                ExpressionWriter.writeExpression(generatorAdapter, context, isTrue.expression());
+                generatorAdapter.push(true);
+                generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, ifLabel);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.IsFalse isFalse) {
+                ExpressionWriter.writeExpression(generatorAdapter, context, isFalse.expression());
+                generatorAdapter.push(true);
+                generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, ifLabel);
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {

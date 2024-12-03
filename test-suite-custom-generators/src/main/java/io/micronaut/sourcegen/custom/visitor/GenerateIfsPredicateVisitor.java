@@ -61,7 +61,7 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
                 .overrides()
                 .returns(boolean.class)
                 .build((aThis, methodParameters) -> StatementDef.multi(
-                    methodParameters.get(0).isNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    methodParameters.get(0).isNull().doIf(TypeDef.Primitive.TRUE.returning()),
                     TypeDef.Primitive.FALSE.returning()
                 )))
             .build();
@@ -75,7 +75,7 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
                 .overrides()
                 .returns(boolean.class)
                 .build((aThis, methodParameters) -> StatementDef.multi(
-                    methodParameters.get(0).isNonNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    methodParameters.get(0).isNonNull().doIf(TypeDef.Primitive.TRUE.returning()),
                     TypeDef.Primitive.FALSE.returning()
                 )))
             .build();
@@ -89,7 +89,10 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
                 .overrides()
                 .returns(boolean.class)
                 .build((aThis, methodParameters)
-                    -> methodParameters.get(0).isNull().asConditionIfElse(TypeDef.Primitive.TRUE.returning(), TypeDef.Primitive.FALSE.returning())))
+                    -> methodParameters.get(0).ifNull(
+                        TypeDef.Primitive.TRUE.returning(),
+                        TypeDef.Primitive.FALSE.returning()
+                )))
             .build();
 
         sourceGenerator.write(ifElsePredicateDef, context, element);
@@ -98,8 +101,8 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
             .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(int.class)
-                .build((aThis, methodParameters) -> methodParameters.get(0).isNull()
-                    .asConditionIfElse(
+                .build((aThis, methodParameters) -> methodParameters.get(0)
+                    .ifNull(
                         TypeDef.Primitive.INT.constant(1).returning(),
                         TypeDef.Primitive.INT.constant(2).returning()
                     )))
@@ -114,8 +117,7 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
                 .overrides()
                 .addStatement(
                     new VariableDef.MethodParameter(PARAM, paramType)
-                        .isNull()
-                        .asConditionIfElse(
+                        .ifNull(
                             ExpressionDef.trueValue().returning(),
                             ExpressionDef.falseValue().returning()
                         )
@@ -130,7 +132,7 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
             .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(boolean.class)
-                .build((self, methodParameters) -> methodParameters.get(0).isNull().asConditionIfElse(
+                .build((self, methodParameters) -> methodParameters.get(0).ifNull(
                     ExpressionDef.trueValue(),
                     ExpressionDef.falseValue()
                 ).returning())
@@ -143,7 +145,7 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
             .addMethod(MethodDef.builder("test").addParameter(PARAM, paramType)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(int.class)
-                .build((self, methodParameters) -> methodParameters.get(0).isNull().asConditionIfElse(
+                .build((self, methodParameters) -> methodParameters.get(0).ifNull(
                     TypeDef.Primitive.INT.constant(1),
                     TypeDef.Primitive.INT.constant(2)
                 ).returning())
@@ -159,7 +161,7 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
                 .overrides()
                 .returns(boolean.class)
                 .build((aThis, methodParameters) -> StatementDef.multi(
-                    methodParameters.get(0).isNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    methodParameters.get(0).isNull().doIf(TypeDef.Primitive.TRUE.returning()),
                     TypeDef.Primitive.FALSE.returning()
                 )))
             .build();
@@ -176,7 +178,7 @@ public final class GenerateIfsPredicateVisitor implements TypeElementVisitor<Gen
                 .addModifiers(Modifier.PUBLIC)
                 .returns(boolean.class)
                 .build((aThis, methodParameters) -> StatementDef.multi(
-                    methodParameters.get(0).isNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    methodParameters.get(0).isNull().doIf(TypeDef.Primitive.TRUE.returning()),
                     TypeDef.Primitive.FALSE.returning()
                 )))
             .build();

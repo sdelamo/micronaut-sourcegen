@@ -195,12 +195,11 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
                 VariableDef o = parameterDef.get(1);
 
                 return StatementDef.multi(
-                    instance.equalsReferentially(o).asConditionIf(ExpressionDef.trueValue().returning()),
-                    o.isNull().asConditionOr(
-                            instance.invokeGetClass().asCondition(" != ", new ExpressionDef.InvokeGetClassMethod(o)))
-                        .asConditionIf(ExpressionDef.falseValue().returning()),
+                    instance.equalsReferentially(o).ifTrue(ExpressionDef.trueValue().returning()),
+                    o.isNull().or(instance.invokeGetClass().asCondition(" != ", new ExpressionDef.InvokeGetClassMethod(o)))
+                        .doIf(ExpressionDef.falseValue().returning()),
                     o.cast(selfType).newLocal("other", variableDef -> {
-                        ExpressionDef exp = null;
+                        ExpressionDef.ConditionExpressionDef exp = null;
                         for (PropertyElement beanProperty : properties) {
                             if (beanProperty.hasAnnotation(EqualsAndHashCode.Exclude.class)) {
                                 continue;
@@ -211,7 +210,7 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
                             var firstProperty = instance.getPropertyValue(beanProperty);
                             var secondProperty = variableDef.getPropertyValue(beanProperty);
 
-                            ExpressionDef newEqualsExpression = new ExpressionDef.EqualsReferentially(firstProperty, secondProperty);
+                            ExpressionDef.ConditionExpressionDef newEqualsExpression = new ExpressionDef.EqualsReferentially(firstProperty, secondProperty);
                             if (!beanProperty.isPrimitive() || beanProperty.isArray()) {
                                 // Object.equals for objects
 //                                if (beanProperty.isArray()) {
@@ -219,15 +218,15 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
 //                                    String methodName = beanProperty.getArrayDimensions() > 1 ?  "deepEquals" : "equals";
 //                                    equalsMethod = ClassTypeDef.of(Arrays.class).invokeStatic(methodName, TypeDef.Primitive.BOOLEAN, firstProperty, secondProperty);
 //                                }
-                                ExpressionDef equalsMethod = firstProperty.equalsStructurally(secondProperty);
+                                ExpressionDef.ConditionExpressionDef equalsMethod = firstProperty.equalsStructurally(secondProperty);
                                 newEqualsExpression = newEqualsExpression
-                                    .asConditionOr(firstProperty.isNonNull().asConditionAnd(equalsMethod));
+                                    .or(firstProperty.isNonNull().and(equalsMethod));
                             }
 
                             if (exp == null) {
                                 exp = newEqualsExpression;
                             } else {
-                                exp = exp.asConditionAnd(newEqualsExpression);
+                                exp = exp.and(newEqualsExpression);
                             }
                         }
                         return Objects.requireNonNullElseGet(exp, ExpressionDef::trueValue).returning();
@@ -255,7 +254,7 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
                     VariableDef.MethodParameter instance = parameterDef.get(0);
                 PropertyElement propertyElement1 = iterator.next();
                 return StatementDef.multi(
-                        instance.isNull().asConditionIf(ExpressionDef.primitiveConstant(0).returning()),
+                        instance.ifNull(ExpressionDef.primitiveConstant(0).returning()),
                         instance.getPropertyValue(propertyElement1).invokeHashCode().newLocal("hashValue", hashValue -> {
                             List<StatementDef> hashUpdates = new ArrayList<>();
                             while (iterator.hasNext()) {

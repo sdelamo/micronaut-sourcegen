@@ -49,7 +49,7 @@ final class SynchronizedStatementWriter implements StatementWriter {
 
         generatorAdapter.visitLabel(synchronizedStart);
 
-        StatementWriter.of(aSynchronized.statement()).write(generatorAdapter, context, () -> {
+        StatementWriter.of(aSynchronized.statement()).writeScoped(generatorAdapter, context, () -> {
             generatorAdapter.loadLocal(monitorLocal);
             generatorAdapter.monitorExit();
             if (finallyBlock != null) {

@@ -37,7 +37,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -424,38 +424,54 @@ public final class ByteCodeWriter {
         String methodDescriptor = TypeUtils.getMethodDescriptor(objectDef, methodDef);
         int access = getModifiersFlag(methodDef.getModifiers());
 
-        MethodVisitor methodVisitor = classVisitor.visitMethod(
+        GeneratorAdapter generatorAdapter = new GeneratorAdapter(classVisitor.visitMethod(
             access,
             name,
             methodDescriptor,
             SignatureWriterUtils.getMethodSignature(objectDef, methodDef),
             null
-        );
-        GeneratorAdapter generatorAdapter = new GeneratorAdapter(methodVisitor, access, name, methodDescriptor);
+        ), access, name, methodDescriptor);
         for (AnnotationDef annotation : methodDef.getAnnotations()) {
-            methodVisitor.visitAnnotation(TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
+            generatorAdapter.visitAnnotation(TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
         }
 
         if (methodDef.getParameters().stream().anyMatch(p -> !p.getAnnotations().isEmpty())) {
-            methodVisitor.visitAnnotableParameterCount(methodDef.getParameters().size(), true);
+            generatorAdapter.visitAnnotableParameterCount(methodDef.getParameters().size(), true);
         }
+
+        MethodContext context = new MethodContext(objectDef, methodDef);
+        Label startMethod = null;
 
         int parameterIndex = 0;
         for (ParameterDef parameter : methodDef.getParameters()) {
+            if (startMethod == null) {
+                startMethod = new Label();
+            }
             for (AnnotationDef annotation : parameter.getAnnotations()) {
-                AnnotationVisitor annotationVisitor = methodVisitor.visitParameterAnnotation(parameterIndex, TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
+                AnnotationVisitor annotationVisitor = generatorAdapter.visitParameterAnnotation(parameterIndex, TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
                 visitAnnotation(annotation, annotationVisitor);
+            }
+            MethodContext.LocalData prevParam = context.locals().put(parameter.getName(), new MethodContext.LocalData(
+                parameter.getName(),
+                TypeUtils.getType(parameter.getType(), objectDef),
+                startMethod,
+                parameterIndex + 1
+            ));
+            if (prevParam != null) {
+                throw new IllegalStateException("Duplicate method parameter: " + parameter.getName() + " of method: " + methodDef.getName() + " " + (objectDef == null ? "" : objectDef.getName()));
             }
             parameterIndex++;
         }
 
-        MethodContext context = new MethodContext(objectDef, methodDef);
         List<StatementDef> statements = methodDef.getStatements();
         if (methodDef.isConstructor()) {
             statements = adjustConstructorStatements(objectDef, statements);
         }
         if (!statements.isEmpty()) {
-            methodVisitor.visitCode();
+            generatorAdapter.visitCode();
+            if (startMethod != null) {
+                generatorAdapter.visitLabel(startMethod);
+            }
             for (StatementDef statement : statements) {
                 StatementWriter.of(statement).write(generatorAdapter, context, null);
             }
@@ -468,10 +484,24 @@ public final class ByteCodeWriter {
                 }
             }
         }
-        if (visitMaxs && !statements.isEmpty()) {
-            methodVisitor.visitMaxs(20, 20);
+        Label endMethod = new Label();
+        if (!context.locals().isEmpty()) {
+            generatorAdapter.visitLabel(endMethod);
         }
-        methodVisitor.visitEnd();
+        for (MethodContext.LocalData localsDatum : context.locals().values()) {
+            generatorAdapter.getDelegate().visitLocalVariable(
+                localsDatum.name(),
+                localsDatum.type().getDescriptor(),
+                null,
+                localsDatum.start(),
+                endMethod,
+                localsDatum.index()
+            );
+        }
+        if (visitMaxs && !statements.isEmpty()) {
+            generatorAdapter.visitMaxs(20, 20);
+        }
+        generatorAdapter.visitEnd();
     }
 
     private List<StatementDef> adjustConstructorStatements(ObjectDef objectDef, List<StatementDef> statements) {
@@ -505,6 +535,9 @@ public final class ByteCodeWriter {
 
     private boolean hasReturnStatement(StatementDef statement) {
         List<StatementDef> statements = statement.flatten();
+        if (statements.isEmpty()) {
+            return false;
+        }
         StatementDef statementDef = statements.get(statements.size() - 1);
         if (statementDef instanceof StatementDef.IfElse ifElse) {
             return hasReturnStatement(ifElse.statement()) && hasReturnStatement(ifElse.elseStatement());
@@ -525,9 +558,7 @@ public final class ByteCodeWriter {
     }
 
     private StatementDef superConstructorInvocation() {
-        return MethodDef.constructor().build((aThis, methodParameters) -> aThis.superRef().invokeConstructor())
-            .getStatements()
-            .get(0);
+        return new VariableDef.This().superRef().invokeConstructor();
     }
 
     private boolean isConstructorInvocation(StatementDef statement) {

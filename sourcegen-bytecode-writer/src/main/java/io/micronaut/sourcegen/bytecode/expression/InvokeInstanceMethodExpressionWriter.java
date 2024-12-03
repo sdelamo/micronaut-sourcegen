@@ -53,30 +53,19 @@ final class InvokeInstanceMethodExpressionWriter extends AbstractStatementAwareE
         Type methodOwnerType = TypeUtils.getType(instanceType, context.objectDef());
         MethodDef methodDef = invokeInstanceMethod.method();
         Method method = new Method(methodDef.getName(), TypeUtils.getMethodDescriptor(context.objectDef(), methodDef));
-        if (invokeInstanceMethod.method().isConstructor()) {
-            generatorAdapter.invokeConstructor(methodOwnerType, method);
-        } else if (instanceType instanceof ClassTypeDef classTypeDef) {
+        if (instanceType instanceof ClassTypeDef classTypeDef) {
             if (instance instanceof VariableDef.Super aSuper) {
-                ClassTypeDef superClass;
-                if (aSuper.type() == TypeDef.SUPER) {
-                    if (context.objectDef() instanceof EnumDef) {
-                        superClass = ClassTypeDef.of(Enum.class);
-                    } else if (context.objectDef() instanceof ClassDef classDef) {
-                        superClass = Objects.requireNonNullElse(classDef.getSuperclass(), TypeDef.OBJECT);
-                    } else {
-                        superClass = TypeDef.OBJECT;
-                    }
-                } else {
-                    superClass = aSuper.type();
-                }
-                methodOwnerType = TypeUtils.getType(superClass, context.objectDef());
+                ClassTypeDef superType = getSuperType(context, aSuper);
+                methodOwnerType = TypeUtils.getType(superType, context.objectDef());
                 generatorAdapter.visitMethodInsn(
                     INVOKESPECIAL,
                     methodOwnerType.getSort() == Type.ARRAY ? methodOwnerType.getDescriptor() : methodOwnerType.getInternalName(),
                     method.getName(),
                     method.getDescriptor(),
-                    superClass.isInterface() && invokeInstanceMethod.isDefault()
+                    superType.isInterface() && invokeInstanceMethod.isDefault()
                 );
+            } else if (invokeInstanceMethod.method().isConstructor()) {
+                generatorAdapter.invokeConstructor(methodOwnerType, method);
             } else if (classTypeDef.isInterface()) {
                 generatorAdapter.invokeInterface(methodOwnerType, method);
             } else {
@@ -86,6 +75,22 @@ final class InvokeInstanceMethodExpressionWriter extends AbstractStatementAwareE
             generatorAdapter.invokeVirtual(methodOwnerType, method);
         }
         popValueIfNeeded(generatorAdapter, invokeInstanceMethod.method().getReturnType());
+    }
+
+    private ClassTypeDef getSuperType(MethodContext context, VariableDef.Super aSuper) {
+        ClassTypeDef superClass;
+        if (aSuper.type() == TypeDef.SUPER) {
+            if (context.objectDef() instanceof EnumDef) {
+                superClass = ClassTypeDef.of(Enum.class);
+            } else if (context.objectDef() instanceof ClassDef classDef) {
+                superClass = Objects.requireNonNullElse(classDef.getSuperclass(), TypeDef.OBJECT);
+            } else {
+                superClass = TypeDef.OBJECT;
+            }
+        } else {
+            superClass = aSuper.type();
+        }
+        return superClass;
     }
 
 }

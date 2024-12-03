@@ -32,8 +32,6 @@ import io.micronaut.sourcegen.model.ExpressionDef.*
 import io.micronaut.sourcegen.model.StatementDef.Assign
 import io.micronaut.sourcegen.model.StatementDef.DefineAndAssign
 import io.micronaut.sourcegen.model.StatementDef.PutField
-import io.micronaut.sourcegen.model.TypeDef
-import io.micronaut.sourcegen.model.VariableDef
 import java.io.IOException
 import java.io.Writer
 import java.lang.reflect.Array
@@ -950,6 +948,9 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 return codeBuilder.build()
             }
             if (expressionDef is Cast) {
+                if (expressionDef.type == expressionDef.expressionDef.type()) {
+                    return renderExpressionCode(objectDef, methodDef, expressionDef.expressionDef)
+                }
                 val codeBuilder = CodeBlock.builder()
                 codeBuilder.add(
                     renderExpressionCode(
@@ -1052,6 +1053,15 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 return CodeBlock.builder()
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression))
                     .add(" != null")
+                    .build()
+            }
+            if (expressionDef is IsTrue) {
+                return renderExpressionCode(objectDef, methodDef, expressionDef.expression)
+            }
+            if (expressionDef is IsFalse) {
+                return CodeBlock.builder()
+                    .add("!")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression))
                     .build()
             }
             if (expressionDef is MathOp) {

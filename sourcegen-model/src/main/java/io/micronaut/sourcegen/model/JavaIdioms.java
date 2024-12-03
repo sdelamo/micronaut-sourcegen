@@ -104,7 +104,7 @@ public final class JavaIdioms {
             return primitive.wrapperType()
                 .invokeStatic("hashCode", primitiveIntType, instance);
         }
-        return instance.isNull().asConditionIfElse(
+        return instance.ifNull(
             primitiveIntType.constant(0),
             instance.invoke(OBJECT_HASHCODE)
         );

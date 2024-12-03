@@ -192,7 +192,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 parameter
                     .invoke("iterator", ClassTypeDef.of(Iterator.class))
                     .newLocal(parameter.name() + "Iterator", iteratorVar ->
-                        parameter.isNonNull().asConditionIf(
+                        parameter.ifNonNull(
                                 iteratorVar.invoke("hasNext", TypeDef.primitive(boolean.class))
                                     .whileLoop(
                                         arrayListVar.invoke("add", TypeDef.of(boolean.class), iteratorVar.invoke("next", ClassTypeDef.OBJECT))
@@ -284,12 +284,12 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(propertyName, TypeDef.parameterized(Collection.class, singularTypeDef))
                 .build((self, parameterDefs) -> StatementDef.multi(
-                    parameterDefs.get(0).isNull().asConditionIf(
+                    parameterDefs.get(0).isNull().doIf(
                         ClassTypeDef.of(NullPointerException.class)
                             .instantiate(ExpressionDef.constant(propertyName + " cannot be null"))
                             .doThrow()
                     ),
-                    self.field(field).isNull().asConditionIf(
+                    self.field(field).isNull().doIf(
                         self.field(field).assign(ClassTypeDef.of(ArrayList.class).instantiate())
                     ),
                     self.field(field).invoke("addAll", TypeDef.primitive(boolean.class), parameterDefs.get(0)),
@@ -299,7 +299,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(singularName, singularTypeDef)
                 .build((self, parameterDefs) -> StatementDef.multi(
-                    self.field(field).isNull().asConditionIf(
+                    self.field(field).isNull().doIf(
                         self.field(field).assign(ClassTypeDef.of(ArrayList.class).instantiate())
                     ),
                     self.field(field).invoke("add", TypeDef.of(boolean.class), parameterDefs.get(0)),
@@ -308,7 +308,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
             classBuilder.addMethod(MethodDef.builder("clear" + StringUtils.capitalize(propertyName))
                 .addModifiers(Modifier.PUBLIC)
                 .build((self, parameterDefs) -> StatementDef.multi(
-                    self.field(field).isNonNull().asConditionIf(
+                    self.field(field).isNonNull().doIf(
                         self.field(field).invoke("clear", TypeDef.VOID)
                     ),
                     returningExpressionProvider.apply(self)
@@ -328,12 +328,12 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(propertyName, TypeDef.parameterized(Map.class, keyType, valueType))
                 .build((self, parameterDefs) -> StatementDef.multi(
-                    parameterDefs.get(0).isNull().asConditionIf(
+                    parameterDefs.get(0).isNull().doIf(
                         ClassTypeDef.of(NullPointerException.class)
                             .instantiate(ExpressionDef.constant(propertyName + " cannot be null"))
                             .doThrow()
                     ),
-                    self.field(field).isNull().asConditionIf(
+                    self.field(field).isNull().doIf(
                         self.field(field).assign(fieldType.instantiate())
                     ),
                     self.field(field).invoke(
@@ -348,7 +348,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                 .addParameter("key", keyType)
                 .addParameter("value", valueType)
                 .build((self, parameterDefs) -> StatementDef.multi(
-                    self.field(field).isNull().asConditionIf(
+                    self.field(field).isNull().doIf(
                         self.field(field).assign(TypeDef.parameterized(ArrayList.class, TypeDef.parameterized(Map.Entry.class, keyType, valueType)).instantiate())
                     ),
                     self.field(field).invoke(
@@ -366,7 +366,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
             classBuilder.addMethod(MethodDef.builder("clear" + StringUtils.capitalize(propertyName))
                 .addModifiers(Modifier.PUBLIC)
                 .build((self, parameterDefs) -> StatementDef.multi(
-                    self.field(field).isNonNull().asConditionIf(
+                    self.field(field).isNonNull().doIf(
                         self.field(field).invoke("clear", TypeDef.VOID)
                     ),
                     returningExpressionProvider.apply(self)
@@ -416,7 +416,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
                             TypeDef fieldType = propertyType.makeNullable();
                             if (fieldType.isNullable()) {
                                 statements.add(
-                                    self.field(propertyName, fieldType).isNonNull().asConditionIf(
+                                    self.field(propertyName, fieldType).isNonNull().doIf(
                                         instanceVar.invoke(
                                             writeMethod.get(),
                                             valueExpression(beanProperty, self.field(propertyName, fieldType))
@@ -454,7 +454,7 @@ public final class BuilderAnnotationVisitor implements TypeElementVisitor<Builde
         String collectionType = propertyElement.getType().getName();
         ClassTypeDef elementType = propertyElement.getType().getFirstTypeArgument().map(ClassTypeDef::of).orElse(ClassTypeDef.OBJECT);
         TypeDef propertyType = TypeDef.of(propertyElement.getType());
-        ExpressionDef collectionSize = field.isNull().asConditionIfElse(
+        ExpressionDef collectionSize = field.ifNull(
             ExpressionDef.primitiveConstant(0),
             field.invoke("size", TypeDef.primitive(int.class))
         );

@@ -19,8 +19,10 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ObjectDef;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.Type;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -29,15 +31,27 @@ import java.util.Map;
  * @param objectDef The current object definition
  * @param methodDef The current method definition.
  * @param locals    The locals
+ * @since 1.5
  */
 @Internal
 public record MethodContext(@Nullable ObjectDef objectDef,
                             MethodDef methodDef,
-                            Map<String, Integer> locals) {
+                            Map<String, LocalData> locals) {
 
     public MethodContext(@Nullable ObjectDef objectDef,
                          MethodDef methodDef) {
-        this(objectDef, methodDef, new HashMap<>());
+        this(objectDef, methodDef, new LinkedHashMap<>());
+    }
+
+    /**
+     * The local data.
+     *
+     * @param name  The name
+     * @param type  The type
+     * @param start The start label
+     * @param index The index
+     */
+    public record LocalData(String name, Type type, Label start, int index) {
     }
 
 }
