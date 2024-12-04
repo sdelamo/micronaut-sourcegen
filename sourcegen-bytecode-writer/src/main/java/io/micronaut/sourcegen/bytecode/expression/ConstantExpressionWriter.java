@@ -48,14 +48,22 @@ final class ConstantExpressionWriter implements ExpressionWriter {
             return;
         }
         if (type instanceof TypeDef.Primitive primitive) {
+            if (value instanceof Number number) {
+                switch (primitive.name()) {
+                    case "long" -> generatorAdapter.push(number.longValue());
+                    case "float" -> generatorAdapter.push(number.floatValue());
+                    case "double" -> generatorAdapter.push(number.doubleValue());
+                    case "byte" -> generatorAdapter.push(number.byteValue());
+                    case "int" -> generatorAdapter.push(number.intValue());
+                    case "short" -> generatorAdapter.push(number.shortValue());
+                    default ->
+                        throw new IllegalStateException("Unrecognized number primitive type: " + primitive.name());
+                }
+                return;
+            }
             switch (primitive.name()) {
-                case "long" -> generatorAdapter.push((long) value);
-                case "float" -> generatorAdapter.push((float) value);
-                case "double" -> generatorAdapter.push((double) value);
-                case "boolean" -> generatorAdapter.push((boolean) value);
-                case "byte" -> generatorAdapter.push((byte) value);
-                case "int" -> generatorAdapter.push((int) value);
-                case "short" -> generatorAdapter.push((short) value);
+                case "boolean" -> generatorAdapter.push((Boolean) value);
+                case "char" -> generatorAdapter.push((Character) value);
                 default ->
                     throw new IllegalStateException("Unrecognized primitive type: " + primitive.name());
             }
