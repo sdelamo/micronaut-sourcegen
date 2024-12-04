@@ -1357,6 +1357,102 @@ class Test {
 """, decompileToJava(bytes));
     }
 
+    @Test
+    void testPrimitives() {
+
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(MethodDef.builder("testLong")
+                .returns(TypeDef.Primitive.LONG)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.LONG.constant(123445).returning()
+                )
+            )
+            .addMethod(MethodDef.builder("testInt")
+                .returns(TypeDef.Primitive.INT)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.INT.constant(334455).returning()
+                )
+            )
+            .addMethod(MethodDef.builder("testFloat")
+                .returns(TypeDef.Primitive.FLOAT)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.FLOAT.constant(123.456).returning()
+                )
+            )
+            .addMethod(MethodDef.builder("testShort")
+                .returns(TypeDef.Primitive.SHORT)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.SHORT.constant(345).returning()
+                )
+            )
+            .addMethod(MethodDef.builder("testChar")
+                .returns(TypeDef.Primitive.CHAR)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.CHAR.constant('c').returning()
+                )
+            )
+            .addMethod(MethodDef.builder("testBoolean")
+                .returns(TypeDef.Primitive.BOOLEAN)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.BOOLEAN.constant(true).returning()
+                )
+            )
+            .addMethod(MethodDef.builder("testByte")
+                .returns(TypeDef.Primitive.BYTE)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.BYTE.constant(45).returning()
+                )
+            )
+            .addMethod(MethodDef.builder("testDouble")
+                .returns(TypeDef.Primitive.DOUBLE)
+                .build((aThis, methodParameters) ->
+                        TypeDef.Primitive.DOUBLE.constant(444.555).returning()
+                )
+            )
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   long testLong() {
+      return 123445L;
+   }
+
+   int testInt() {
+      return 334455;
+   }
+
+   float testFloat() {
+      return 123.456F;
+   }
+
+   short testShort() {
+      return 345;
+   }
+
+   char testChar() {
+      return 'c';
+   }
+
+   boolean testBoolean() {
+      return true;
+   }
+
+   byte testByte() {
+      return 45;
+   }
+
+   double testDouble() {
+      return 444.555;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
     private String toBytecode(ObjectDef objectDef) {
         StringWriter stringWriter = new StringWriter();
         generateFile(objectDef, stringWriter);
