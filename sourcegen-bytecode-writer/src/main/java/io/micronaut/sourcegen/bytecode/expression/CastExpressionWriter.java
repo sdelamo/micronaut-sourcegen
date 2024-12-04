@@ -46,7 +46,7 @@ final class CastExpressionWriter implements ExpressionWriter {
         cast(generatorAdapter, context, exp.type(), castExpressionDef.type());
     }
 
-    static void cast(GeneratorAdapter generatorAdapter, MethodContext context, TypeDef from, TypeDef to) {
+    private static void cast(GeneratorAdapter generatorAdapter, MethodContext context, TypeDef from, TypeDef to) {
         from = ObjectDef.getContextualType(context.objectDef(), from);
         to = ObjectDef.getContextualType(context.objectDef(), to);
         if ((from instanceof TypeDef.Primitive fromP && to instanceof TypeDef.Primitive toP) && !from.equals(to)) {
