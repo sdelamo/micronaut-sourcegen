@@ -408,7 +408,11 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/TypeSpec.Builder.html#alwaysQualify(java.lang.String...)" class="member-name-link">alwaysQualify(String...)</a> - Method in class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/TypeSpec.Builder.html" title="class in io.micronaut.sourcegen.javapoet">TypeSpec.Builder</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.And.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">And(ExpressionDef, ExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.And.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.And</a></dt>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html#and(io.micronaut.sourcegen.model.ExpressionDef.ConditionExpressionDef)" class="member-name-link">and(ExpressionDef.ConditionExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef.ConditionExpressionDef</a></dt>
+<dd>
+<div class="block">The and condition of this variable.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.And.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef.ConditionExpressionDef,io.micronaut.sourcegen.model.ExpressionDef.ConditionExpressionDef)" class="member-name-link">And(ExpressionDef.ConditionExpressionDef, ExpressionDef.ConditionExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.And.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.And</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>And</code> record class.</div>
 </dd>
@@ -565,26 +569,6 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#asCondition(java.lang.String,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">asCondition(String, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
 <dd>
 <div class="block">The condition of this variable.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#asConditionAnd(io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">asConditionAnd(ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">The and condition of this variable.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#asConditionIf(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">asConditionIf(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">The conditional statement based on this expression.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#asConditionIfElse(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">asConditionIfElse(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">The conditional if else expression.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#asConditionIfElse(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">asConditionIfElse(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">The conditional statement based on this expression.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#asConditionOr(io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">asConditionOr(ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">The or condition of this variable.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ParameterDef.html#asExpression()" class="member-name-link">asExpression()</a> - Method in class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ParameterDef.html" title="class in io.micronaut.sourcegen.model">ParameterDef</a></dt>
 <dd>&nbsp;</dd>
@@ -1054,6 +1038,18 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/model/StatementDef.Try.html#doFinally(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">doFinally(StatementDef)</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/StatementDef.Try.html" title="class in io.micronaut.sourcegen.model">StatementDef.Try</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html#doIf(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">doIf(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef.ConditionExpressionDef</a></dt>
+<dd>
+<div class="block">The conditional statement based on this expression.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html#doIfElse(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">doIfElse(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef.ConditionExpressionDef</a></dt>
+<dd>
+<div class="block">The conditional if else expression.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html#doIfElse(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">doIfElse(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef.ConditionExpressionDef</a></dt>
+<dd>
+<div class="block">The conditional statement based on this expression.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#doThrow()" class="member-name-link">doThrow()</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
 <dd>
 <div class="block">Throw an exception.</div>
@@ -1120,6 +1116,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/sourcegen/bytecode/EnumGenUtils.html#%3Cinit%3E()" class="member-name-link">EnumGenUtils()</a> - Constructor for class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/EnumGenUtils.html" title="class in io.micronaut.sourcegen.bytecode">EnumGenUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1227,11 +1227,19 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsFalse</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNotNull</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNull</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsTrue</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -1403,6 +1411,8 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/StatementDef.Try.Catch.html#param-exception"><code>exception</code></a> record component.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/statement/TryCatchStatementWriter.html#EXCEPTION_NAME" class="member-name-link">EXCEPTION_NAME</a> - Static variable in class io.micronaut.sourcegen.bytecode.statement.<a href="io/micronaut/sourcegen/bytecode/statement/TryCatchStatementWriter.html" title="class in io.micronaut.sourcegen.bytecode.statement">TryCatchStatementWriter</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/MethodSpec.html#exceptions" class="member-name-link">exceptions</a> - Variable in class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/MethodSpec.html" title="class in io.micronaut.sourcegen.javapoet">MethodSpec</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/model/VariableDef.ExceptionVar.html#%3Cinit%3E(io.micronaut.sourcegen.model.ClassTypeDef)" class="member-name-link">ExceptionVar(ClassTypeDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/VariableDef.ExceptionVar.html" title="class in io.micronaut.sourcegen.model">VariableDef.ExceptionVar</a></dt>
@@ -1421,6 +1431,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/ExpressionDef.InstanceOf.html#param-expression"><code>expression</code></a> record component.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html#expression()" class="member-name-link">expression()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsFalse</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html#param-expression"><code>expression</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html#expression()" class="member-name-link">expression()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNotNull</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html#param-expression"><code>expression</code></a> record component.</div>
@@ -1428,6 +1442,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html#expression()" class="member-name-link">expression()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNull</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/ExpressionDef.IsNull.html#param-expression"><code>expression</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html#expression()" class="member-name-link">expression()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsTrue</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html#param-expression"><code>expression</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.Switch.html#expression()" class="member-name-link">expression()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.Switch.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.Switch</a></dt>
 <dd>
@@ -1533,6 +1551,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The call a static method expression.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html" class="type-name-link" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsFalse</a> - Record Class in <a href="io/micronaut/sourcegen/model/package-summary.html">io.micronaut.sourcegen.model</a></dt>
+<dd>
+<div class="block">The IS FALSE condition.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html" class="type-name-link" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNotNull</a> - Record Class in <a href="io/micronaut/sourcegen/model/package-summary.html">io.micronaut.sourcegen.model</a></dt>
 <dd>
 <div class="block">The IS NOT NULL condition.</div>
@@ -1540,6 +1562,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html" class="type-name-link" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNull</a> - Record Class in <a href="io/micronaut/sourcegen/model/package-summary.html">io.micronaut.sourcegen.model</a></dt>
 <dd>
 <div class="block">The IS NULL condition.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html" class="type-name-link" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsTrue</a> - Record Class in <a href="io/micronaut/sourcegen/model/package-summary.html">io.micronaut.sourcegen.model</a></dt>
+<dd>
+<div class="block">The IS TRUE condition.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.MathOp.html" class="type-name-link" title="class in io.micronaut.sourcegen.model">ExpressionDef.MathOp</a> - Record Class in <a href="io/micronaut/sourcegen/model/package-summary.html">io.micronaut.sourcegen.model</a></dt>
 <dd>
@@ -1924,6 +1950,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/AnnotationSpec.AnnotationSpecValue.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/AnnotationSpec.AnnotationSpecValue.html" title="class in io.micronaut.sourcegen.javapoet">AnnotationSpec.AnnotationSpecValue</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -2028,11 +2058,19 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsFalse</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNotNull</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNull</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsTrue</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -2195,10 +2233,62 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>IfElse</code> record class.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifFalse(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">ifFalse(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is false - if / else expression.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifFalse(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifFalse(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is false - if statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifFalse(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifFalse(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is false - if / else statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifNonNull(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">ifNonNull(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is not null - if / else expression.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifNonNull(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifNonNull(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is not null - if statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifNonNull(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifNonNull(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is not null - if / else statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifNull(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">ifNull(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is null - if / else expression.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifNull(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifNull(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is null - if statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifNull(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifNull(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is null - if / else statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifTrue(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">ifTrue(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is true - if / else expression.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifTrue(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifTrue(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is true - if statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#ifTrue(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">ifTrue(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
+<dd>
+<div class="block">Is true - if / else statement.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/CodeBlock.Builder.html#indent()" class="member-name-link">indent()</a> - Method in class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/CodeBlock.Builder.html" title="class in io.micronaut.sourcegen.javapoet">CodeBlock.Builder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/JavaFile.Builder.html#indent(java.lang.String)" class="member-name-link">indent(String)</a> - Method in class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/JavaFile.Builder.html" title="class in io.micronaut.sourcegen.javapoet">JavaFile.Builder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#index()" class="member-name-link">index()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#param-index"><code>index</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.ArrayElement.html#index()" class="member-name-link">index()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.ArrayElement.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.ArrayElement</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/ExpressionDef.ArrayElement.html#param-index"><code>index</code></a> record component.</div>
@@ -2513,6 +2603,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isFalse()" class="member-name-link">isFalse()</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">IsFalse(ExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsFalse</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>IsFalse</code> record class.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ClassTypeDef.ClassElementType.html#isInner()" class="member-name-link">isInner()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ClassTypeDef.ClassElementType.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassElementType</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/model/ClassTypeDef.ClassName.html#isInner()" class="member-name-link">isInner()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ClassTypeDef.ClassName.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassName</a></dt>
@@ -2535,36 +2629,12 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNonNull()" class="member-name-link">isNonNull()</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNonNull(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">isNonNull(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">Is not null - if / else expression.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNonNull(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">isNonNull(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">Is not null - if statement.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNonNull(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">isNonNull(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">Is not null - if / else statement.</div>
-</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">IsNotNull(ExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNotNull</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>IsNotNull</code> record class.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNull()" class="member-name-link">isNull()</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNull(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">isNull(ExpressionDef, ExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">Is null - if / else expression.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNull(io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">isNull(StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">Is null - if statement.</div>
-</dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isNull(io.micronaut.sourcegen.model.StatementDef,io.micronaut.sourcegen.model.StatementDef)" class="member-name-link">isNull(StatementDef, StatementDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
-<dd>
-<div class="block">Is null - if / else statement.</div>
-</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">IsNull(ExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNull</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>IsNull</code> record class.</div>
@@ -2599,6 +2669,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.html#isTrue()" class="member-name-link">isTrue()</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">IsTrue(ExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsTrue</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>IsTrue</code> record class.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:J">J</h2>
 <dl class="index">
@@ -2678,6 +2752,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>Local</code> record class.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#%3Cinit%3E(java.lang.String,org.objectweb.asm.Type,org.objectweb.asm.Label,int)" class="member-name-link">LocalData(String, Type, Label, int)</a> - Constructor for record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>LocalData</code> record class.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.html#locals()" class="member-name-link">locals()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/bytecode/MethodContext.html#param-locals"><code>locals</code></a> record component.</div>
@@ -2749,9 +2827,13 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.html#%3Cinit%3E(io.micronaut.sourcegen.model.ObjectDef,io.micronaut.sourcegen.model.MethodDef)" class="member-name-link">MethodContext(ObjectDef, MethodDef)</a> - Constructor for record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.html#%3Cinit%3E(io.micronaut.sourcegen.model.ObjectDef,io.micronaut.sourcegen.model.MethodDef,java.util.Map)" class="member-name-link">MethodContext(ObjectDef, MethodDef, Map&lt;String, Integer&gt;)</a> - Constructor for record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext</a></dt>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.html#%3Cinit%3E(io.micronaut.sourcegen.model.ObjectDef,io.micronaut.sourcegen.model.MethodDef,java.util.Map)" class="member-name-link">MethodContext(ObjectDef, MethodDef, Map&lt;String, MethodContext.LocalData&gt;)</a> - Constructor for record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>MethodContext</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" class="type-name-link" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a> - Record Class in <a href="io/micronaut/sourcegen/bytecode/package-summary.html">io.micronaut.sourcegen.bytecode</a></dt>
+<dd>
+<div class="block">The local data.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.html#methodDef()" class="member-name-link">methodDef()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext</a></dt>
 <dd>
@@ -2842,6 +2924,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/model/AbstractElementBuilder.html#name" class="member-name-link">name</a> - Variable in class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/AbstractElementBuilder.html" title="class in io.micronaut.sourcegen.model">AbstractElementBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#param-name"><code>name</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/TypeDef.Primitive.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/TypeDef.Primitive.html" title="class in io.micronaut.sourcegen.model">TypeDef.Primitive</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/model/TypeDef.TypeVariable.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/TypeDef.TypeVariable.html" title="class in io.micronaut.sourcegen.model">TypeDef.TypeVariable</a></dt>
@@ -3063,7 +3149,11 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/model/ExpressionDef.MathOp.html#param-operator"><code>operator</code></a> record component.</div>
 </dd>
-<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.Or.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef,io.micronaut.sourcegen.model.ExpressionDef)" class="member-name-link">Or(ExpressionDef, ExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.Or.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.Or</a></dt>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html#or(io.micronaut.sourcegen.model.ExpressionDef.ConditionExpressionDef)" class="member-name-link">or(ExpressionDef.ConditionExpressionDef)</a> - Method in interface io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.ConditionExpressionDef.html" title="interface in io.micronaut.sourcegen.model">ExpressionDef.ConditionExpressionDef</a></dt>
+<dd>
+<div class="block">The or condition of this variable.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.Or.html#%3Cinit%3E(io.micronaut.sourcegen.model.ExpressionDef.ConditionExpressionDef,io.micronaut.sourcegen.model.ExpressionDef.ConditionExpressionDef)" class="member-name-link">Or(ExpressionDef.ConditionExpressionDef, ExpressionDef.ConditionExpressionDef)</a> - Constructor for record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.Or.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.Or</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>Or</code> record class.</div>
 </dd>
@@ -3336,6 +3426,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">The source generators.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#start()" class="member-name-link">start()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#param-start"><code>start</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/generator/visitors/BuilderAnnotationVisitor.html#start(io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">start(VisitorContext)</a> - Method in class io.micronaut.sourcegen.generator.visitors.<a href="io/micronaut/sourcegen/generator/visitors/BuilderAnnotationVisitor.html" title="class in io.micronaut.sourcegen.generator.visitors">BuilderAnnotationVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/generator/visitors/DelegateAnnotationVisitor.html#start(io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">start(VisitorContext)</a> - Method in class io.micronaut.sourcegen.generator.visitors.<a href="io/micronaut/sourcegen/generator/visitors/DelegateAnnotationVisitor.html" title="class in io.micronaut.sourcegen.generator.visitors">DelegateAnnotationVisitor</a></dt>
@@ -3569,6 +3663,10 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns the top class in this nesting group.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
@@ -3679,11 +3777,19 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsFalse.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsFalse</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNotNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNotNull</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsNull.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsNull</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ExpressionDef.IsTrue.html" title="class in io.micronaut.sourcegen.model">ExpressionDef.IsTrue</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -3841,6 +3947,12 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Creates an instance of a <code>Try</code> record class.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/statement/TryCatchStatementWriter.html" class="type-name-link" title="class in io.micronaut.sourcegen.bytecode.statement">TryCatchStatementWriter</a> - Class in <a href="io/micronaut/sourcegen/bytecode/statement/package-summary.html">io.micronaut.sourcegen.bytecode.statement</a></dt>
+<dd>
+<div class="block">The try-catch statement.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/statement/TryCatchStatementWriter.html#%3Cinit%3E(io.micronaut.sourcegen.model.StatementDef.Try)" class="member-name-link">TryCatchStatementWriter(StatementDef.Try)</a> - Constructor for class io.micronaut.sourcegen.bytecode.statement.<a href="io/micronaut/sourcegen/bytecode/statement/TryCatchStatementWriter.html" title="class in io.micronaut.sourcegen.bytecode.statement">TryCatchStatementWriter</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/AnnotationSpec.html#type" class="member-name-link">type</a> - Variable in class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/AnnotationSpec.html" title="class in io.micronaut.sourcegen.javapoet">AnnotationSpec</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/FieldSpec.html#type" class="member-name-link">type</a> - Variable in class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/FieldSpec.html" title="class in io.micronaut.sourcegen.javapoet">FieldSpec</a></dt>
@@ -3852,6 +3964,10 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/sourcegen/annotations/Delegate.html#type()" class="member-name-link">type()</a> - Element in annotation interface io.micronaut.sourcegen.annotations.<a href="io/micronaut/sourcegen/annotations/Delegate.html" title="annotation interface in io.micronaut.sourcegen.annotations">Delegate</a></dt>
 <dd>
 <div class="block">Define what the class that delegate should be created for.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#type()" class="member-name-link">type()</a> - Method in record class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html" title="class in io.micronaut.sourcegen.bytecode">MethodContext.LocalData</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/sourcegen/bytecode/MethodContext.LocalData.html#param-type"><code>type</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/model/ClassTypeDef.JavaClass.html#type()" class="member-name-link">type()</a> - Method in record class io.micronaut.sourcegen.model.<a href="io/micronaut/sourcegen/model/ClassTypeDef.JavaClass.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.JavaClass</a></dt>
 <dd>
@@ -4250,6 +4366,8 @@ the order they are declared.</div>
 <dd>
 <div class="block">Write the statement.</div>
 </dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/statement/TryCatchStatementWriter.html#write(org.objectweb.asm.commons.GeneratorAdapter,io.micronaut.sourcegen.bytecode.MethodContext,java.lang.Runnable)" class="member-name-link">write(GeneratorAdapter, MethodContext, Runnable)</a> - Method in class io.micronaut.sourcegen.bytecode.statement.<a href="io/micronaut/sourcegen/bytecode/statement/TryCatchStatementWriter.html" title="class in io.micronaut.sourcegen.bytecode.statement">TryCatchStatementWriter</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/sourcegen/bytecode/ByteCodeWriter.html#writeClass(org.objectweb.asm.ClassVisitor,io.micronaut.sourcegen.model.ClassDef)" class="member-name-link">writeClass(ClassVisitor, ClassDef)</a> - Method in class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/ByteCodeWriter.html" title="class in io.micronaut.sourcegen.bytecode">ByteCodeWriter</a></dt>
 <dd>
 <div class="block">Write an interface.</div>
@@ -4289,6 +4407,10 @@ the order they are declared.</div>
 <dt><a href="io/micronaut/sourcegen/bytecode/ByteCodeWriter.html#writeRecord(org.objectweb.asm.ClassVisitor,io.micronaut.sourcegen.model.RecordDef,io.micronaut.sourcegen.model.ClassTypeDef)" class="member-name-link">writeRecord(ClassVisitor, RecordDef, ClassTypeDef)</a> - Method in class io.micronaut.sourcegen.bytecode.<a href="io/micronaut/sourcegen/bytecode/ByteCodeWriter.html" title="class in io.micronaut.sourcegen.bytecode">ByteCodeWriter</a></dt>
 <dd>
 <div class="block">Write an interface.</div>
+</dd>
+<dt><a href="io/micronaut/sourcegen/bytecode/statement/StatementWriter.html#writeScoped(org.objectweb.asm.commons.GeneratorAdapter,io.micronaut.sourcegen.bytecode.MethodContext,java.lang.Runnable)" class="member-name-link">writeScoped(GeneratorAdapter, MethodContext, Runnable)</a> - Method in interface io.micronaut.sourcegen.bytecode.statement.<a href="io/micronaut/sourcegen/bytecode/statement/StatementWriter.html" title="interface in io.micronaut.sourcegen.bytecode.statement">StatementWriter</a></dt>
+<dd>
+<div class="block">Write the statement with scoped locals.</div>
 </dd>
 <dt><a href="io/micronaut/sourcegen/javapoet/JavaFile.html#writeTo(java.io.File)" class="member-name-link">writeTo(File)</a> - Method in class io.micronaut.sourcegen.javapoet.<a href="io/micronaut/sourcegen/javapoet/JavaFile.html" title="class in io.micronaut.sourcegen.javapoet">JavaFile</a></dt>
 <dd>
