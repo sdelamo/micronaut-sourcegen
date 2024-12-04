@@ -107,8 +107,7 @@ public sealed interface ExpressionWriter permits ArrayElementExpressionWriter, C
         if (expressionDef instanceof ExpressionDef.Constant constant) {
             expressionDef = adjustConstant(expressionDef, expectedType, constant);
         }
-        ExpressionWriter.of(expressionDef).write(generatorAdapter, context);
-        CastExpressionWriter.cast(generatorAdapter, context, expressionDef.type(), expectedType);
+        ExpressionWriter.of(new ExpressionDef.Cast(expectedType, expressionDef)).write(generatorAdapter, context);
     }
 
     private static ExpressionDef adjustConstant(ExpressionDef expressionDef, TypeDef expectedType, ExpressionDef.Constant constant) {
