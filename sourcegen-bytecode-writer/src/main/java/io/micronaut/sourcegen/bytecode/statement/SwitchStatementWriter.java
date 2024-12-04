@@ -92,7 +92,7 @@ final class SwitchStatementWriter extends AbstractSwitchWriter implements Statem
                 generatorAdapter.invokeVirtual(stringType, Method.getMethod(ReflectionUtils.getRequiredMethod(String.class, "equals", Object.class)));
                 generatorAdapter.push(true);
                 generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, defaultEnd);
-                StatementWriter.of(e.getValue()).write(generatorAdapter, context, finallyBlock);
+                StatementWriter.of(e.getValue()).writeScoped(generatorAdapter, context, finallyBlock);
                 generatorAdapter.goTo(finalEnd);
             }
 
@@ -104,7 +104,7 @@ final class SwitchStatementWriter extends AbstractSwitchWriter implements Statem
 
         generatorAdapter.visitLabel(defaultEnd);
         if (aSwitch.defaultCase() != null) {
-            StatementWriter.of(aSwitch.defaultCase()).write(generatorAdapter, context, finallyBlock);
+            StatementWriter.of(aSwitch.defaultCase()).writeScoped(generatorAdapter, context, finallyBlock);
         }
         generatorAdapter.visitLabel(finalEnd);
     }
@@ -158,7 +158,7 @@ final class SwitchStatementWriter extends AbstractSwitchWriter implements Statem
                 generatorAdapter.visitTableSwitchInsn(min, max, defaultLabel, labels);
                 for (Map.Entry<Label, StatementDef> e : result) {
                     generatorAdapter.mark(e.getKey());
-                    StatementWriter.of(e.getValue()).write(generatorAdapter, context, finallyBlock);
+                    StatementWriter.of(e.getValue()).writeScoped(generatorAdapter, context, finallyBlock);
                     generatorAdapter.goTo(endLabel);
                 }
             } else {
@@ -180,14 +180,14 @@ final class SwitchStatementWriter extends AbstractSwitchWriter implements Statem
                 generatorAdapter.visitLookupSwitchInsn(defaultLabel, keys, labels);
                 for (Map.Entry<Label, StatementDef> e : result) {
                     generatorAdapter.mark(e.getKey());
-                    StatementWriter.of(e.getValue()).write(generatorAdapter, context, finallyBlock);
+                    StatementWriter.of(e.getValue()).writeScoped(generatorAdapter, context, finallyBlock);
                     generatorAdapter.goTo(endLabel);
                 }
             }
         }
         generatorAdapter.mark(defaultLabel);
         if (defaultCase != null) {
-            StatementWriter.of(defaultCase).write(generatorAdapter, context, finallyBlock);
+            StatementWriter.of(defaultCase).writeScoped(generatorAdapter, context, finallyBlock);
         }
         generatorAdapter.mark(endLabel);
     }

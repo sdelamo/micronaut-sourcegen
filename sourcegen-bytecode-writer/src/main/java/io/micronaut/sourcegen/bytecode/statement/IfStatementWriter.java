@@ -32,7 +32,7 @@ final class IfStatementWriter extends AbstractConditionalWriter implements State
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
         Label elseLabel = new Label();
         pushElseConditionalExpression(generatorAdapter, context, ifStatement.condition(), elseLabel);
-        StatementWriter.of(ifStatement.statement()).write(generatorAdapter, context, finallyBlock);
+        StatementWriter.of(ifStatement.statement()).writeScoped(generatorAdapter, context, finallyBlock);
         generatorAdapter.visitLabel(elseLabel);
     }
 }

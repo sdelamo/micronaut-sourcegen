@@ -85,7 +85,7 @@ public sealed interface ExpressionDef
      * @return The condition expression
      * @since 1.2
      */
-    default ExpressionDef asCondition(String op, ExpressionDef expression) {
+    default ConditionExpressionDef asCondition(String op, ExpressionDef expression) {
         return new ExpressionDef.Condition(op, this, expression);
     }
 
@@ -102,32 +102,10 @@ public sealed interface ExpressionDef
     }
 
     /**
-     * The and condition of this variable.
-     *
-     * @param expression The expression of this variable
-     * @return The "and" condition expression
-     * @since 1.3
-     */
-    default ExpressionDef asConditionAnd(ExpressionDef expression) {
-        return new ExpressionDef.And(this, expression);
-    }
-
-    /**
-     * The or condition of this variable.
-     *
-     * @param expression The expression of this variable
-     * @return The "or" condition expression
-     * @since 1.3
-     */
-    default ExpressionDef asConditionOr(ExpressionDef expression) {
-        return new ExpressionDef.Or(this, expression);
-    }
-
-    /**
      * @return Is non-null expression
      * @since 1.2
      */
-    default ExpressionDef isNonNull() {
+    default ConditionExpressionDef isNonNull() {
         return new ExpressionDef.IsNotNull(this);
     }
 
@@ -139,8 +117,8 @@ public sealed interface ExpressionDef
      * @return Is not null expression
      * @since 1.5
      */
-    default ExpressionDef isNonNull(ExpressionDef ifExpression, ExpressionDef elseExpression) {
-        return isNonNull().asConditionIfElse(ifExpression, elseExpression);
+    default ExpressionDef ifNonNull(ExpressionDef ifExpression, ExpressionDef elseExpression) {
+        return isNonNull().doIfElse(ifExpression, elseExpression);
     }
 
     /**
@@ -150,8 +128,8 @@ public sealed interface ExpressionDef
      * @return Is not null statement
      * @since 1.5
      */
-    default StatementDef isNonNull(StatementDef ifStatement) {
-        return isNonNull().asConditionIf(ifStatement);
+    default StatementDef ifNonNull(StatementDef ifStatement) {
+        return isNonNull().doIf(ifStatement);
     }
 
     /**
@@ -162,15 +140,15 @@ public sealed interface ExpressionDef
      * @return Is not null statement
      * @since 1.5
      */
-    default StatementDef isNonNull(StatementDef ifStatement, StatementDef elseStatement) {
-        return isNonNull().asConditionIfElse(ifStatement, elseStatement);
+    default StatementDef ifNonNull(StatementDef ifStatement, StatementDef elseStatement) {
+        return isNonNull().doIfElse(ifStatement, elseStatement);
     }
 
     /**
      * @return Is null expression
      * @since 1.2
      */
-    default ExpressionDef isNull() {
+    default ConditionExpressionDef isNull() {
         return new ExpressionDef.IsNull(this);
     }
 
@@ -182,8 +160,8 @@ public sealed interface ExpressionDef
      * @return Is null expression
      * @since 1.5
      */
-    default ExpressionDef isNull(ExpressionDef ifExpression, ExpressionDef elseExpression) {
-        return isNull().asConditionIfElse(ifExpression, elseExpression);
+    default ExpressionDef ifNull(ExpressionDef ifExpression, ExpressionDef elseExpression) {
+        return isNull().doIfElse(ifExpression, elseExpression);
     }
 
     /**
@@ -193,8 +171,8 @@ public sealed interface ExpressionDef
      * @return Is null statement
      * @since 1.5
      */
-    default StatementDef isNull(StatementDef ifStatement) {
-        return isNull().asConditionIf(ifStatement);
+    default StatementDef ifNull(StatementDef ifStatement) {
+        return isNull().doIf(ifStatement);
     }
 
     /**
@@ -205,8 +183,8 @@ public sealed interface ExpressionDef
      * @return Is null statement
      * @since 1.5
      */
-    default StatementDef isNull(StatementDef ifStatement, StatementDef elseStatement) {
-        return isNull().asConditionIfElse(ifStatement, elseStatement);
+    default StatementDef ifNull(StatementDef ifStatement, StatementDef elseStatement) {
+        return isNull().doIfElse(ifStatement, elseStatement);
     }
 
     /**
@@ -214,7 +192,42 @@ public sealed interface ExpressionDef
      * @since 1.5
      */
     default ExpressionDef.ConditionExpressionDef isTrue() {
-        return new ExpressionDef.Condition("==", trueValue(), this);
+        return new ExpressionDef.IsTrue(this.cast(TypeDef.Primitive.BOOLEAN));
+    }
+
+    /**
+     * Is true - if / else expression.
+     *
+     * @param ifExpression   If expression
+     * @param elseExpression Else expression
+     * @return Is true expression
+     * @since 1.5
+     */
+    default ExpressionDef ifTrue(ExpressionDef ifExpression, ExpressionDef elseExpression) {
+        return isTrue().doIfElse(ifExpression, elseExpression);
+    }
+
+    /**
+     * Is true - if statement.
+     *
+     * @param ifStatement If statement
+     * @return Is true statement
+     * @since 1.5
+     */
+    default StatementDef ifTrue(StatementDef ifStatement) {
+        return isTrue().doIf(ifStatement);
+    }
+
+    /**
+     * Is true - if / else statement.
+     *
+     * @param ifStatement   If statement
+     * @param elseStatement Else statement
+     * @return Is true statement
+     * @since 1.5
+     */
+    default StatementDef ifTrue(StatementDef ifStatement, StatementDef elseStatement) {
+        return isTrue().doIfElse(ifStatement, elseStatement);
     }
 
     /**
@@ -222,7 +235,42 @@ public sealed interface ExpressionDef
      * @since 1.5
      */
     default ExpressionDef.ConditionExpressionDef isFalse() {
-        return new ExpressionDef.Condition("==", falseValue(), this);
+        return new ExpressionDef.IsFalse(this.cast(TypeDef.Primitive.BOOLEAN));
+    }
+
+    /**
+     * Is false - if / else expression.
+     *
+     * @param ifExpression   If expression
+     * @param elseExpression Else expression
+     * @return Is false expression
+     * @since 1.5
+     */
+    default ExpressionDef ifFalse(ExpressionDef ifExpression, ExpressionDef elseExpression) {
+        return isFalse().doIfElse(ifExpression, elseExpression);
+    }
+
+    /**
+     * Is false - if statement.
+     *
+     * @param ifStatement If statement
+     * @return Is null statement
+     * @since 1.5
+     */
+    default StatementDef ifFalse(StatementDef ifStatement) {
+        return isFalse().doIf(ifStatement);
+    }
+
+    /**
+     * Is false - if / else statement.
+     *
+     * @param ifStatement   If statement
+     * @param elseStatement Else statement
+     * @return Is false statement
+     * @since 1.5
+     */
+    default StatementDef ifFalse(StatementDef ifStatement, StatementDef elseStatement) {
+        return isFalse().doIfElse(ifStatement, elseStatement);
     }
 
     /**
@@ -285,41 +333,6 @@ public sealed interface ExpressionDef
     }
 
     /**
-     * The conditional statement based on this expression.
-     *
-     * @param statement The statement
-     * @return The statement returning this expression
-     * @since 1.2
-     */
-    default StatementDef asConditionIf(StatementDef statement) {
-        return new StatementDef.If(this, statement);
-    }
-
-    /**
-     * The conditional statement based on this expression.
-     *
-     * @param statement     The statement
-     * @param elseStatement The else statement
-     * @return The statement returning this expression
-     * @since 1.2
-     */
-    default StatementDef asConditionIfElse(StatementDef statement, StatementDef elseStatement) {
-        return new StatementDef.IfElse(this, statement, elseStatement);
-    }
-
-    /**
-     * The conditional if else expression.
-     *
-     * @param expression     The expression
-     * @param elseExpression The else expression
-     * @return The statement returning this expression
-     * @since 1.2
-     */
-    default ExpressionDef asConditionIfElse(ExpressionDef expression, ExpressionDef elseExpression) {
-        return new ExpressionDef.IfElse(this, expression, elseExpression);
-    }
-
-    /**
      * Turn this expression into a new local variable.
      *
      * @param name The local name
@@ -339,10 +352,10 @@ public sealed interface ExpressionDef
      * @since 1.2
      */
     default StatementDef newLocal(String name, Function<VariableDef, StatementDef> fn) {
-        StatementDef.DefineAndAssign defineAndAssign = newLocal(name);
+        VariableDef.Local local = new VariableDef.Local(name, type());
         return StatementDef.multi(
-            defineAndAssign,
-            fn.apply(defineAndAssign.variable())
+            new StatementDef.DefineAndAssign(local, this),
+            fn.apply(local)
         );
     }
 
@@ -891,6 +904,12 @@ public sealed interface ExpressionDef
     record NewInstance(ClassTypeDef type,
                        List<TypeDef> parameterTypes,
                        List<? extends ExpressionDef> values) implements ExpressionDef {
+
+        public NewInstance {
+            if (parameterTypes.size() != values.size()) {
+                throw new IllegalStateException("Cannot create a new instance of " + type.getName() + " parameters: " + parameterTypes.size() + " doesn't match values provided: " + values.size());
+            }
+        }
     }
 
     /**
@@ -965,6 +984,13 @@ public sealed interface ExpressionDef
     record InvokeStaticMethod(ClassTypeDef classDef,
                               MethodDef method,
                               List<? extends ExpressionDef> values) implements ExpressionDef, StatementDef {
+
+        public InvokeStaticMethod {
+            if (method.getParameters().size() != values.size()) {
+                throw new IllegalStateException("Method " + classDef.getName() + "#" + method.getName() + " parameters: " + method.getParameters().size() + " doesn't match values provided: " + values.size());
+            }
+        }
+
         @Override
         public TypeDef type() {
             return method.getReturnType();
@@ -1024,6 +1050,26 @@ public sealed interface ExpressionDef
     }
 
     /**
+     * The IS TRUE condition.
+     *
+     * @param expression The expression
+     * @author Denis Stepanov
+     */
+    @Experimental
+    record IsTrue(ExpressionDef expression) implements ConditionExpressionDef {
+    }
+
+    /**
+     * The IS FALSE condition.
+     *
+     * @param expression The expression
+     * @author Denis Stepanov
+     */
+    @Experimental
+    record IsFalse(ExpressionDef expression) implements ConditionExpressionDef {
+    }
+
+    /**
      * The and condition. Puts parenthesis around itself when needed.
      *
      * @param left  The left expression
@@ -1032,7 +1078,7 @@ public sealed interface ExpressionDef
      * @since 1.3
      */
     @Experimental
-    record And(ExpressionDef left, ExpressionDef right) implements ConditionExpressionDef {
+    record And(ConditionExpressionDef left, ConditionExpressionDef right) implements ConditionExpressionDef {
     }
 
     /**
@@ -1044,7 +1090,7 @@ public sealed interface ExpressionDef
      * @since 1.3
      */
     @Experimental
-    record Or(ExpressionDef left, ExpressionDef right) implements ConditionExpressionDef {
+    record Or(ConditionExpressionDef left, ConditionExpressionDef right) implements ConditionExpressionDef {
     }
 
     /**
@@ -1244,6 +1290,63 @@ public sealed interface ExpressionDef
         @Override
         default TypeDef type() {
             return TypeDef.Primitive.BOOLEAN;
+        }
+
+        /**
+         * The conditional statement based on this expression.
+         *
+         * @param statement The statement
+         * @return The statement returning this expression
+         * @since 1.5
+         */
+        default StatementDef doIf(StatementDef statement) {
+            return new StatementDef.If(this, statement);
+        }
+
+        /**
+         * The conditional statement based on this expression.
+         *
+         * @param statement     The statement
+         * @param elseStatement The else statement
+         * @return The statement returning this expression
+         * @since 1.5
+         */
+        default StatementDef doIfElse(StatementDef statement, StatementDef elseStatement) {
+            return new StatementDef.IfElse(this, statement, elseStatement);
+        }
+
+        /**
+         * The conditional if else expression.
+         *
+         * @param expression     The expression
+         * @param elseExpression The else expression
+         * @return The statement returning this expression
+         * @since 1.5
+         */
+        default ExpressionDef doIfElse(ExpressionDef expression, ExpressionDef elseExpression) {
+            return new ExpressionDef.IfElse(this, expression, elseExpression);
+        }
+
+        /**
+         * The and condition of this variable.
+         *
+         * @param expression The expression of this variable
+         * @return The "and" condition expression
+         * @since 1.5
+         */
+        default ConditionExpressionDef and(ConditionExpressionDef expression) {
+            return new ExpressionDef.And(this, expression);
+        }
+
+        /**
+         * The or condition of this variable.
+         *
+         * @param expression The expression of this variable
+         * @return The "or" condition expression
+         * @since 1.5
+         */
+        default ConditionExpressionDef or(ConditionExpressionDef expression) {
+            return new ExpressionDef.Or(this, expression);
         }
 
     }

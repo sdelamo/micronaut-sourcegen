@@ -17,6 +17,7 @@ package io.micronaut.sourcegen.bytecode.expression;
 
 import io.micronaut.sourcegen.bytecode.MethodContext;
 import io.micronaut.sourcegen.bytecode.TypeUtils;
+import io.micronaut.sourcegen.bytecode.statement.TryCatchStatementWriter;
 import io.micronaut.sourcegen.model.ParameterDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
@@ -31,14 +32,14 @@ final class VariableExpressionWriter implements ExpressionWriter {
 
     @Override
     public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
-        if (variableDef instanceof VariableDef.ExceptionVar exceptionVar) {
-            int index = context.locals().get("@exception");
-            generatorAdapter.loadLocal(index, TypeUtils.getType(exceptionVar.type(), context.objectDef()));
+        if (variableDef instanceof VariableDef.ExceptionVar) {
+            MethodContext.LocalData localData = context.locals().get(TryCatchStatementWriter.EXCEPTION_NAME);
+            generatorAdapter.loadLocal(localData.index(), localData.type());
             return;
         }
         if (variableDef instanceof VariableDef.Local localVariableDef) {
-            int index = context.locals().get(localVariableDef.name());
-            generatorAdapter.loadLocal(index, TypeUtils.getType(localVariableDef.type(), context.objectDef()));
+            MethodContext.LocalData localData = context.locals().get(localVariableDef.name());
+            generatorAdapter.loadLocal(localData.index(), localData.type());
             return;
         }
         if (variableDef instanceof VariableDef.MethodParameter parameterVariableDef) {

@@ -37,7 +37,7 @@ class ByteCodeWriterTest {
                 .overrides()
                 .returns(boolean.class)
                 .build((aThis, methodParameters) -> StatementDef.multi(
-                    methodParameters.get(0).isNull().asConditionIf(TypeDef.Primitive.TRUE.returning()),
+                    methodParameters.get(0).isNull().doIf(TypeDef.Primitive.TRUE.returning()),
                     TypeDef.Primitive.FALSE.returning()
                 )))
             .build();
@@ -62,13 +62,16 @@ class example/IfPredicate {
 
   // access flags 0x1
   public test(Ljava/lang/Object;)Z
+   L0
     ALOAD 1
-    IFNONNULL L0
+    IFNONNULL L1
     ICONST_1
     IRETURN
-   L0
+   L1
     ICONST_0
     IRETURN
+   L2
+    LOCALVARIABLE param Ljava/lang/Object; L0 L2 1
 }
 """, bytecode);
 
@@ -76,8 +79,8 @@ class example/IfPredicate {
 package example;
 
 class IfPredicate {
-   public boolean test(Object var1) {
-      return var1 == null;
+   public boolean test(Object param) {
+      return param == null;
    }
 }
 """, decompileToJava(bytes));
@@ -114,10 +117,13 @@ class example/IfPredicate {
 
   // access flags 0x1
   public test(Ljava/lang/Integer;)I
+   L0
     ALOAD 1
     CHECKCAST java/lang/Number
     INVOKEVIRTUAL java/lang/Number.intValue ()I
     IRETURN
+   L1
+    LOCALVARIABLE param Ljava/lang/Integer; L0 L1 1
 }
 """, bytecode);
 
@@ -125,8 +131,8 @@ class example/IfPredicate {
 package example;
 
 class IfPredicate {
-   public int test(Integer var1) {
-      return ((Number)var1).intValue();
+   public int test(Integer param) {
+      return ((Number)param).intValue();
    }
 }
 """, decompileToJava(bytes));
@@ -163,9 +169,12 @@ class example/IfPredicate {
 
   // access flags 0x1
   public test(I)Ljava/lang/Integer;
+   L0
     ILOAD 1
     INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
     ARETURN
+   L1
+    LOCALVARIABLE param I L0 L1 1
 }
 """, bytecode);
 
@@ -174,8 +183,8 @@ class example/IfPredicate {
 package example;
 
 class IfPredicate {
-   public Integer test(int var1) {
-      return var1;
+   public Integer test(int param) {
+      return param;
    }
 }
 """, decompileToJava(bytes));
@@ -232,11 +241,15 @@ final enum MyEnum extends java/lang/Enum {
 
   // access flags 0x2
   private <init>(Ljava/lang/String;I)V
+   L0
     ALOAD 0
     ALOAD 1
     ILOAD 2
     INVOKESPECIAL java/lang/Enum.<init> (Ljava/lang/String;I)V
     RETURN
+   L1
+    LOCALVARIABLE arg0 Ljava/lang/String; L0 L1 1
+    LOCALVARIABLE arg1 I L0 L1 2
 
   // access flags 0xA
   private static $values()[LMyEnum;
@@ -265,11 +278,14 @@ final enum MyEnum extends java/lang/Enum {
 
   // access flags 0x9
   public static valueOf(Ljava/lang/String;)LMyEnum;
+   L0
     LDC LMyEnum;.class
     ALOAD 0
     INVOKESTATIC java/lang/Enum.valueOf (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
     CHECKCAST MyEnum
     ARETURN
+   L1
+    LOCALVARIABLE value Ljava/lang/String; L0 L1 1
 }
 """, bytecode);
     }
@@ -292,12 +308,12 @@ final enum MyEnum extends java/lang/Enum {
                     VariableDef.Field targetFieldAccess = aThis.field(targetField);
                     return StatementDef.multi(
                         targetFieldAccess.newLocal("target", targetVar ->
-                            targetVar.isNull(
+                            targetVar.ifNull(
                                 new StatementDef.Synchronized(
                                     aThis,
                                     StatementDef.multi(
                                         targetVar.assign(targetFieldAccess),
-                                        targetVar.isNull(
+                                        targetVar.ifNull(
                                             StatementDef.multi(
                                                 targetFieldAccess.assign(ExpressionDef.nullValue()),
                                                 aThis.field(beanResolutionContextField).assign(ExpressionDef.nullValue())
@@ -338,23 +354,24 @@ class test/MyClass {
 
   // access flags 0x1
   public interceptedTarget()Ljava/lang/Object;
+   L0
     ALOAD 0
     GETFIELD test/MyClass.target : Ltest/SomeTarget;
     ASTORE 1
     ALOAD 1
-    IFNONNULL L0
-    TRYCATCHBLOCK L1 L2 L3 null
-    TRYCATCHBLOCK L3 L4 L3 null
+    IFNONNULL L1
+    TRYCATCHBLOCK L2 L3 L4 null
+    TRYCATCHBLOCK L4 L5 L4 null
     ALOAD 0
     DUP
     ASTORE 2
     MONITORENTER
-   L1
+   L2
     ALOAD 0
     GETFIELD test/MyClass.target : Ltest/SomeTarget;
     ASTORE 1
     ALOAD 1
-    IFNONNULL L5
+    IFNONNULL L6
     ALOAD 0
     ACONST_NULL
     CHECKCAST test/SomeTarget
@@ -363,23 +380,25 @@ class test/MyClass {
     ACONST_NULL
     CHECKCAST io/micronaut/context/BeanResolutionContext
     PUTFIELD test/MyClass.$beanResolutionContext : Lio/micronaut/context/BeanResolutionContext;
-   L5
+   L6
     ALOAD 2
     MONITOREXIT
-   L2
-    GOTO L6
    L3
+    GOTO L7
+   L4
     ASTORE 3
     ALOAD 2
     MONITOREXIT
-   L4
+   L5
     ALOAD 3
     ATHROW
-   L6
-   L0
+   L7
+   L1
     ALOAD 0
     GETFIELD test/MyClass.target : Ltest/SomeTarget;
     ARETURN
+   L8
+    LOCALVARIABLE target Ltest/SomeTarget; L0 L8 1
 }
 """, bytecode);
 
@@ -394,11 +413,11 @@ class MyClass {
    private SomeTarget target;
 
    public Object interceptedTarget() {
-      SomeTarget var1 = this.target;
-      if (var1 == null) {
+      SomeTarget target = this.target;
+      if (target == null) {
          synchronized(this) {
-            var1 = this.target;
-            if (var1 == null) {
+            target = this.target;
+            if (target == null) {
                this.target = (SomeTarget)null;
                this.$beanResolutionContext = (BeanResolutionContext)null;
             }
@@ -426,10 +445,10 @@ class MyClass {
                 .build((aThis, methodParameters) -> {
                     VariableDef.Field myFieldAccess = aThis.field(myField);
                     return StatementDef.multi(
-                        myFieldAccess.isNull(
+                        myFieldAccess.ifNull(
                             ExpressionDef.constant(1).returning()
                         ),
-                        myFieldAccess.isNonNull(
+                        myFieldAccess.ifNonNull(
                             ExpressionDef.constant(2).returning()
                         ),
                         myFieldAccess.returning()
@@ -590,11 +609,13 @@ class test/MyClass {
 
   // access flags 0x1
   public swap(Ljava/lang/Object;)Ljava/lang/Object;
+   L0
     GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
     LDC "Hello"
     INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
-    TRYCATCHBLOCK L0 L1 L2 null
-   L0
+    TRYCATCHBLOCK L1 L2 L3 null
+   L1
+   L4
     ALOAD 0
     GETFIELD test/MyClass.target : Ljava/lang/Object;
     ASTORE 2
@@ -608,17 +629,21 @@ class test/MyClass {
     INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
     ALOAD 3
     ARETURN
-   L1
-    GOTO L3
+   L5
+    LOCALVARIABLE target Ljava/lang/Object; L4 L5 2
    L2
+    GOTO L6
+   L3
     ASTORE 4
     GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
     LDC "World"
     INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
     ALOAD 4
     ATHROW
-    GOTO L3
-   L3
+    GOTO L6
+   L6
+   L7
+    LOCALVARIABLE arg1 Ljava/lang/Object; L0 L7 1
 }
 """, bytecode);
 
@@ -628,14 +653,14 @@ package test;
 class MyClass {
    private final Object target;
 
-   public Object swap(Object var1) {
+   public Object swap(Object arg1) {
       System.out.println("Hello");
 
       try {
-         Object var2 = this.target;
-         this.target = var1;
+         Object target = this.target;
+         this.target = arg1;
          System.out.println("World");
-         return var2;
+         return target;
       } finally {
          System.out.println("World");
       }
@@ -690,28 +715,31 @@ class test/MyClass {
 
   // access flags 0x1
   public swap(I)I
+   L0
     ILOAD 1
     TABLESWITCH
-      1: L0
-      2: L1
-      3: L0
-      4: L0
-      5: L0
-      6: L0
-      7: L0
-      default: L2
-   L0
+      1: L1
+      2: L2
+      3: L1
+      4: L1
+      5: L1
+      6: L1
+      7: L1
+      default: L3
+   L1
     BIPUSH 123
     IRETURN
-    GOTO L3
-   L1
+    GOTO L4
+   L2
     BIPUSH 111
     IRETURN
-    GOTO L3
-   L2
+    GOTO L4
+   L3
     SIPUSH 444
     IRETURN
-   L3
+   L4
+   L5
+    LOCALVARIABLE arg1 I L0 L5 1
 }
 """, bytecode);
 
@@ -719,8 +747,8 @@ class test/MyClass {
 package test;
 
 class MyClass {
-   public int swap(int var1) {
-      switch (var1) {
+   public int swap(int arg1) {
+      switch (arg1) {
          case 1:
          case 3:
          case 4:
@@ -784,28 +812,31 @@ class test/MyClass {
 
   // access flags 0x1
   public swap(I)I
+   L0
     ILOAD 1
     LOOKUPSWITCH
-      1: L0
-      20: L1
-      30: L0
-      40: L0
-      50: L0
-      60: L0
-      70: L0
-      default: L2
-   L0
+      1: L1
+      20: L2
+      30: L1
+      40: L1
+      50: L1
+      60: L1
+      70: L1
+      default: L3
+   L1
     BIPUSH 123
     IRETURN
-    GOTO L3
-   L1
+    GOTO L4
+   L2
     BIPUSH 111
     IRETURN
-    GOTO L3
-   L2
+    GOTO L4
+   L3
     SIPUSH 444
     IRETURN
-   L3
+   L4
+   L5
+    LOCALVARIABLE arg1 I L0 L5 1
 }
 """, bytecode);
 
@@ -813,8 +844,8 @@ class test/MyClass {
 package test;
 
 class MyClass {
-   public int swap(int var1) {
-      switch (var1) {
+   public int swap(int arg1) {
+      switch (arg1) {
          case 1:
          case 30:
          case 40:
@@ -950,11 +981,15 @@ public final enum example/MyEnumWithInnerTypes extends java/lang/Enum {
 
   // access flags 0x2
   private <init>(Ljava/lang/String;I)V
+   L0
     ALOAD 0
     ALOAD 1
     ILOAD 2
     INVOKESPECIAL java/lang/Enum.<init> (Ljava/lang/String;I)V
     RETURN
+   L1
+    LOCALVARIABLE arg0 Ljava/lang/String; L0 L1 1
+    LOCALVARIABLE arg1 I L0 L1 2
 
   // access flags 0xA
   private static $values()[Lexample/MyEnumWithInnerTypes;
@@ -983,11 +1018,14 @@ public final enum example/MyEnumWithInnerTypes extends java/lang/Enum {
 
   // access flags 0x9
   public static valueOf(Ljava/lang/String;)Lexample/MyEnumWithInnerTypes;
+   L0
     LDC Lexample/MyEnumWithInnerTypes;.class
     ALOAD 0
     INVOKESTATIC java/lang/Enum.valueOf (Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
     CHECKCAST example/MyEnumWithInnerTypes
     ARETURN
+   L1
+    LOCALVARIABLE value Ljava/lang/String; L0 L1 1
 
   // access flags 0x1
   public myName()Ljava/lang/String;
@@ -1013,6 +1051,307 @@ public enum MyEnumWithInnerTypes {
 
    public String myName() {
       return this.toString();
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testLocalVariable() {
+        MethodDef method = MethodDef.builder("test").addParameter("myIn", String.class)
+            .returns(int.class)
+            .build((aThis, methodParameters) -> {
+                return methodParameters.get(0).invokeHashCode().newLocal("hc", hcVar -> {
+                    return hcVar.math("+", TypeDef.Primitive.INT.constant(4)).returning();
+                });
+            });
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(method)
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  test(Ljava/lang/String;)I
+   L0
+   L1
+    ALOAD 1
+    IFNONNULL L2
+    ICONST_0
+    GOTO L3
+   L2
+    ALOAD 1
+    INVOKEVIRTUAL java/lang/String.hashCode ()I
+   L3
+    ISTORE 2
+    ILOAD 2
+    ICONST_4
+    IADD
+    IRETURN
+   L4
+    LOCALVARIABLE myIn Ljava/lang/String; L0 L4 1
+    LOCALVARIABLE hc I L1 L4 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   int test(String myIn) {
+      int hc = myIn == null ? 0 : myIn.hashCode();
+      return hc + 4;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testMultipleCasts() {
+        MethodDef method = MethodDef.builder("test").addParameter("myIn", Object.class)
+            .returns(Integer.class)
+            .build((aThis, methodParameters) -> methodParameters.get(0).cast(TypeDef.Primitive.INT).cast(TypeDef.of(Integer.class)).returning());
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(method)
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  test(Ljava/lang/Object;)Ljava/lang/Integer;
+   L0
+    ALOAD 1
+    CHECKCAST java/lang/Integer
+    ARETURN
+   L1
+    LOCALVARIABLE myIn Ljava/lang/Object; L0 L1 1
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   Integer test(Object myIn) {
+      return (Integer)myIn;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testNullCast() {
+        MethodDef method = MethodDef.builder("test").addParameter("myIn", Object.class)
+            .returns(Integer.class)
+            .build((aThis, methodParameters) -> ExpressionDef.nullValue().cast(TypeDef.of(Integer.class)).returning());
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(method)
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  test(Ljava/lang/Object;)Ljava/lang/Integer;
+   L0
+    ACONST_NULL
+    ARETURN
+   L1
+    LOCALVARIABLE myIn Ljava/lang/Object; L0 L1 1
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   Integer test(Object myIn) {
+      return null;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testTrueFalseConditions() {
+        MethodDef method = MethodDef.builder("test")
+            .returns(boolean.class)
+            .build((aThis, methodParameters) ->
+                new ExpressionDef.Or(
+                    ExpressionDef.trueValue().isTrue().and(ExpressionDef.falseValue().isTrue()),
+                    ExpressionDef.trueValue().isTrue().or(ExpressionDef.falseValue().isTrue())
+                ).returning());
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(method)
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  test()Z
+    ICONST_1
+    ICONST_1
+    IF_ICMPNE L0
+    ICONST_0
+    ICONST_1
+    IF_ICMPNE L0
+    GOTO L1
+   L0
+    ICONST_1
+    ICONST_1
+    IF_ICMPEQ L1
+    ICONST_0
+    ICONST_1
+    IF_ICMPEQ L1
+    GOTO L2
+   L1
+    ICONST_1
+    GOTO L3
+   L2
+    ICONST_0
+   L3
+    IRETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   boolean test() {
+      return true && false || true || false;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testTrueFalseConditions2() {
+        MethodDef method = MethodDef.builder("test")
+            .returns(boolean.class)
+            .build((aThis, methodParameters) ->
+                new ExpressionDef.And(
+                    ExpressionDef.trueValue().isTrue().or(ExpressionDef.falseValue().isTrue()),
+                    ExpressionDef.trueValue().isTrue().or(ExpressionDef.falseValue().isTrue())
+                ).returning());
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(method)
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  test()Z
+    ICONST_1
+    ICONST_1
+    IF_ICMPEQ L0
+    ICONST_0
+    ICONST_1
+    IF_ICMPEQ L0
+    GOTO L1
+   L0
+    ICONST_1
+    ICONST_1
+    IF_ICMPEQ L2
+    ICONST_0
+    ICONST_1
+    IF_ICMPEQ L2
+    GOTO L1
+   L2
+    ICONST_1
+    GOTO L3
+   L1
+    ICONST_0
+   L3
+    IRETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   boolean test() {
+      return (true || false) && (true || false);
    }
 }
 """, decompileToJava(bytes));

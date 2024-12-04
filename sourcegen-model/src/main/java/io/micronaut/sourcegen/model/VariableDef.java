@@ -58,7 +58,7 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Ex
     record Local(String name, TypeDef type) implements VariableDef {
 
         @Override
-        public StatementDef assign(ExpressionDef expression) {
+        public StatementDef.Assign assign(ExpressionDef expression) {
             return new StatementDef.Assign(this, expression);
         }
 

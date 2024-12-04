@@ -18,6 +18,7 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.ast.MethodElement;
 
 import javax.lang.model.element.Modifier;
@@ -101,7 +102,7 @@ public final class MethodDef extends AbstractElement {
     @NonNull
     public static MethodDef of(@NonNull MethodElement methodElement) {
         return MethodDef.builder(methodElement.getName())
-            .addParameters(Arrays.stream(methodElement.getSuspendParameters()).map(p -> TypeDef.erasure(p.getType())).toList())
+            .addParameters(Arrays.stream(methodElement.getSuspendParameters()).map(p -> ParameterDef.of(p.getName(), TypeDef.erasure(p.getType()))).toList())
             .returns(methodElement.isSuspend() ? TypeDef.OBJECT : TypeDef.erasure(methodElement.getReturnType()))
             .build();
     }
@@ -116,7 +117,7 @@ public final class MethodDef extends AbstractElement {
     @NonNull
     public static MethodDef of(@NonNull Method method) {
         return MethodDef.builder(method.getName())
-            .addParameters(Arrays.stream(method.getParameters()).map(p -> TypeDef.of(p.getType())).toList())
+            .addParameters(Arrays.stream(method.getParameters()).map(p -> ParameterDef.of(p.getName(), TypeDef.of(p.getType()))).toList())
             .returns(TypeDef.of(method.getReturnType()))
             .build();
     }
@@ -132,7 +133,7 @@ public final class MethodDef extends AbstractElement {
     public static MethodDefBuilder override(@NonNull MethodElement methodElement) {
         return MethodDef.builder(methodElement.getName())
             .addModifiers(toOverrideModifiers(methodElement))
-            .addParameters(Arrays.stream(methodElement.getSuspendParameters()).map(p -> TypeDef.erasure(p.getType())).toList())
+            .addParameters(Arrays.stream(methodElement.getSuspendParameters()).map(p -> ParameterDef.of(p.getName(), TypeDef.erasure(p.getType()))).toList())
             .returns(methodElement.isSuspend() ? TypeDef.OBJECT : TypeDef.erasure(methodElement.getReturnType()));
     }
 
@@ -147,7 +148,7 @@ public final class MethodDef extends AbstractElement {
     public static MethodDefBuilder override(@NonNull Method method) {
         return MethodDef.builder(method.getName())
             .addModifiers(toOverrideModifiers(method.getModifiers()))
-            .addParameters(Arrays.stream(method.getParameters()).map(p -> TypeDef.of(p.getType())).toList())
+            .addParameters(Arrays.stream(method.getParameters()).map(p -> ParameterDef.of(p.getName(), TypeDef.of(p.getType()))).toList())
             .returns(TypeDef.of(method.getReturnType()));
     }
 
@@ -162,7 +163,7 @@ public final class MethodDef extends AbstractElement {
     public static MethodDefBuilder override(@NonNull Constructor<?> constructor) {
         return MethodDef.constructor()
             .addModifiers(toOverrideModifiers(constructor.getModifiers()))
-            .addParameters(Arrays.stream(constructor.getParameters()).map(p -> TypeDef.of(p.getType())).toList());
+            .addParameters(Arrays.stream(constructor.getParameters()).map(p -> ParameterDef.of(p.getName(), TypeDef.of(p.getType()))).toList());
     }
 
     private static Modifier[] toOverrideModifiers(int modifiers) {
@@ -326,7 +327,7 @@ public final class MethodDef extends AbstractElement {
          */
         @NonNull
         public MethodDefBuilder addParameter(@NonNull TypeDef type) {
-            return addParameter("parameter" + (parameters.size() + 1), type);
+            return addParameter("arg" + (parameters.size() + 1), type);
         }
 
         /**
@@ -486,13 +487,7 @@ public final class MethodDef extends AbstractElement {
                 }
             }
             if (returnType == null && !statements.isEmpty()) {
-                StatementDef lastStatement = statements.get(statements.size() - 1);
-                if (lastStatement instanceof StatementDef.Return aReturn) {
-                    returnType = aReturn.expression().type();
-                }
-                if (lastStatement instanceof StatementDef.Try aTry) {
-                    returnType = findReturnType(aTry);
-                }
+                returnType = findReturnType(CollectionUtils.last(statements));
             }
             if (returnType == null && !name.equals(CONSTRUCTOR)) {
                 returnType = TypeDef.VOID;
@@ -500,12 +495,18 @@ public final class MethodDef extends AbstractElement {
             return new MethodDef(name, modifiers, returnType, parameters, statements, annotations, javadoc, overrides);
         }
 
-        private TypeDef findReturnType(StatementDef statement) {
+        private static TypeDef findReturnType(StatementDef statement) {
+            if (statement instanceof StatementDef.Multi multi) {
+                return findReturnType(CollectionUtils.last(multi.statements()));
+            }
             if (statement instanceof StatementDef.Return aReturn) {
                 return aReturn.expression().type();
             }
             if (statement instanceof StatementDef.Try aTry) {
                 return findReturnType(aTry.statement());
+            }
+            if (statement instanceof StatementDef.Synchronized aSynchronized) {
+                return findReturnType(aSynchronized.statement());
             }
             return null;
         }

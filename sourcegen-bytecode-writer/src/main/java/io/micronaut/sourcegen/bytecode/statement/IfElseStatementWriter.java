@@ -33,9 +33,9 @@ final class IfElseStatementWriter extends AbstractConditionalWriter implements S
         Label elseLabel = new Label();
         pushElseConditionalExpression(generatorAdapter, context, ifStatement.condition(), elseLabel);
         Label end = new Label();
-        StatementWriter.of(ifStatement.statement()).write(generatorAdapter, context, finallyBlock);
+        StatementWriter.of(ifStatement.statement()).writeScoped(generatorAdapter, context, finallyBlock);
         generatorAdapter.visitLabel(end);
         generatorAdapter.visitLabel(elseLabel);
-        StatementWriter.of(ifStatement.elseStatement()).write(generatorAdapter, context, finallyBlock);
+        StatementWriter.of(ifStatement.elseStatement()).writeScoped(generatorAdapter, context, finallyBlock);
     }
 }

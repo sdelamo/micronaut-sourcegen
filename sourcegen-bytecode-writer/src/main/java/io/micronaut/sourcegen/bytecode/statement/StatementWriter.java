@@ -19,7 +19,11 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.sourcegen.bytecode.MethodContext;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.StatementDef;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.commons.GeneratorAdapter;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * The statement writer.
@@ -27,7 +31,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
  * @author Denis Stepanov
  * @since 1.5
  */
-public sealed interface StatementWriter permits AssignAndDefineStatementWriter, AssignVariableStatementWriter, ExpressionAsStatementWriter, IfElseStatementWriter, IfStatementWriter, MultiStatementWriter, PutStaticFieldStatementWriter, PutStaticStatementWriter, ReturnStatementWriter, SwitchStatementWriter, SynchronizedStatementWriter, ThrowStatementWriter, TryCatchStatementWriter, WhileLoopStatementWriter {
+public sealed interface StatementWriter permits DefineAndAssignStatementWriter, AssignVariableStatementWriter, ExpressionAsStatementWriter, IfElseStatementWriter, IfStatementWriter, MultiStatementWriter, PutStaticFieldStatementWriter, PutStaticStatementWriter, ReturnStatementWriter, SwitchStatementWriter, SynchronizedStatementWriter, ThrowStatementWriter, TryCatchStatementWriter, WhileLoopStatementWriter {
 
     /**
      * Create a writer from the statement.
@@ -67,7 +71,7 @@ public sealed interface StatementWriter permits AssignAndDefineStatementWriter, 
             return new AssignVariableStatementWriter(assign);
         }
         if (statementDef instanceof StatementDef.DefineAndAssign assign) {
-            return new AssignAndDefineStatementWriter(assign);
+            return new DefineAndAssignStatementWriter(assign);
         }
         if (statementDef instanceof StatementDef.Try aTry) {
             return new TryCatchStatementWriter(aTry);
@@ -91,5 +95,36 @@ public sealed interface StatementWriter permits AssignAndDefineStatementWriter, 
     void write(GeneratorAdapter generatorAdapter,
                MethodContext context,
                @Nullable Runnable finallyBlock);
+
+    /**
+     * Write the statement with scoped locals.
+     *
+     * @param generatorAdapter The adapter
+     * @param context          The method context
+     * @param finallyBlock     The runnable that should be invoked before any returning operation - return/throw
+     */
+    default void writeScoped(GeneratorAdapter generatorAdapter,
+                             MethodContext context,
+                             @Nullable Runnable finallyBlock) {
+        Map<String, MethodContext.LocalData> oldLocals = context.locals();
+        Map<String, MethodContext.LocalData> newLocals = new LinkedHashMap<>(oldLocals);
+        MethodContext newContext = new MethodContext(context.objectDef(), context.methodDef(), newLocals);
+        write(generatorAdapter, newContext, finallyBlock);
+        oldLocals.keySet().forEach(newLocals::remove); // Remove locals not created in the scope
+        Label endMethod = new Label();
+        if (!newLocals.isEmpty()) {
+            generatorAdapter.visitLabel(endMethod);
+        }
+        for (MethodContext.LocalData localsDatum : newLocals.values()) {
+            generatorAdapter.getDelegate().visitLocalVariable(
+                localsDatum.name(),
+                localsDatum.type().getDescriptor(),
+                null,
+                localsDatum.start(),
+                endMethod,
+                localsDatum.index()
+            );
+        }
+    }
 
 }

@@ -22,6 +22,9 @@ import io.micronaut.sourcegen.model.TypeDef;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
 final class ConstantExpressionWriter implements ExpressionWriter {
     private final ExpressionDef.Constant constant;
 
@@ -35,6 +38,13 @@ final class ConstantExpressionWriter implements ExpressionWriter {
         Object value = constant.value();
         if (value == null) {
             generatorAdapter.push((String) null);
+            return;
+        }
+        if (value.getClass().isArray()) {
+            ExpressionDef ex = TypeDef.of(value.getClass().getComponentType())
+                .array()
+                .instantiate(Arrays.stream(getArray(value)).map(ExpressionDef::constant).toList());
+            ExpressionWriter.writeExpression(generatorAdapter, context, ex);
             return;
         }
         if (type instanceof TypeDef.Primitive primitive) {
@@ -109,5 +119,16 @@ final class ConstantExpressionWriter implements ExpressionWriter {
             return;
         }
         throw new UnsupportedOperationException("Unrecognized constant: " + constant);
+    }
+
+    private static Object[] getArray(Object val) {
+        if (val instanceof Object[]) {
+            return (Object[]) val;
+        }
+        Object[] outputArray = new Object[Array.getLength(val)];
+        for (int i = 0; i < outputArray.length; ++i) {
+            outputArray[i] = Array.get(val, i);
+        }
+        return outputArray;
     }
 }

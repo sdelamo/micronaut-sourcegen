@@ -20,13 +20,14 @@ import io.micronaut.sourcegen.bytecode.TypeUtils;
 import io.micronaut.sourcegen.bytecode.expression.ExpressionWriter;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.VariableDef;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-final class AssignAndDefineStatementWriter implements StatementWriter {
+final class DefineAndAssignStatementWriter implements StatementWriter {
     private final StatementDef.DefineAndAssign assign;
 
-    public AssignAndDefineStatementWriter(StatementDef.DefineAndAssign assign) {
+    public DefineAndAssignStatementWriter(StatementDef.DefineAndAssign assign) {
         this.assign = assign;
     }
 
@@ -34,9 +35,14 @@ final class AssignAndDefineStatementWriter implements StatementWriter {
     public void write(GeneratorAdapter generatorAdapter, MethodContext context, Runnable finallyBlock) {
         VariableDef.Local local = assign.variable();
         Type localType = TypeUtils.getType(local.type(), context.objectDef());
+        Label startVariable = new Label();
+        generatorAdapter.visitLabel(startVariable);
         int localIndex = generatorAdapter.newLocal(localType);
         ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, assign.expression(), local.type());
         generatorAdapter.storeLocal(localIndex, localType);
-        context.locals().put(local.name(), localIndex);
+        MethodContext.LocalData prevLocal = context.locals().put(local.name(), new MethodContext.LocalData(local.name(), localType, startVariable, localIndex));
+        if (prevLocal != null) {
+            throw new IllegalStateException("Duplicate local name: " + local.name());
+        }
     }
 }
