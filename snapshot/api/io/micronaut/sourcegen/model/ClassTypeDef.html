@@ -82,7 +82,7 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="modifiers">public sealed interface </span><span class="element-name type-name-label">ClassTypeDef</span><span class="extends-implements">
 extends <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model">TypeDef</a></span>
-<span class="permits">permits <a href="ClassTypeDef.JavaClass.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.JavaClass</a>, <a href="ClassTypeDef.ClassName.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassName</a>, <a href="ClassTypeDef.ClassElementType.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassElementType</a>, <a href="ClassTypeDef.ClassDefType.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassDefType</a>, <a href="ClassTypeDef.Parameterized.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.Parameterized</a></span></div>
+<span class="permits">permits <a href="ClassTypeDef.ClassName.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassName</a>, <a href="ClassTypeDef.JavaClass.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.JavaClass</a>, <a href="ClassTypeDef.ClassElementType.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassElementType</a>, <a href="ClassTypeDef.ClassDefType.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.ClassDefType</a>, <a href="ClassTypeDef.Parameterized.html" title="class in io.micronaut.sourcegen.model">ClassTypeDef.Parameterized</a></span></div>
 <div class="block">The class type definition.
  Not-null by default.</div>
 <dl class="notes">
@@ -178,9 +178,9 @@ extends <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model"
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">
 <div class="block">Define a ClassTypeDef with annotations.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getCanonicalName()" class="member-name-link">getCanonicalName</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code>default <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5"><code><a href="#getCanonicalName()" class="member-name-link">getCanonicalName</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab5">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
@@ -330,7 +330,7 @@ extends <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model"
 <div class="block">Create a new type definition.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1"><code>static <a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(io.micronaut.sourcegen.model.ClassDef)" class="member-name-link">of</a><wbr>(<a href="ClassDef.html" title="class in io.micronaut.sourcegen.model">ClassDef</a>&nbsp;classDef)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1"><code><a href="#of(io.micronaut.sourcegen.model.ObjectDef)" class="member-name-link">of</a><wbr>(<a href="ObjectDef.html" title="class in io.micronaut.sourcegen.model">ObjectDef</a>&nbsp;objectDef)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1">
 <div class="block">Create a new type definition.</div>
 </div>
@@ -394,10 +394,10 @@ extends <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model"
 <li>
 <section class="detail" id="getCanonicalName()">
 <h3>getCanonicalName</h3>
-<div class="member-signature"><span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getCanonicalName</span>()</div>
+<div class="member-signature"><span class="modifiers">default</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getCanonicalName</span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
-<dd>The type name</dd>
+<dd>The canonical type name</dd>
 <dt>Since:</dt>
 <dd>1.5</dd>
 </dl>
@@ -858,13 +858,13 @@ extends <a href="TypeDef.html" title="interface in io.micronaut.sourcegen.model"
 </section>
 </li>
 <li>
-<section class="detail" id="of(io.micronaut.sourcegen.model.ClassDef)">
+<section class="detail" id="of(io.micronaut.sourcegen.model.ObjectDef)">
 <h3>of</h3>
-<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(<a href="ClassDef.html" title="class in io.micronaut.sourcegen.model">ClassDef</a>&nbsp;classDef)</span></div>
+<div class="member-signature"><span class="modifiers">static</span>&nbsp;<span class="return-type"><a href="ClassTypeDef.html" title="interface in io.micronaut.sourcegen.model">ClassTypeDef</a></span>&nbsp;<span class="element-name">of</span><wbr><span class="parameters">(<a href="ObjectDef.html" title="class in io.micronaut.sourcegen.model">ObjectDef</a>&nbsp;objectDef)</span></div>
 <div class="block">Create a new type definition.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>classDef</code> - The class definition</dd>
+<dd><code>objectDef</code> - The object definition</dd>
 <dt>Returns:</dt>
 <dd>type definition</dd>
 </dl>
