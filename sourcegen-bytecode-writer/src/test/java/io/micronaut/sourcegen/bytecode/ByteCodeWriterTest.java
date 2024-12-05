@@ -374,11 +374,9 @@ class test/MyClass {
     IFNONNULL L6
     ALOAD 0
     ACONST_NULL
-    CHECKCAST test/SomeTarget
     PUTFIELD test/MyClass.target : Ltest/SomeTarget;
     ALOAD 0
     ACONST_NULL
-    CHECKCAST io/micronaut/context/BeanResolutionContext
     PUTFIELD test/MyClass.$beanResolutionContext : Lio/micronaut/context/BeanResolutionContext;
    L6
     ALOAD 2
@@ -418,8 +416,8 @@ class MyClass {
          synchronized(this) {
             target = this.target;
             if (target == null) {
-               this.target = (SomeTarget)null;
-               this.$beanResolutionContext = (BeanResolutionContext)null;
+               this.target = null;
+               this.$beanResolutionContext = null;
             }
          }
       }
@@ -1448,6 +1446,74 @@ class Test {
 
    double testDouble() {
       return 444.555;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testCastingNull() {
+
+        MethodDef build = MethodDef.builder("acceptValue")
+            .addParameter(TypeDef.of(Integer.class))
+            .returns(TypeDef.OBJECT)
+            .build((aThis, methodParameters) -> methodParameters.get(0).returning());
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(build
+            )
+            .addMethod(MethodDef.builder("invoke")
+                .build((aThis, methodParameters) ->
+                    aThis.invoke(build, ExpressionDef.nullValue()).returning()
+                )
+            )
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  acceptValue(Ljava/lang/Integer;)Ljava/lang/Object;
+   L0
+    ALOAD 1
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 Ljava/lang/Integer; L0 L1 1
+
+  // access flags 0x0
+  invoke()Ljava/lang/Object;
+    ALOAD 0
+    ACONST_NULL
+    INVOKEVIRTUAL example/Test.acceptValue (Ljava/lang/Integer;)Ljava/lang/Object;
+    ARETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   Object acceptValue(Integer arg1) {
+      return arg1;
+   }
+
+   Object invoke() {
+      return this.acceptValue((Integer)null);
    }
 }
 """, decompileToJava(bytes));
