@@ -23,6 +23,8 @@ import javax.lang.model.element.Modifier;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.AbstractList;
+import java.util.List;
 import java.util.Map;
 
 import static io.micronaut.sourcegen.bytecode.DecompilerUtils.decompileToJava;
@@ -1514,6 +1516,169 @@ class Test {
 
    Object invoke() {
       return this.acceptValue((Integer)null);
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testCastingClassDefWithSuperclass() {
+
+        ClassDef myList = ClassDef.builder("example.MyList")
+            .superclass(ClassTypeDef.of(AbstractList.class))
+            .build();
+
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(MethodDef.builder("load")
+                .returns(ClassTypeDef.of(List.class))
+                .build((aThis, methodParameters) -> myList.asTypeDef()
+                    .instantiate().returning())
+            )
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  load()Ljava/util/List;
+    NEW example/MyList
+    DUP
+    INVOKESPECIAL example/MyList.<init> ()V
+    ARETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+import java.util.List;
+
+class Test {
+   List load() {
+      return new MyList();
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testCastingThisClassDefWithSuperclass() {
+
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .superclass(TypeDef.parameterized(AbstractList.class, Number.class))
+            .addMethod(MethodDef.builder("load")
+                .returns(ClassTypeDef.of(List.class))
+                .build((aThis, methodParameters) -> aThis.type().instantiate().returning())
+            )
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/util/AbstractList<Ljava/lang/Number;>;
+// declaration: example/Test extends java.util.AbstractList<java.lang.Number>
+class example/Test extends java/util/AbstractList {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/util/AbstractList.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  load()Ljava/util/List;
+    NEW example/Test
+    DUP
+    INVOKESPECIAL example/Test.<init> ()V
+    ARETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+import java.util.AbstractList;
+import java.util.List;
+
+class Test extends AbstractList {
+   List load() {
+      return new Test();
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testCastingEnum() {
+
+        EnumDef enumDef = EnumDef.builder("example.MyEnum")
+            .addEnumConstant("A")
+            .addEnumConstant("B")
+            .build();
+
+        ClassDef classDef = ClassDef.builder("example.Test")
+            .addMethod(MethodDef.builder("load")
+                .returns(Enum.class)
+                .build((aThis, methodParameters) -> enumDef.asTypeDef()
+                    .getStaticField(enumDef.getField("A"))
+                    .returning())
+            )
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(classDef, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Test
+class example/Test {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  load()Ljava/lang/Enum;
+    GETSTATIC example/MyEnum.A : Lexample/MyEnum;
+    ARETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Test {
+   Enum load() {
+      return MyEnum.A;
    }
 }
 """, decompileToJava(bytes));

@@ -45,7 +45,7 @@ public final class EnumDef extends ObjectDef {
     private final List<FieldDef> fields;
     private final LinkedHashMap<String, List<ExpressionDef>> enumConstants;
 
-    private EnumDef(ClassTypeDef type,
+    private EnumDef(ClassTypeDef.ClassName className,
                     EnumSet<Modifier> modifiers,
                     List<FieldDef> fields,
                     List<MethodDef> methods,
@@ -55,14 +55,14 @@ public final class EnumDef extends ObjectDef {
                     LinkedHashMap<String, List<ExpressionDef>> enumConstants,
                     List<TypeDef> superinterfaces,
                     List<ObjectDef> innerTypes) {
-        super(type, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
         this.fields = fields;
         this.enumConstants = enumConstants;
     }
 
     @Override
-    public EnumDef withType(ClassTypeDef type) {
-        return new EnumDef(type, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
+    public EnumDef withClassName(ClassTypeDef.ClassName className) {
+        return new EnumDef(className, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
     }
 
     public static EnumDefBuilder builder(String name) {
@@ -94,9 +94,12 @@ public final class EnumDef extends ObjectDef {
 
     @NonNull
     public FieldDef getField(String name) {
+        if (enumConstants.containsKey(name)) {
+            return FieldDef.builder(name, asTypeDef()).build();
+        }
         FieldDef field = findField(name);
         if (field == null) {
-            throw new IllegalStateException("Enum: " + this.name + " doesn't have a field: " + name);
+            throw new IllegalStateException("Enum: " + this.className + " doesn't have a field: " + name);
         }
         return null;
     }
@@ -169,7 +172,7 @@ public final class EnumDef extends ObjectDef {
                     }
                 }
             }
-            return new EnumDef(ClassTypeDef.of(name), modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
+            return new EnumDef(new ClassTypeDef.ClassName(name), modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
         }
 
         /**

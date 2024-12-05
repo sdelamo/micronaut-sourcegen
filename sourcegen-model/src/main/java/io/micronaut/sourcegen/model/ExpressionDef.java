@@ -449,7 +449,7 @@ public sealed interface ExpressionDef
      * @since 1.2
      */
     default VariableDef.Field field(FieldDef fieldDef) {
-        return new VariableDef.Field(this, fieldDef.name, fieldDef.getType());
+        return new VariableDef.Field(this, fieldDef.getName(), fieldDef.getType());
     }
 
     /**

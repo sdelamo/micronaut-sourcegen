@@ -113,11 +113,8 @@ public sealed class ObjectDefBuilder<ThisType>
     @NonNull
     public final ThisType addInnerType(@NonNull ObjectDef innerDef) {
         ClassTypeDef innerType = innerDef.asTypeDef();
-        ClassTypeDef newType = ClassTypeDef.of(
-            ClassTypeDef.of(name).getCanonicalName() + "$" + innerType.getSimpleName(),
-            true
-        );
-        innerTypes.add(innerDef.withType(newType));
+        String newName = ClassTypeDef.of(name).getCanonicalName() + "$" + innerType.getSimpleName();
+        innerTypes.add(innerDef.withClassName(new ClassTypeDef.ClassName(newName, true)));
         return thisInstance;
     }
 
