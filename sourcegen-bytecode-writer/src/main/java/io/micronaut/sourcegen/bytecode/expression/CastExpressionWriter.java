@@ -18,9 +18,12 @@ package io.micronaut.sourcegen.bytecode.expression;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.sourcegen.bytecode.MethodContext;
 import io.micronaut.sourcegen.bytecode.TypeUtils;
+import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
+import io.micronaut.sourcegen.model.EnumDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.ObjectDef;
+import io.micronaut.sourcegen.model.RecordDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
@@ -61,33 +64,70 @@ final class CastExpressionWriter implements ExpressionWriter {
             if (!from.isPrimitive() && to.isPrimitive()) {
                 unbox(generatorAdapter, context, to);
             }
-        } else if (!from.makeNullable().equals(to.makeNullable())) {
-            if (from instanceof ClassTypeDef.ClassElementType fromElement) {
-                ClassElement fromClassElement = fromElement.classElement();
-                if (to instanceof ClassTypeDef.ClassElementType toElement) {
-                    if (!fromClassElement.isAssignable(toElement.classElement())) {
-                        checkCast(generatorAdapter, context, from, to);
-                    }
-                } else if (to instanceof ClassTypeDef.JavaClass toClass) {
-                    if (!fromClassElement.isAssignable(toClass.type())) {
-                        checkCast(generatorAdapter, context, from, to);
-                    }
-                } else if (to instanceof ClassTypeDef.ClassName toClassName) {
-                    if (!fromClassElement.isAssignable(toClassName.className())) {
-                        checkCast(generatorAdapter, context, from, to);
-                    }
-                } else {
-                    checkCast(generatorAdapter, context, from, to);
-                }
-            } else if (from instanceof ClassTypeDef.JavaClass fromClass && to instanceof ClassTypeDef.JavaClass toClass) {
-                if (!toClass.type().isAssignableFrom(fromClass.type())) {
-                    checkCast(generatorAdapter, context, from, to);
-                }
-            } else {
-                checkCast(generatorAdapter, context, from, to);
-            }
+        } else if (needsCast(from, to)) {
+            checkCast(generatorAdapter, context, from, to);
         }
     }
+
+    private static boolean needsCast(TypeDef from, TypeDef to) {
+        if (from.makeNullable().equals(to.makeNullable())) {
+            return false;
+        }
+        if (from instanceof ClassTypeDef.Parameterized parameterized) {
+            return needsCast(parameterized.rawType(), to);
+        }
+        if (to instanceof ClassTypeDef.Parameterized parameterized) {
+            return needsCast(from, parameterized.rawType());
+        }
+        if (from instanceof ClassTypeDef.ClassElementType fromElement) {
+            return needsCast(fromElement.classElement(), to);
+        }
+        if (from instanceof ClassTypeDef.JavaClass fromClass) {
+            if (to instanceof ClassTypeDef.JavaClass toClass) {
+                return !toClass.type().isAssignableFrom(fromClass.type());
+            }
+        }
+        if (from instanceof ClassTypeDef.ClassDefType fromClassDef) {
+            ClassTypeDef fromSuperclass = getSuperclass(fromClassDef.objectDef());
+            if (fromSuperclass != null) {
+                return needsCast(fromSuperclass, to);
+            }
+        }
+        return true;
+    }
+
+    private static boolean needsCast(ClassElement from, TypeDef to) {
+        if (to instanceof ClassTypeDef.ClassElementType toElement) {
+            return !from.isAssignable(toElement.classElement());
+        }
+        if (to instanceof ClassTypeDef.JavaClass toClass) {
+            return !from.isAssignable(toClass.type());
+        }
+        if (to instanceof ClassTypeDef.ClassName toClassName) {
+            return !from.isAssignable(toClassName.name());
+        }
+        if (to instanceof ClassTypeDef.ClassDefType toClassDefType) {
+            if (from.isAssignable(toClassDefType.getName())) {
+                return false;
+            }
+            return !from.isAssignable(toClassDefType.getName());
+        }
+        return true;
+    }
+
+    private static ClassTypeDef getSuperclass(ObjectDef objectDef) {
+        if (objectDef instanceof ClassDef classDef) {
+            return classDef.getSuperclass();
+        }
+        if (objectDef instanceof EnumDef) {
+            return ClassTypeDef.of(Enum.class);
+        }
+        if (objectDef instanceof RecordDef) {
+            return ClassTypeDef.of(Record.class);
+        }
+        return null;
+    }
+
 
     private static void checkCast(GeneratorAdapter generatorAdapter, MethodContext context, TypeDef from, TypeDef to) {
         TypeDef toType = ObjectDef.getContextualType(context.objectDef(), to);

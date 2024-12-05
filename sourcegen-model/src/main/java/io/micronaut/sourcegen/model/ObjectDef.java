@@ -32,20 +32,24 @@ import java.util.List;
 @Experimental
 public abstract sealed class ObjectDef extends AbstractElement permits ClassDef, EnumDef, InterfaceDef, RecordDef {
 
-    protected final ClassTypeDef type;
+    protected final ClassTypeDef.ClassName className;
     protected final List<MethodDef> methods;
     protected final List<PropertyDef> properties;
     protected final List<TypeDef> superinterfaces;
     protected final List<ObjectDef> innerTypes;
 
     ObjectDef(
-        ClassTypeDef type, EnumSet<Modifier> modifiers, List<AnnotationDef> annotations,
-        List<String> javadoc, List<MethodDef> methods, List<PropertyDef> properties,
+        ClassTypeDef.ClassName className,
+        EnumSet<Modifier> modifiers,
+        List<AnnotationDef> annotations,
+        List<String> javadoc,
+        List<MethodDef> methods,
+        List<PropertyDef> properties,
         List<TypeDef> superinterfaces,
         List<ObjectDef> innerTypes
     ) {
-        super(type.getName(), modifiers, annotations, javadoc);
-        this.type = type;
+        super(className.getName(), modifiers, annotations, javadoc);
+        this.className = className;
         this.methods = methods;
         this.properties = properties;
         this.superinterfaces = superinterfaces;
@@ -65,11 +69,11 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
     }
 
     public final String getPackageName() {
-        return type.getPackageName();
+        return className.getPackageName();
     }
 
     public final String getSimpleName() {
-        return type.getSimpleName();
+        return className.getSimpleName();
     }
 
     public final List<ObjectDef> getInnerTypes() {
@@ -77,12 +81,13 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
     }
 
     /**
-     * Creates a copy of this definition with a specific type.
-     * @param type The type
-     * @return the copy of this object definition with a new name
+     * Creates a copy of this definition with a new class name.
+     *
+     * @param className    The class name
+     * @return the copy of this object definition with a new class name
      * @since 1.5
      */
-    public abstract ObjectDef withType(ClassTypeDef type);
+    public abstract ObjectDef withClassName(ClassTypeDef.ClassName className);
 
     /**
      * Get the type definition for this type.
@@ -90,7 +95,7 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
      * @return The type definition
      */
     public ClassTypeDef asTypeDef() {
-        return type;
+        return ClassTypeDef.of(this);
     }
 
     /**

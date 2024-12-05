@@ -43,7 +43,7 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Ex
      * @return The statement
      */
     default StatementDef assign(ParameterDef parameterDef) {
-        return assign(new MethodParameter(parameterDef.name, parameterDef.getType()));
+        return assign(new MethodParameter(parameterDef.getName(), parameterDef.getType()));
     }
 
     /**
@@ -87,7 +87,7 @@ public sealed interface VariableDef extends ExpressionDef permits VariableDef.Ex
     record MethodParameter(String name, TypeDef type) implements VariableDef {
 
         public MethodParameter(ParameterDef parameterDef) {
-            this(parameterDef.name, parameterDef.getType());
+            this(parameterDef.getName(), parameterDef.getType());
         }
     }
 

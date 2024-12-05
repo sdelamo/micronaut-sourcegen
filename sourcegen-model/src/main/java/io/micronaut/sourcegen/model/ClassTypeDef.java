@@ -44,10 +44,15 @@ public sealed interface ClassTypeDef extends TypeDef {
     String getName();
 
     /**
-     * @return The type name
+     * @return The canonical type name
      * @since 1.5
      */
-    String getCanonicalName();
+    default String getCanonicalName() {
+        if (isInner()) {
+            return getName().replace("$", ".");
+        }
+        return getName();
+    }
 
     /**
      * @return The simple name
@@ -418,11 +423,11 @@ public sealed interface ClassTypeDef extends TypeDef {
     /**
      * Create a new type definition.
      *
-     * @param classDef The class definition
+     * @param objectDef The object definition
      * @return type definition
      */
-    static ClassTypeDef of(ClassDef classDef) {
-        return new ClassDefType(classDef, false);
+    static ClassTypeDef of(ObjectDef objectDef) {
+        return new ClassDefType(objectDef, false);
     }
 
     /**
@@ -504,26 +509,26 @@ public sealed interface ClassTypeDef extends TypeDef {
     /**
      * The class name type.
      *
-     * @param className The class name
+     * @param name The class name
      * @param isInner   Is inner
      * @param nullable  Is nullable
      * @author Denis Stepanov
      * @since 1.0
      */
     @Experimental
-    record ClassName(String className, boolean isInner, boolean nullable) implements ClassTypeDef {
+    record ClassName(String name, boolean isInner, boolean nullable) implements ClassTypeDef {
 
-        @Override
-        public String getName() {
-            return className;
+        public ClassName(String name) {
+            this(name, false);
+        }
+
+        public ClassName(String name, boolean isInner) {
+            this(name, isInner, false);
         }
 
         @Override
-        public String getCanonicalName() {
-            if (isInner) {
-                return className.replace("$", ".");
-            }
-            return className;
+        public String getName() {
+            return name;
         }
 
         @Override
@@ -538,7 +543,7 @@ public sealed interface ClassTypeDef extends TypeDef {
 
         @Override
         public ClassTypeDef makeNullable() {
-            return new ClassName(className,  isInner, true);
+            return new ClassName(name,  isInner, true);
         }
 
     }
@@ -598,27 +603,27 @@ public sealed interface ClassTypeDef extends TypeDef {
     /**
      * The class def element type.
      *
-     * @param classDef The class def
+     * @param objectDef The object def
      * @param nullable Is nullable
      * @author Denis Stepanov
      * @since 1.2
      */
     @Experimental
-    record ClassDefType(ClassDef classDef, boolean nullable) implements ClassTypeDef {
+    record ClassDefType(ObjectDef objectDef, boolean nullable) implements ClassTypeDef {
 
         @Override
         public String getName() {
-            return classDef.getName();
+            return objectDef.className.name;
         }
 
         @Override
-        public String getSimpleName() {
-            return classDef.getSimpleName();
+        public boolean isInner() {
+            return objectDef.className.isInner;
         }
 
         @Override
-        public String getCanonicalName() {
-            return classDef.getName().replace("$", ".");
+        public boolean isInterface() {
+            return objectDef instanceof InterfaceDef;
         }
 
         @Override
@@ -628,7 +633,7 @@ public sealed interface ClassTypeDef extends TypeDef {
 
         @Override
         public ClassTypeDef makeNullable() {
-            return new ClassDefType(classDef, true);
+            return new ClassDefType(objectDef, true);
         }
 
     }

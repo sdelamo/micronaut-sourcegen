@@ -40,7 +40,7 @@ public final class ClassDef extends ObjectDef {
     private final ClassTypeDef superclass;
     private final StatementDef staticInitializer;
 
-    private ClassDef(ClassTypeDef type,
+    private ClassDef(ClassTypeDef.ClassName className,
                      EnumSet<Modifier> modifiers,
                      List<FieldDef> fields,
                      List<MethodDef> methods,
@@ -52,7 +52,8 @@ public final class ClassDef extends ObjectDef {
                      ClassTypeDef superclass,
                      List<ObjectDef> innerTypes,
                      StatementDef staticInitializer) {
-        super(type, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+        ClassTypeDef.of(this);
         this.fields = fields;
         this.typeVariables = typeVariables;
         this.superclass = superclass;
@@ -60,8 +61,8 @@ public final class ClassDef extends ObjectDef {
     }
 
     @Override
-    public ClassDef withType(ClassTypeDef type) {
-        return new ClassDef(type, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
+    public ClassDef withClassName(ClassTypeDef.ClassName className) {
+        return new ClassDef(className, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
     }
 
     @Override
@@ -108,7 +109,7 @@ public final class ClassDef extends ObjectDef {
     public FieldDef getField(String name) {
         FieldDef field = findField(name);
         if (field == null) {
-            throw new IllegalStateException("Class: " + this.name + " doesn't have a field: " + name);
+            throw new IllegalStateException("Class: " + this.className + " doesn't have a field: " + name);
         }
         return null;
     }
@@ -122,8 +123,11 @@ public final class ClassDef extends ObjectDef {
             if (superclass instanceof ClassTypeDef.ClassElementType classElementType) {
                 return classElementType.classElement().findField(name).isPresent();
             }
-            if (superclass instanceof ClassTypeDef.ClassDefType classDefType) {
-                return classDefType.classDef().hasField(name);
+            if (superclass instanceof ClassTypeDef.ClassDefType classDefType && classDefType.objectDef() instanceof ClassDef classDef) {
+                return classDef.hasField(name);
+            }
+            if (superclass instanceof ClassTypeDef.ClassDefType classDefType && classDefType.objectDef() instanceof EnumDef enumDef) {
+                return enumDef.hasField(name);
             }
             if (superclass instanceof ClassTypeDef.JavaClass javaClass) {
                 try {
@@ -146,7 +150,7 @@ public final class ClassDef extends ObjectDef {
 
     @Override
     public String toString() {
-        return "ClassDef{" + "name='" + name + '\'' + '}';
+        return "ClassDef{" + "name='" + className + '\'' + '}';
     }
 
     /**
@@ -199,7 +203,7 @@ public final class ClassDef extends ObjectDef {
         }
 
         public ClassDef build() {
-            return new ClassDef(ClassTypeDef.of(name), modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
+            return new ClassDef(new ClassTypeDef.ClassName(name), modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
         }
 
         /**
