@@ -13,7 +13,6 @@ import io.micronaut.sourcegen.model.ObjectDef;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.micronaut.sourcegen.bytecode.DecompilerUtils.decompileToJava;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ByteCodeWriterTest {
 
@@ -44,11 +44,11 @@ class ByteCodeWriterTest {
                 )))
             .build();
 
-        StringWriter bytecodeWriter = new StringWriter();
+        var bytecodeWriter = new StringWriter();
         byte[] bytes = generateFile(ifPredicateDef, bytecodeWriter);
 
         String bytecode = bytecodeWriter.toString();
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -77,7 +77,7 @@ class example/IfPredicate {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class IfPredicate {
@@ -103,7 +103,7 @@ class IfPredicate {
         byte[] bytes = generateFile(ifPredicateDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -129,7 +129,7 @@ class example/IfPredicate {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class IfPredicate {
@@ -155,7 +155,7 @@ class IfPredicate {
         byte[] bytes = generateFile(ifPredicateDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -181,7 +181,7 @@ class example/IfPredicate {
 """, bytecode);
 
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class IfPredicate {
@@ -197,7 +197,7 @@ class IfPredicate {
         EnumDef myEnum = EnumDef.builder("MyEnum").addEnumConstant("A").addEnumConstant("B").addEnumConstant("C").build();
 
         String bytecode = toBytecode(myEnum);
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x4010
 // signature Ljava/lang/Enum<LMyEnum;>;
@@ -334,7 +334,7 @@ final enum MyEnum extends java/lang/Enum {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -403,7 +403,7 @@ class test/MyClass {
 """, bytecode);
 
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package test;
 
 import io.micronaut.context.BeanResolutionContext;
@@ -462,7 +462,7 @@ class MyClass {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -529,7 +529,7 @@ class test/MyClass {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package test;
 
 class MyClass {
@@ -590,7 +590,7 @@ class MyClass {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -647,7 +647,7 @@ class test/MyClass {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package test;
 
 class MyClass {
@@ -699,7 +699,7 @@ class MyClass {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -743,7 +743,7 @@ class test/MyClass {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package test;
 
 class MyClass {
@@ -796,7 +796,7 @@ class MyClass {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -840,7 +840,7 @@ class test/MyClass {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package test;
 
 class MyClass {
@@ -880,7 +880,7 @@ class MyClass {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -904,7 +904,7 @@ class test/MyClass {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package test;
 
 class MyClass {
@@ -923,7 +923,7 @@ class MyClass {
         byte[] bytes = generateFile(enumDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x4011
 // signature Ljava/lang/Enum<Lexample/MyEnumWithInnerTypes;>;
@@ -1035,7 +1035,7 @@ public final enum example/MyEnumWithInnerTypes extends java/lang/Enum {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 public enum MyEnumWithInnerTypes {
@@ -1073,7 +1073,7 @@ public enum MyEnumWithInnerTypes {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1110,7 +1110,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1135,7 +1135,7 @@ class Test {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1160,7 +1160,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1184,7 +1184,7 @@ class Test {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1208,7 +1208,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1236,7 +1236,7 @@ class Test {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1277,7 +1277,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1305,7 +1305,7 @@ class Test {
         byte[] bytes = generateFile(classDef, bytecodeWriter);
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1346,7 +1346,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1414,7 +1414,7 @@ class Test {
         StringWriter bytecodeWriter = new StringWriter();
         byte[] bytes = generateFile(classDef, bytecodeWriter);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1475,7 +1475,7 @@ class Test {
 
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1506,7 +1506,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1541,7 +1541,7 @@ class Test {
 
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1564,7 +1564,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 import java.util.List;
@@ -1593,7 +1593,7 @@ class Test {
 
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/util/AbstractList<Ljava/lang/Number;>;
@@ -1616,7 +1616,7 @@ class example/Test extends java/util/AbstractList {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 import java.util.AbstractList;
@@ -1652,7 +1652,7 @@ class Test extends AbstractList {
 
         String bytecode = bytecodeWriter.toString();
 
-        Assertions.assertEquals("""
+        assertEquals("""
 // class version 61.0 (61)
 // access flags 0x0
 // signature Ljava/lang/Object;
@@ -1673,7 +1673,7 @@ class example/Test {
 }
 """, bytecode);
 
-        Assertions.assertEquals("""
+        assertEquals("""
 package example;
 
 class Test {
@@ -1691,9 +1691,9 @@ class Test {
     }
 
     private byte[] generateFile(ObjectDef objectDef, StringWriter stringWriter) {
-        ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-        CheckClassAdapter checkClassAdapter = new CheckClassAdapter(classWriter);
-        TraceClassVisitor tcv = new TraceClassVisitor(checkClassAdapter, new PrintWriter(stringWriter));
+        var classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        var checkClassAdapter = new CheckClassAdapter(classWriter);
+        var tcv = new TraceClassVisitor(checkClassAdapter, new PrintWriter(stringWriter));
 
         new ByteCodeWriter(false, false).writeObject(tcv, objectDef);
 

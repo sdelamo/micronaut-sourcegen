@@ -1,8 +1,8 @@
 plugins {
     id("io.micronaut.build.internal.sourcegen-testsuite")
-    id("org.jetbrains.kotlin.jvm")
-    id("com.google.devtools.ksp") version mn.versions.ksp
-    id("org.jetbrains.kotlin.plugin.allopen")
+    alias(mn.plugins.kotlin.jvm)
+    alias(mn.plugins.kotlin.allopen)
+    alias(mn.plugins.ksp)
 }
 
 dependencies {
@@ -10,10 +10,14 @@ dependencies {
     ksp(projects.sourcegenGeneratorKotlin)
     ksp(projects.testSuiteCustomGenerators)
     ksp(mnValidation.micronaut.validation.processor)
+
     implementation(mnValidation.micronaut.validation)
+    implementation(mn.kotlin.stdlib)
     implementation(mn.micronaut.inject.kotlin)
     implementation(projects.sourcegenAnnotations)
     implementation(projects.testSuiteCustomAnnotations)
+
     testImplementation(mnTest.micronaut.test.junit5)
-    testImplementation(libs.junit.jupiter.engine)
+
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
 }

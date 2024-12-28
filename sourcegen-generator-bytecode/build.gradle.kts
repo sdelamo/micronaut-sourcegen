@@ -5,7 +5,8 @@ plugins {
 dependencies {
     api(projects.sourcegenGenerator)
     api(projects.sourcegenBytecodeWriter)
-    testImplementation(libs.junit.jupiter.engine)
+
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
 }
 
 tasks.withType<Test> {

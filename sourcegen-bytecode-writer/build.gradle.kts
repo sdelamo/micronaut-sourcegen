@@ -10,14 +10,18 @@ repositories {
 
 dependencies {
     api(projects.sourcegenModel)
-    compileOnly(mn.micronaut.core.processor)
     api(libs.asm)
     api(libs.asm.commons)
     api(libs.asm.util)
+
+    compileOnly(mn.micronaut.core.processor)
+
     testImplementation(mn.micronaut.core.processor)
-    testImplementation(libs.junit.jupiter.engine)
+    testImplementation(mnTest.junit.jupiter.api)
     testImplementation(libs.intellij.java.decompiler)
     testImplementation(projects.testSuiteCustomGenerators)
+
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
 }
 
 tasks.withType<Test> {
