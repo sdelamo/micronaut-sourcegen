@@ -57,7 +57,9 @@ class AnnotationTest {
         val result = writeClass(classDef)
 
         val expected = """
-        @Simple(value = listOf(1, 2, 3))
+        @Simple(value = listOf(1,
+        2,
+        3))
         public class SimpleClass
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())
@@ -73,22 +75,9 @@ class AnnotationTest {
         val result = writeClass(classDef)
 
         val expected = """
-        @JsonSubTypes(
-        value = listOf(
-                @JsonSubTypes.Type(
-                    value = String.class,
-                    name = "Cat"
-                ),
-                @JsonSubTypes.Type(
-                    value = String.class,
-                    name = "Dog"
-                ),
-                @JsonSubTypes.Type(
-                    value = String.class,
-                    name = "Fish"
-                )
-            )
-        )
+        @JsonSubTypes(value = listOf(@com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Cat"),
+        @com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Dog"),
+        @com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Fish")))
         public class SimpleClass
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())
@@ -102,7 +91,7 @@ class AnnotationTest {
     }
 
     private fun getJsonSubTypesAnn(): AnnotationDef {
-        val mapping = mapOf("Cat" to String::class, "Dog" to String::class, "Fish" to String::class)
+        val mapping = mapOf("Cat" to TypeDef.STRING, "Dog" to TypeDef.STRING, "Fish" to TypeDef.STRING)
         val subTypeList = mapping.entries
             .map { entry: Map.Entry<String, Any> ->
                 AnnotationDef

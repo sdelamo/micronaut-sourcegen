@@ -1314,7 +1314,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             }
 
             is ClassTypeDef -> {
-                builder.addMember(memberName, "%L::class", value.getSimpleName())
+                builder.addMember("$memberName = %L::class", value.getSimpleName())
             }
 
             is Enum<*> -> {
@@ -1338,20 +1338,19 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             }
 
             is VariableDef -> {
-                builder.addMember(memberName, renderVariable(null, null, value))
+                builder.addMember("$memberName = %L", renderVariable(null, null, value))
             }
 
             is AnnotationDef -> {
-                // builder does not process AnnotationSpec as member
                 val spec = asAnnotationSpec(value)
-                builder.addMember(memberName, spec)
+                builder.addMember("$memberName = %L", spec)
             }
 
             is Collection<*> -> {
                 value.forEach(Consumer { v: Any? -> addAnnotationValue(builder, memberName, v!!) })
                 val listItems = builder.members.filter { it.isNotEmpty() && it.toString().contains(memberName) }
                 builder.members.removeAll(listItems)
-                val listStr: String = listItems.map { it.toString().substringAfter("= ") }.joinToString()
+                val listStr: String = listItems.map { it.toString().substringAfter("= ") }.joinToString(separator = ",\n")
                 builder.addMember("$memberName = listOf(%L)", listStr)
             }
 
