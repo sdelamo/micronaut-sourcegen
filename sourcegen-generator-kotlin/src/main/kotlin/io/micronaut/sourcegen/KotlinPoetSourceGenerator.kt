@@ -1233,10 +1233,11 @@ class KotlinPoetSourceGenerator : SourceGenerator {
 
         private fun renderVariable(
             objectDef: ObjectDef?,
-            methodDef: MethodDef,
+            methodDef: MethodDef?,
             variableDef: VariableDef
         ): CodeBlock {
             if (variableDef is VariableDef.MethodParameter) {
+                checkNotNull(methodDef) { "Accessing method parameters is not available" }
                 methodDef.getParameter(variableDef.name) // Check if exists
                 return CodeBlock.of("%N", variableDef.name)
             }
@@ -1249,6 +1250,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 } else {
                     throw IllegalStateException("Field access not supported on the object definition: $objectDef")
                 }
+                checkNotNull(methodDef) { "Accessing field is not available" }
                 val codeBlock = renderExpressionCode(objectDef, methodDef, variableDef.instance)
                 val builder = codeBlock.toBuilder()
                 if (variableDef.instance.type().isNullable) {
@@ -1289,39 +1291,73 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         }
 
         private fun asAnnotationSpec(annotationDef: AnnotationDef): AnnotationSpec {
-            var builder = AnnotationSpec.builder(ClassName.bestGuess(annotationDef.type.name))
-            for ((memberName, value) in annotationDef.values) {
-                builder = when (value) {
-                    is Class<*> -> {
-                        builder.addMember("$memberName = %T::class", value)
-                    }
-
-                    is Enum<*> -> {
-                        builder.addMember("$memberName = %T.%L", value.javaClass, value.name)
-                    }
-
-                    is String -> {
-                        builder.addMember("$memberName = %S", value)
-                    }
-
-                    is Float -> {
-                        builder.addMember("$memberName = %Lf", value)
-                    }
-
-                    is Char -> {
-                        builder.addMember(
-                            "$memberName = '%L'", characterLiteralWithoutSingleQuotes(
-                                value
-                            )
-                        )
-                    }
-
-                    else -> {
-                        builder.addMember("$memberName = %L", value)
-                    }
+            var annName : String =
+                if (annotationDef.type.name.contains("$")) {
+                    annotationDef.type.name.replace("$", ".")
+                } else {
+                    annotationDef.type.name
                 }
+            var builder = AnnotationSpec.builder(ClassName.bestGuess(annName))
+            for ((memberName, value) in annotationDef.values) {
+                builder = addAnnotationValue(builder, memberName, value)
             }
             return builder.build()
+        }
+
+        private fun addAnnotationValue(
+            builder: AnnotationSpec.Builder,
+            memberName: String,
+            value: Any
+        ): AnnotationSpec.Builder = when (value) {
+            is Class<*> -> {
+                builder.addMember("$memberName = %T::class", value)
+            }
+
+            is ClassTypeDef -> {
+                builder.addMember(memberName, "%L::class", value.getSimpleName())
+            }
+
+            is Enum<*> -> {
+                builder.addMember("$memberName = %T.%L", value.javaClass, value.name)
+            }
+
+            is String -> {
+                builder.addMember("$memberName = %S", value)
+            }
+
+            is Float -> {
+                builder.addMember("$memberName = %Lf", value)
+            }
+
+            is Char -> {
+                builder.addMember(
+                    "$memberName = '%L'", characterLiteralWithoutSingleQuotes(
+                        value
+                    )
+                )
+            }
+
+            is VariableDef -> {
+                builder.addMember(memberName, renderVariable(null, null, value))
+            }
+
+            is AnnotationDef -> {
+                // builder does not process AnnotationSpec as member
+                val spec = asAnnotationSpec(value)
+                builder.addMember(memberName, spec)
+            }
+
+            is Collection<*> -> {
+                value.forEach(Consumer { v: Any? -> addAnnotationValue(builder, memberName, v!!) })
+                val listItems = builder.members.filter { it.isNotEmpty() && it.toString().contains(memberName) }
+                builder.members.removeAll(listItems)
+                val listStr: String = listItems.map { it.toString().substringAfter("= ") }.joinToString()
+                builder.addMember("$memberName = listOf(%L)", listStr)
+            }
+
+            else -> {
+                builder.addMember("$memberName = %L", value)
+            }
         }
 
         // Copy from com.squareup.javapoet.Util
