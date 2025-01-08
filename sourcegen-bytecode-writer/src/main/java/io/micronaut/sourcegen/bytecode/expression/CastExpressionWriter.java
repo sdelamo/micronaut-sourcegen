@@ -28,6 +28,7 @@ import io.micronaut.sourcegen.model.TypeDef;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 final class CastExpressionWriter implements ExpressionWriter {
+
     private final ExpressionDef.Cast castExpressionDef;
 
     public CastExpressionWriter(ExpressionDef.Cast castExpressionDef) {
@@ -127,7 +128,6 @@ final class CastExpressionWriter implements ExpressionWriter {
         }
         return null;
     }
-
 
     private static void checkCast(GeneratorAdapter generatorAdapter, MethodContext context, TypeDef from, TypeDef to) {
         TypeDef toType = ObjectDef.getContextualType(context.objectDef(), to);

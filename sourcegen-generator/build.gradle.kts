@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(projects.sourcegenModel)
     api(mn.micronaut.core.processor)
+
     implementation(projects.sourcegenAnnotations)
 
     testImplementation(mn.micronaut.inject.java.test)

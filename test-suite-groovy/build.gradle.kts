@@ -1,6 +1,6 @@
 plugins {
     id("io.micronaut.build.internal.sourcegen-testsuite")
-    id("groovy")
+    groovy
 }
 
 dependencies {
@@ -12,12 +12,9 @@ dependencies {
 //    implementation(projects.sourcegenGeneratorJava)
 //    implementation(projects.sourcegenGenerator)
 
-//    annotationProcessor(mn.micronaut.inject.groovy)
-//    annotationProcessor(projects.sourcegenGeneratorJava)
-//    annotationProcessor(projects.sourcegenGenerator)
-
     implementation(projects.sourcegenAnnotations)
 
     testImplementation(mnTest.micronaut.test.junit5)
-    testImplementation(libs.junit.jupiter.engine)
+
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
 }

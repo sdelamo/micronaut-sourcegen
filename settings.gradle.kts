@@ -5,8 +5,10 @@ pluginManagement {
     }
 }
 
+includeBuild("build-logic")
+
 plugins {
-    id("io.micronaut.build.shared.settings") version "7.2.3"
+    id("io.micronaut.build.shared.settings") version "7.3.2"
 }
 
 rootProject.name = "sourcegen-parent"
@@ -40,4 +42,3 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-
