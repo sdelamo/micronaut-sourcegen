@@ -13,6 +13,7 @@ import io.micronaut.sourcegen.model.ObjectDef;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -30,6 +31,60 @@ import static io.micronaut.sourcegen.bytecode.DecompilerUtils.decompileToJava;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ByteCodeWriterTest {
+
+    @Test
+    void testSynthetic() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .synthetic()
+            .addField(FieldDef.builder("myField", String.class).synthetic().build())
+            .addMethod(MethodDef.builder("myMethod").synthetic().returns(int.class)
+                .build((aThis, methodParameters) -> ExpressionDef.constant(1).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1001
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public synthetic class example/Example {
+
+
+  // access flags 0x1000
+  synthetic Ljava/lang/String; myField
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x1000
+  synthetic myMethod()I
+    ICONST_1
+    IRETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+// $FF: synthetic class
+public class Example {
+   // $FF: synthetic field
+   String myField;
+
+   // $FF: synthetic method
+   int myMethod() {
+      return 1;
+   }
+}
+""", decompileToJava(bytes));
+    }
 
     @Test
     void testDefaultPublicConstructor() {

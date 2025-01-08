@@ -36,12 +36,21 @@ abstract sealed class AbstractElement permits ObjectDef, FieldDef, MethodDef, Pa
     protected final EnumSet<Modifier> modifiers;
     protected final List<AnnotationDef> annotations;
     protected final List<String> javadoc;
+    protected final boolean synthetic;
 
-    AbstractElement(String name, EnumSet<Modifier> modifiers, List<AnnotationDef> annotations, List<String> javadoc) {
+    AbstractElement(String name, EnumSet<Modifier> modifiers, List<AnnotationDef> annotations, List<String> javadoc, boolean synthetic) {
         this.name = name;
         this.modifiers = modifiers;
         this.annotations = Collections.unmodifiableList(annotations);
         this.javadoc = Collections.unmodifiableList(javadoc);
+        this.synthetic = synthetic;
+    }
+
+    /**
+     * @return Is synthetic element
+     */
+    public boolean isSynthetic() {
+        return synthetic;
     }
 
     public final String getName() {

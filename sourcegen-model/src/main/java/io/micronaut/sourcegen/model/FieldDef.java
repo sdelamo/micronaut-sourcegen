@@ -41,8 +41,9 @@ public final class FieldDef extends AbstractElement {
                      TypeDef type,
                      ExpressionDef initializer,
                      List<AnnotationDef> annotations,
-                     List<String> javadoc) {
-        super(name, modifiers, annotations, javadoc);
+                     List<String> javadoc,
+                     boolean synthetic) {
+        super(name, modifiers, annotations, javadoc, synthetic);
         this.type = type;
         this.initializer = initializer;
     }
@@ -120,7 +121,7 @@ public final class FieldDef extends AbstractElement {
         public FieldDef build() {
             Objects.requireNonNull(name, "Name cannot be null");
             Objects.requireNonNull(type, "Type cannot be null");
-            return new FieldDef(name, modifiers, type, initializer, annotations, javadoc);
+            return new FieldDef(name, modifiers, type, initializer, annotations, javadoc, synthetic);
         }
 
         public FieldDefBuilder initializer(ExpressionDef expr) {

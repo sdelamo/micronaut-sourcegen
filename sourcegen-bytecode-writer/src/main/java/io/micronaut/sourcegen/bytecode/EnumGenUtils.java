@@ -66,6 +66,10 @@ public class EnumGenUtils {
             .addSuperinterfaces(enumDef.getSuperinterfaces())
             .addInnerType(enumDef.getInnerTypes());
 
+        if (enumDef.isSynthetic()) {
+            classDefBuilder.synthetic();
+        }
+
         int i = 0;
         for (Map.Entry<String, List<ExpressionDef>> e : enumDef.getEnumConstants().entrySet()) {
 
