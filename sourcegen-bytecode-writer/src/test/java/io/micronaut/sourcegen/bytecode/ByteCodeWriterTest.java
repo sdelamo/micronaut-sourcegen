@@ -32,6 +32,73 @@ import static io.micronaut.sourcegen.bytecode.DecompilerUtils.decompileToJava;
 class ByteCodeWriterTest {
 
     @Test
+    void testDefaultPublicConstructor() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void testDefaultPackagePrivateConstructor() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x0
+// signature Ljava/lang/Object;
+// declaration: example/Example
+class example/Example {
+
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+class Example {
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
     void testNullCondition() {
         ClassDef ifPredicateDef = ClassDef.builder("example.IfPredicate")
             .addMethod(MethodDef.builder("test").addParameter("param", TypeDef.OBJECT.makeNullable())

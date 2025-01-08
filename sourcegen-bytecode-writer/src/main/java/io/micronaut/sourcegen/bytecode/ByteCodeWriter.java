@@ -277,7 +277,11 @@ public final class ByteCodeWriter {
 
         if (classDef.getMethods().stream().noneMatch(MethodDef::isConstructor)) {
             // Add default constructor
-            writeMethod(classVisitor, classDef, MethodDef.constructor()
+            MethodDef.MethodDefBuilder defaultConstructor = MethodDef.constructor();
+            if (classDef.getModifiers().contains(Modifier.PUBLIC)) {
+                defaultConstructor.addModifiers(Modifier.PUBLIC);
+            }
+            writeMethod(classVisitor, classDef, defaultConstructor
                 .build((aThis, methodParameters) -> aThis.superRef().invokeConstructor(methodParameters)));
         }
 
