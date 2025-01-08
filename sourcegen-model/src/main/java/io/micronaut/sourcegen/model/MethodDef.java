@@ -56,8 +56,9 @@ public final class MethodDef extends AbstractElement {
               List<StatementDef> statements,
               List<AnnotationDef> annotations,
               List<String> javadoc,
-              boolean override) {
-        super(name, modifiers, annotations, javadoc);
+              boolean override,
+              boolean synthetic) {
+        super(name, modifiers, annotations, javadoc, synthetic);
         this.returnType = Objects.requireNonNullElse(returnType, TypeDef.VOID);
         this.parameters = Collections.unmodifiableList(parameters);
         this.statements = statements;
@@ -492,7 +493,7 @@ public final class MethodDef extends AbstractElement {
             if (returnType == null && !name.equals(CONSTRUCTOR)) {
                 returnType = TypeDef.VOID;
             }
-            return new MethodDef(name, modifiers, returnType, parameters, statements, annotations, javadoc, overrides);
+            return new MethodDef(name, modifiers, returnType, parameters, statements, annotations, javadoc, overrides, synthetic);
         }
 
         private static TypeDef findReturnType(StatementDef statement) {

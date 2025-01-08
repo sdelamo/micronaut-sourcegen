@@ -41,10 +41,21 @@ public sealed class AbstractElementBuilder<ThisType> permits ObjectDefBuilder, F
     protected final List<AnnotationDef> annotations = new ArrayList<>();
     protected final List<String> javadoc = new ArrayList<>();
     protected final ThisType thisInstance;
+    protected boolean synthetic;
 
     protected AbstractElementBuilder(String name) {
         this.name = name;
         this.thisInstance = (ThisType) this;
+    }
+
+    /**
+     * Marks the element as synthetic.
+     *
+     * @return The builder
+     */
+    public final ThisType synthetic() {
+        synthetic = true;
+        return thisInstance;
     }
 
     public final ThisType addModifiers(Collection<Modifier> modifiers) {
