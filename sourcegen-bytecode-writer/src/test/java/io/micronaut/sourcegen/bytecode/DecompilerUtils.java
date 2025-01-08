@@ -38,7 +38,7 @@ public final class DecompilerUtils {
 
             @Override
             public void saveClassFile(String s, String s1, String s2, String s3, int[] ints) {
-                result[0] = s3;
+                result[0] = s3.replace("\r\n", "\n");
             }
 
             @Override

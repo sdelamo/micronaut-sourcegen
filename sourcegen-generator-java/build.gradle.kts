@@ -4,20 +4,19 @@ plugins {
 
 dependencies {
     implementation(projects.sourcegenGenerator)
+
     testImplementation(libs.google.truth)
     testImplementation(libs.google.compile.testing)
     testImplementation(libs.google.jimfs)
     testImplementation(mnTest.mockito.core)
 }
 
-tasks.withType(Test::class.java).configureEach {
+tasks.withType<Test> {
     useJUnit()
-    predictiveSelection {
-        enabled = false
-    }
+    develocity.predictiveTestSelection.enabled = false
 }
 
-tasks.withType(Checkstyle::class.java).configureEach {
+tasks.withType<Checkstyle> {
     exclude("**/javapoet/**")
 }
 

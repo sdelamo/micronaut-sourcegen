@@ -10,7 +10,3 @@ tasks.withType(Test).configureEach {
 tasks.withType(Checkstyle).configureEach {
     enabled = false
 }
-
-if (System.getenv("SONAR_TOKEN") != null) {
-    tasks.configureEach { if (it.name == "testCodeCoverageReport") { enabled = false } }
-}
