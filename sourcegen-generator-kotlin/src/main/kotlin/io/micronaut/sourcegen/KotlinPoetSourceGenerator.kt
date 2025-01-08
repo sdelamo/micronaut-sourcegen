@@ -37,6 +37,7 @@ import java.io.Writer
 import java.lang.reflect.Array
 import java.util.function.Consumer
 import javax.lang.model.element.Modifier
+import kotlin.reflect.KClass
 
 /**
  * Kotlin source code generator.
@@ -589,7 +590,10 @@ class KotlinPoetSourceGenerator : SourceGenerator {
         @OptIn(KotlinPoetJavaPoetPreview::class)
         private fun asClassName(classType: ClassTypeDef): ClassName {
             val packageName = classType.packageName
-            val simpleName = classType.simpleName
+            var simpleName = classType.simpleName
+            if (classType.isEnum) {
+                simpleName = simpleName.substringAfter("$")
+            }
             val result: ClassName = com.squareup.javapoet.ClassName.get(packageName, simpleName).toKClassName()
             if (result.isNullable) {
                 return asNullable(result) as ClassName
@@ -1309,7 +1313,12 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             memberName: String,
             value: Any
         ): AnnotationSpec.Builder = when (value) {
+            // Note: Class values skip both Class<*> and KClass<*> entries
             is Class<*> -> {
+                builder.addMember("$memberName = %T::class", value)
+            }
+
+            is KClass<*> -> {
                 builder.addMember("$memberName = %T::class", value)
             }
 
@@ -1318,6 +1327,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
             }
 
             is Enum<*> -> {
+                // Enum values gets represented as a Static Variable and does not enter here
                 builder.addMember("$memberName = %T.%L", value.javaClass, value.name)
             }
 
@@ -1343,7 +1353,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
 
             is AnnotationDef -> {
                 val spec = asAnnotationSpec(value)
-                builder.addMember("$memberName = %L", spec)
+                builder.addMember("$memberName = %L", spec.toString().substring(1))
             }
 
             is Collection<*> -> {
@@ -1351,7 +1361,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                 val listItems = builder.members.filter { it.isNotEmpty() && it.toString().contains(memberName) }
                 builder.members.removeAll(listItems)
                 val listStr: String = listItems.map { it.toString().substringAfter("= ") }.joinToString(separator = ",\n")
-                builder.addMember("$memberName = listOf(%L)", listStr)
+                builder.addMember("$memberName = [%L]", listStr)
             }
 
             else -> {
