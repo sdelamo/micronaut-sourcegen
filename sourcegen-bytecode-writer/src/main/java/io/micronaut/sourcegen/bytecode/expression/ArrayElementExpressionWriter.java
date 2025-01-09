@@ -30,7 +30,7 @@ final class ArrayElementExpressionWriter implements ExpressionWriter {
     @Override
     public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         ExpressionWriter.writeExpression(generatorAdapter, context, arrayElement.expression());
-        generatorAdapter.push(arrayElement.index());
+        ExpressionWriter.writeExpression(generatorAdapter, context, arrayElement.indexExpression());
         generatorAdapter.arrayLoad(TypeUtils.getType(arrayElement.type(), context.objectDef()));
     }
 }
