@@ -33,6 +33,107 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ByteCodeWriterTest {
 
     @Test
+    void arrayElement() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(String[].class)
+                .build((aThis, methodParameters) -> methodParameters.get(0).arrayElement(1).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod([Ljava/lang/String;)Ljava/lang/String;
+   L0
+    ALOAD 1
+    ICONST_1
+    AALOAD
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 [Ljava/lang/String; L0 L1 1
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   String myMethod(String[] arg1) {
+      return arg1[1];
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void arrayElement2() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(String[].class, int.class)
+                .build((aThis, methodParameters) -> methodParameters.get(0).arrayElement(methodParameters.get(1)).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod([Ljava/lang/String;I)Ljava/lang/String;
+   L0
+    ALOAD 1
+    ILOAD 2
+    AALOAD
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 [Ljava/lang/String; L0 L1 1
+    LOCALVARIABLE arg2 I L0 L1 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   String myMethod(String[] arg1, int arg2) {
+      return arg1[arg2];
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
     void testSynthetic() {
         ClassDef def = ClassDef.builder("example.Example")
             .addModifiers(Modifier.PUBLIC)
