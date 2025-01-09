@@ -34,6 +34,200 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ByteCodeWriterTest {
 
     @Test
+    void equalsAndNotEquals() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(Object.class)
+                .addParameters(Object.class)
+                .build((aThis, methodParameters) ->
+                    TypeDef.OBJECT.array().instantiate(
+                        methodParameters.get(0).equalsStructurally(methodParameters.get(1)),
+                        methodParameters.get(0).notEqualsStructurally(methodParameters.get(1)),
+                        methodParameters.get(0).equalsReferentially(methodParameters.get(1)),
+                        methodParameters.get(0).notEqualsReferentially(methodParameters.get(1))
+                    ).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(Ljava/lang/Object;Ljava/lang/Object;)[Ljava/lang/Object;
+   L0
+    ICONST_4
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ALOAD 1
+    ALOAD 2
+    INVOKEVIRTUAL java/lang/Object.equals (Ljava/lang/Object;)Z
+    ICONST_1
+    IF_ICMPNE L1
+    ICONST_1
+    GOTO L2
+   L1
+    ICONST_0
+   L2
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_1
+    ALOAD 1
+    ALOAD 2
+    INVOKEVIRTUAL java/lang/Object.equals (Ljava/lang/Object;)Z
+    ICONST_1
+    IF_ICMPEQ L3
+    ICONST_1
+    GOTO L4
+   L3
+    ICONST_0
+   L4
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_2
+    ALOAD 1
+    ALOAD 2
+    IF_ACMPNE L5
+    ICONST_1
+    GOTO L6
+   L5
+    ICONST_0
+   L6
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_3
+    ALOAD 1
+    ALOAD 2
+    IF_ACMPEQ L7
+    ICONST_1
+    GOTO L8
+   L7
+    ICONST_0
+   L8
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    ARETURN
+   L9
+    LOCALVARIABLE arg1 Ljava/lang/Object; L0 L9 1
+    LOCALVARIABLE arg2 Ljava/lang/Object; L0 L9 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object[] myMethod(Object arg1, Object arg2) {
+      return new Object[]{arg1.equals(arg2), !arg1.equals(arg2), arg1 == arg2, arg1 != arg2};
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void math() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(int.class)
+                .addParameters(int.class)
+                .addParameters(float.class)
+                .addParameters(float.class)
+                .addParameters(double.class)
+                .addParameters(double.class)
+                .build((aThis, methodParameters) ->
+                    TypeDef.OBJECT.array().instantiate(
+                        methodParameters.get(0).math("+", methodParameters.get(1)),
+                        methodParameters.get(2).math("+", methodParameters.get(3)),
+                        methodParameters.get(4).math("+", methodParameters.get(5))
+                    ).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(IIFFDD)[Ljava/lang/Object;
+   L0
+    ICONST_3
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ILOAD 1
+    ILOAD 2
+    IADD
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_1
+    FLOAD 3
+    FLOAD 4
+    FADD
+    INVOKESTATIC java/lang/Float.valueOf (F)Ljava/lang/Float;
+    AASTORE
+    DUP
+    ICONST_2
+    DLOAD 5
+    DLOAD 7
+    DADD
+    INVOKESTATIC java/lang/Double.valueOf (D)Ljava/lang/Double;
+    AASTORE
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 I L0 L1 1
+    LOCALVARIABLE arg2 I L0 L1 2
+    LOCALVARIABLE arg3 F L0 L1 3
+    LOCALVARIABLE arg4 F L0 L1 4
+    LOCALVARIABLE arg5 D L0 L1 5
+    LOCALVARIABLE arg6 D L0 L1 6
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object[] myMethod(int arg1, int arg2, float arg3, float arg4, double arg5, double var7) {
+      return new Object[]{arg1 + arg2, arg3 + arg4, arg5 + var7};
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
     void concatStrings() {
         ClassDef def = ClassDef.builder("example.Example")
             .addModifiers(Modifier.PUBLIC)

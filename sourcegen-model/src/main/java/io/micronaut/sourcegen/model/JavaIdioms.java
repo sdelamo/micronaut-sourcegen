@@ -124,26 +124,40 @@ public final class JavaIdioms {
      * @return The idiom expression
      */
     public static ExpressionDef equalsStructurally(ExpressionDef.EqualsStructurally equalsStructurally) {
-        var type = equalsStructurally.instance().type();
+        ExpressionDef left = equalsStructurally.instance();
+        ExpressionDef right = equalsStructurally.other();
+        return equalsStructurally(left, right);
+    }
+
+    /**
+     * The equals structurally idiom.
+     *
+     * @param left The left expression
+     * @param right The left expression
+     * @return The idiom expression
+     * @since 1.5
+     */
+    public static ExpressionDef equalsStructurally(ExpressionDef left, ExpressionDef right) {
+        var type = left.type();
         if (type instanceof TypeDef.Array array) {
             if (array.dimensions() > 1) {
                 return ARRAYS_TYPE
                     .invokeStatic(
                         ARRAYS_DEEP_EQUALS,
-                        equalsStructurally.instance(),
-                        equalsStructurally.other()
+                        left,
+                        right
                     );
             } else {
                 return ARRAYS_TYPE
                     .invokeStatic(
                         "equals",
                         TypeDef.Primitive.BOOLEAN,
-                        equalsStructurally.instance(),
-                        equalsStructurally.other()
+                        left,
+                        right
                     );
             }
         }
-        return equalsStructurally.instance().invoke(OBJECT_EQUALS, equalsStructurally.other());
+        return left.invoke(OBJECT_EQUALS, right);
     }
 
     /**
