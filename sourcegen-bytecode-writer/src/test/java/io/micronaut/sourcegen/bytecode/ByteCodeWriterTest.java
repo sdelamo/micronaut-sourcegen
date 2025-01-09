@@ -8,6 +8,7 @@ import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.EnumDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.FieldDef;
+import io.micronaut.sourcegen.model.JavaIdioms;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.ObjectDef;
 import io.micronaut.sourcegen.model.StatementDef;
@@ -31,6 +32,118 @@ import static io.micronaut.sourcegen.bytecode.DecompilerUtils.decompileToJava;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ByteCodeWriterTest {
+
+    @Test
+    void concatStrings() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(String.class)
+                .addParameters(Object.class)
+                .addParameters(String[].class)
+                .build((aThis, methodParameters) -> JavaIdioms.concatStrings(methodParameters).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/String;)Ljava/lang/String;
+   L0
+    NEW java/lang/StringBuilder
+    DUP
+    ALOAD 1
+    INVOKESPECIAL java/lang/StringBuilder.<init> (Ljava/lang/String;)V
+    ALOAD 2
+    INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/Object;)Ljava/lang/StringBuilder;
+    ALOAD 3
+    INVOKESTATIC java/util/Arrays.toString ([Ljava/lang/String;)Ljava/lang/String;
+    INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
+    INVOKEVIRTUAL java/lang/StringBuilder.toString ()Ljava/lang/String;
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 Ljava/lang/String; L0 L1 1
+    LOCALVARIABLE arg2 Ljava/lang/Object; L0 L1 2
+    LOCALVARIABLE arg3 [Ljava/lang/String; L0 L1 3
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+import java.util.Arrays;
+
+public class Example {
+   String myMethod(String arg1, Object arg2, String[] arg3) {
+      return arg1 + arg2 + Arrays.toString(arg3);
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void instanceOf() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(Object.class)
+                .build((aThis, methodParameters) -> methodParameters.get(0).instanceOf(TypeDef.STRING).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(Ljava/lang/Object;)Z
+   L0
+    ALOAD 1
+    INSTANCEOF java/lang/String
+    IRETURN
+   L1
+    LOCALVARIABLE arg1 Ljava/lang/Object; L0 L1 1
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   boolean myMethod(Object arg1) {
+      return arg1 instanceof String;
+   }
+}
+""", decompileToJava(bytes));
+    }
 
     @Test
     void arrayElement() {
