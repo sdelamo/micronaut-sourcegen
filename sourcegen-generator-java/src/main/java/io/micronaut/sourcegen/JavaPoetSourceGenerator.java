@@ -856,10 +856,25 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             }
             return renderExpressionWithParentheses(objectDef, methodDef, JavaIdioms.equalsStructurally(equalsStructurally));
         }
+        if (expressionDef instanceof ExpressionDef.NotEqualsStructurally notEqualsStructurally) {
+            ExpressionDef left = notEqualsStructurally.instance();
+            TypeDef leftType = left.type();
+            ExpressionDef right = notEqualsStructurally.other();
+            TypeDef rightType = right.type();
+            if (leftType.isPrimitive() || rightType.isPrimitive()) {
+                return renderEqualsReferentially(objectDef, methodDef, left, right);
+            }
+            return renderExpressionWithParentheses(objectDef, methodDef, JavaIdioms.equalsStructurally(notEqualsStructurally.instance(), notEqualsStructurally.other()).isFalse());
+        }
         if (expressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {
             ExpressionDef left = equalsReferentially.instance();
             ExpressionDef right = equalsReferentially.other();
             return renderEqualsReferentially(objectDef, methodDef, left, right);
+        }
+        if (expressionDef instanceof ExpressionDef.NotEqualsReferentially notEqualsReferentially) {
+            ExpressionDef left = notEqualsReferentially.instance();
+            ExpressionDef right = notEqualsReferentially.other();
+            return renderNotEqualsReferentially(objectDef, methodDef, left, right);
         }
         throw new IllegalStateException("Unrecognized condition: " + expressionDef);
     }
@@ -868,6 +883,14 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         return CodeBlock.builder()
             .add(renderExpressionWithParentheses(objectDef, methodDef, left))
             .add(" == ")
+            .add(renderExpressionWithParentheses(objectDef, methodDef, right))
+            .build();
+    }
+
+    private CodeBlock renderNotEqualsReferentially(ObjectDef objectDef, MethodDef methodDef, ExpressionDef left, ExpressionDef right) {
+        return CodeBlock.builder()
+            .add(renderExpressionWithParentheses(objectDef, methodDef, left))
+            .add(" != ")
             .add(renderExpressionWithParentheses(objectDef, methodDef, right))
             .build();
     }

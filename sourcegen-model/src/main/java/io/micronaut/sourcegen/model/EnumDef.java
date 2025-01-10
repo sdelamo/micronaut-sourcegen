@@ -54,15 +54,16 @@ public final class EnumDef extends ObjectDef {
                     List<String> javadoc,
                     LinkedHashMap<String, List<ExpressionDef>> enumConstants,
                     List<TypeDef> superinterfaces,
-                    List<ObjectDef> innerTypes) {
-        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+                    List<ObjectDef> innerTypes,
+                    boolean synthetic) {
+        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes, synthetic);
         this.fields = fields;
         this.enumConstants = enumConstants;
     }
 
     @Override
     public EnumDef withClassName(ClassTypeDef.ClassName className) {
-        return new EnumDef(className, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
+        return new EnumDef(className, modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes, synthetic);
     }
 
     public static EnumDefBuilder builder(String name) {
@@ -172,7 +173,7 @@ public final class EnumDef extends ObjectDef {
                     }
                 }
             }
-            return new EnumDef(new ClassTypeDef.ClassName(name), modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes);
+            return new EnumDef(new ClassTypeDef.ClassName(name), modifiers, fields, methods, properties, annotations, javadoc, enumConstants, superinterfaces, innerTypes, synthetic);
         }
 
         /**

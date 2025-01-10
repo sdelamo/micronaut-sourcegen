@@ -35,8 +35,8 @@ public final class ParameterDef extends AbstractElement {
     private ParameterDef(String name, EnumSet<Modifier> modifiers,
                          List<AnnotationDef> annotations,
                          List<String> javadoc,
-                         TypeDef type) {
-        super(name, modifiers, annotations, javadoc);
+                         TypeDef type, boolean synthetic) {
+        super(name, modifiers, annotations, javadoc, synthetic);
         this.type = type;
     }
 
@@ -81,7 +81,7 @@ public final class ParameterDef extends AbstractElement {
         }
 
         public ParameterDef build() {
-            return new ParameterDef(name, modifiers, annotations, javadoc, type);
+            return new ParameterDef(name, modifiers, annotations, javadoc, type, synthetic);
         }
 
     }

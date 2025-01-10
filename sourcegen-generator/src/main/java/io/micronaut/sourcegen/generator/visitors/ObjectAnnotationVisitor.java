@@ -29,6 +29,7 @@ import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.JavaIdioms;
 import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
@@ -36,7 +37,6 @@ import io.micronaut.sourcegen.model.VariableDef;
 
 import javax.lang.model.element.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -58,16 +58,6 @@ import java.util.Set;
 public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object, Object> {
 
     private static final ExpressionDef HASH_MULTIPLIER = ExpressionDef.primitiveConstant(31);
-
-    private static final MethodDef APPEND_STRING = MethodDef.builder("append")
-        .returns(StringBuilder.class)
-        .addParameter(String.class)
-        .build();
-
-    private static final MethodDef APPEND_OBJECT = MethodDef.builder("append")
-        .returns(StringBuilder.class)
-        .addParameter(Object.class)
-        .build();
 
     private final Set<String> processed = new HashSet<>();
 
@@ -148,34 +138,21 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
             .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
             .returns(TypeDef.STRING)
             .addParameter("instance", selfType)
-            .build((self, parameterDef) ->
-                ClassTypeDef.of(StringBuilder.class).instantiate(
-                        ExpressionDef.constant(selfType.getSimpleName() + "["))
-                    .newLocal("strBuilder", variableDef -> {
-                        ExpressionDef exp = variableDef;
-                        for (int i = 0; i < properties.size(); i++) {
-                            var beanProperty = properties.get(i);
-                            if (beanProperty.isWriteOnly()) {
-                                continue;
-                            }
-                            ExpressionDef propertyValue = parameterDef.get(0).getPropertyValue(beanProperty);
-
-                            exp = exp.invoke(APPEND_STRING, ExpressionDef.constant(beanProperty.getName() + "="));
-                            TypeDef propertyType = TypeDef.of(beanProperty.getType());
-                            if (propertyType.isArray()) {
-                                exp = exp.invoke(APPEND_STRING,
-                                    ClassTypeDef.of(Arrays.class).invokeStatic("toString", TypeDef.STRING, propertyValue)
-                                );
-                            } else if (propertyType.isPrimitive() || propertyType.equals(TypeDef.STRING)) {
-                                exp = exp.invoke("append", variableDef.type(), propertyValue);
-                            } else {
-                                exp = exp.invoke(APPEND_OBJECT, propertyValue);
-                            }
-                            exp = exp.invoke(APPEND_STRING,
-                                ExpressionDef.constant((i == properties.size() - 1) ? "]" : ", "));
+            .build((self, parameterDef) -> {
+                    List<ExpressionDef> expressions = new ArrayList<>();
+                    expressions.add(ExpressionDef.constant(selfType.getSimpleName() + "["));
+                    for (int i = 0; i < properties.size(); i++) {
+                        var beanProperty = properties.get(i);
+                        if (beanProperty.isWriteOnly()) {
+                            continue;
                         }
-                        return exp.invoke("toString", TypeDef.STRING).returning();
-                    })
+                        ExpressionDef propertyValue = parameterDef.get(0).getPropertyValue(beanProperty);
+                        expressions.add(ExpressionDef.constant(beanProperty.getName() + "="));
+                        expressions.add(propertyValue);
+                        expressions.add(ExpressionDef.constant((i == properties.size() - 1) ? "]" : ", "));
+                    }
+                    return JavaIdioms.concatStrings(expressions).returning();
+                }
             );
         classDefBuilder.addMethod(method);
     }
@@ -196,7 +173,7 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
 
                 return StatementDef.multi(
                     instance.equalsReferentially(o).ifTrue(ExpressionDef.trueValue().returning()),
-                    o.isNull().or(instance.invokeGetClass().asCondition(" != ", new ExpressionDef.InvokeGetClassMethod(o)))
+                    o.isNull().or(instance.invokeGetClass().notEqualsReferentially(o.invokeGetClass()))
                         .doIf(ExpressionDef.falseValue().returning()),
                     o.cast(selfType).newLocal("other", variableDef -> {
                         ExpressionDef.ConditionExpressionDef exp = null;
@@ -210,7 +187,7 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
                             var firstProperty = instance.getPropertyValue(beanProperty);
                             var secondProperty = variableDef.getPropertyValue(beanProperty);
 
-                            ExpressionDef.ConditionExpressionDef newEqualsExpression = new ExpressionDef.EqualsReferentially(firstProperty, secondProperty);
+                            ExpressionDef.ConditionExpressionDef newEqualsExpression = firstProperty.equalsReferentially(secondProperty);
                             if (!beanProperty.isPrimitive() || beanProperty.isArray()) {
                                 // Object.equals for objects
 //                                if (beanProperty.isArray()) {

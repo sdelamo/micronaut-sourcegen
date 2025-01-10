@@ -41,14 +41,15 @@ public final class RecordDef extends ObjectDef {
                       List<String> javadoc,
                       List<TypeDef.TypeVariable> typeVariables,
                       List<TypeDef> superinterfaces,
-                      List<ObjectDef> innerTypes) {
-        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+                      List<ObjectDef> innerTypes,
+                      boolean synthetic) {
+        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes, synthetic);
         this.typeVariables = typeVariables;
     }
 
     @Override
     public RecordDef withClassName(ClassTypeDef.ClassName className) {
-        return new RecordDef(className, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
+        return new RecordDef(className, modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes, synthetic);
     }
 
     public static RecordDefBuilder builder(String name) {
@@ -80,7 +81,7 @@ public final class RecordDef extends ObjectDef {
         }
 
         public RecordDef build() {
-            return new RecordDef(new ClassTypeDef.ClassName(name), modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes);
+            return new RecordDef(new ClassTypeDef.ClassName(name), modifiers, methods, properties, annotations, javadoc, typeVariables, superinterfaces, innerTypes, synthetic);
         }
 
     }

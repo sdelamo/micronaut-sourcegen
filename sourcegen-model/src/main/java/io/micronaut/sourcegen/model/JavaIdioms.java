@@ -16,12 +16,15 @@
 package io.micronaut.sourcegen.model;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MemberElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -54,6 +57,66 @@ public final class JavaIdioms {
 
     private static final ClassTypeDef ARRAYS_TYPE = ClassTypeDef.of(Arrays.class);
 
+    private static final Method STRING_BUILDER_APPEND_STRING = ReflectionUtils.getRequiredMethod(StringBuilder.class, "append", String.class);
+    private static final Method STRING_BUILDER_APPEND_OBJECT = ReflectionUtils.getRequiredMethod(StringBuilder.class, "append", Object.class);
+    private static final Method STRING_BUILDER_TO_STRING = ReflectionUtils.getRequiredMethod(StringBuilder.class, "toString");
+
+    /**
+     * Concat strings using {@link StringBuilder}.
+     *
+     * @param stringExpressions The expression
+     * @return The string builder expression
+     */
+    public static ExpressionDef concatStrings(ExpressionDef... stringExpressions) {
+        return concatStrings(Arrays.asList(stringExpressions));
+    }
+
+    /**
+     * Concat strings using {@link StringBuilder}.
+     *
+     * @param stringExpressions The expression
+     * @return The string builder expression
+     */
+    public static ExpressionDef concatStrings(List<? extends ExpressionDef> stringExpressions) {
+        if (stringExpressions.isEmpty()) {
+            return ExpressionDef.constant("");
+        }
+        if (stringExpressions.size() == 1) {
+            return convertToStringIfNeeded(stringExpressions.get(0));
+        }
+        ExpressionDef stringBuilderExp = null;
+        for (ExpressionDef expression : stringExpressions) {
+            if (stringBuilderExp == null) {
+                stringBuilderExp = ClassTypeDef.of(StringBuilder.class).instantiate(
+                    convertToStringIfNeeded(expression)
+                );
+            } else if (expression.type().equals(TypeDef.STRING)) {
+                stringBuilderExp = stringBuilderExp.invoke(STRING_BUILDER_APPEND_STRING, expression);
+            } else if (expression.type().isArray()) {
+                stringBuilderExp = stringBuilderExp.invoke(STRING_BUILDER_APPEND_STRING, convertToStringIfNeeded(expression));
+            } else {
+                stringBuilderExp = stringBuilderExp.invoke(STRING_BUILDER_APPEND_OBJECT, expression);
+            }
+        }
+        return stringBuilderExp.invoke(STRING_BUILDER_TO_STRING);
+    }
+
+    /**
+     * Convert the expression to {@link String} if it's not one.
+     * @param expression The expression
+     * @return The string expression
+     */
+    public static ExpressionDef convertToStringIfNeeded(ExpressionDef expression) {
+        TypeDef type = expression.type();
+        if (type.equals(TypeDef.STRING)) {
+            return expression;
+        }
+        if (type.isArray()) {
+            return ClassTypeDef.of(Arrays.class).invokeStatic("toString", TypeDef.STRING, expression);
+        }
+        return ClassTypeDef.of(String.class).invokeStatic("valueOf", TypeDef.STRING, expression);
+    }
+
     /**
      * The equals structurally idiom.
      *
@@ -61,26 +124,40 @@ public final class JavaIdioms {
      * @return The idiom expression
      */
     public static ExpressionDef equalsStructurally(ExpressionDef.EqualsStructurally equalsStructurally) {
-        var type = equalsStructurally.instance().type();
+        ExpressionDef left = equalsStructurally.instance();
+        ExpressionDef right = equalsStructurally.other();
+        return equalsStructurally(left, right);
+    }
+
+    /**
+     * The equals structurally idiom.
+     *
+     * @param left The left expression
+     * @param right The left expression
+     * @return The idiom expression
+     * @since 1.5
+     */
+    public static ExpressionDef equalsStructurally(ExpressionDef left, ExpressionDef right) {
+        var type = left.type();
         if (type instanceof TypeDef.Array array) {
             if (array.dimensions() > 1) {
                 return ARRAYS_TYPE
                     .invokeStatic(
                         ARRAYS_DEEP_EQUALS,
-                        equalsStructurally.instance(),
-                        equalsStructurally.other()
+                        left,
+                        right
                     );
             } else {
                 return ARRAYS_TYPE
                     .invokeStatic(
                         "equals",
                         TypeDef.Primitive.BOOLEAN,
-                        equalsStructurally.instance(),
-                        equalsStructurally.other()
+                        left,
+                        right
                     );
             }
         }
-        return equalsStructurally.instance().invoke(OBJECT_EQUALS, equalsStructurally.other());
+        return left.invoke(OBJECT_EQUALS, right);
     }
 
     /**

@@ -60,6 +60,7 @@ import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_RECORD;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 import static org.objectweb.asm.Opcodes.V17;
 
 /**
@@ -141,6 +142,9 @@ public final class ByteCodeWriter {
      */
     public void writeField(ClassVisitor classVisitor, ObjectDef objectDef, FieldDef fieldDef) {
         int modifiersFlag = getModifiersFlag(fieldDef.getModifiers());
+        if (fieldDef.isSynthetic()) {
+            modifiersFlag |= ACC_SYNTHETIC;
+        }
         if (EnumGenUtils.isEnumField(objectDef, fieldDef)) {
             modifiersFlag |= ACC_ENUM;
         }
@@ -166,8 +170,12 @@ public final class ByteCodeWriter {
      * @param outerType The outer type
      */
     public void writeInterface(ClassVisitor classVisitor, InterfaceDef interfaceDef, @Nullable ClassTypeDef outerType) {
+        int modifiersFlag = ACC_INTERFACE | ACC_ABSTRACT | getModifiersFlag(interfaceDef.getModifiers());
+        if (interfaceDef.isSynthetic()) {
+            modifiersFlag |= ACC_SYNTHETIC;
+        }
         classVisitor.visit(V17,
-            ACC_INTERFACE | ACC_ABSTRACT | getModifiersFlag(interfaceDef.getModifiers()),
+            modifiersFlag,
             TypeUtils.getType(interfaceDef.asTypeDef()).getInternalName(),
             SignatureWriterUtils.getInterfaceSignature(interfaceDef),
             TypeUtils.OBJECT_TYPE.getInternalName(),
@@ -204,9 +212,13 @@ public final class ByteCodeWriter {
      * @param outerType     The outer type
      */
     public void writeRecord(ClassVisitor classVisitor, RecordDef recordDef, @Nullable ClassTypeDef outerType) {
+        int modifiersFlag = ACC_RECORD | getModifiersFlag(recordDef.getModifiers());
+        if (recordDef.isSynthetic()) {
+            modifiersFlag |= ACC_SYNTHETIC;
+        }
         classVisitor.visit(
             V17,
-            ACC_RECORD | getModifiersFlag(recordDef.getModifiers()),
+            modifiersFlag,
             TypeUtils.getType(recordDef.asTypeDef()).getInternalName(),
             SignatureWriterUtils.getRecordSignature(recordDef),
             Type.getType(Record.class).getInternalName(),
@@ -237,6 +249,9 @@ public final class ByteCodeWriter {
 
         int modifiersFlag = getModifiersFlag(classDef.getModifiers());
 
+        if (classDef.isSynthetic()) {
+            modifiersFlag |= ACC_SYNTHETIC;
+        }
         if (EnumGenUtils.isEnum(classDef)) {
             modifiersFlag |= ACC_ENUM;
         }
@@ -426,15 +441,17 @@ public final class ByteCodeWriter {
     public void writeMethod(ClassVisitor classVisitor, @Nullable ObjectDef objectDef, MethodDef methodDef) {
         String name = methodDef.getName();
         String methodDescriptor = TypeUtils.getMethodDescriptor(objectDef, methodDef);
-        int access = getModifiersFlag(methodDef.getModifiers());
-
+        int modifiersFlag = getModifiersFlag(methodDef.getModifiers());
+        if (methodDef.isSynthetic()) {
+            modifiersFlag |= ACC_SYNTHETIC;
+        }
         GeneratorAdapter generatorAdapter = new GeneratorAdapter(classVisitor.visitMethod(
-            access,
+            modifiersFlag,
             name,
             methodDescriptor,
             SignatureWriterUtils.getMethodSignature(objectDef, methodDef),
             null
-        ), access, name, methodDescriptor);
+        ), modifiersFlag, name, methodDescriptor);
         for (AnnotationDef annotation : methodDef.getAnnotations()) {
             generatorAdapter.visitAnnotation(TypeUtils.getType(annotation.getType(), null).getDescriptor(), true);
         }

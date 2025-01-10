@@ -46,9 +46,10 @@ public abstract sealed class ObjectDef extends AbstractElement permits ClassDef,
         List<MethodDef> methods,
         List<PropertyDef> properties,
         List<TypeDef> superinterfaces,
-        List<ObjectDef> innerTypes
+        List<ObjectDef> innerTypes,
+        boolean synthetic
     ) {
-        super(className.getName(), modifiers, annotations, javadoc);
+        super(className.getName(), modifiers, annotations, javadoc, synthetic);
         this.className = className;
         this.methods = methods;
         this.properties = properties;

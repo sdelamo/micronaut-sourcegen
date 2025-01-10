@@ -1142,10 +1142,43 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
                     .build()
             }
+            if (expressionDef is NotEqualsStructurally) {
+                val type = expressionDef.instance.type()
+                if (type.isArray) {
+                    if (type is TypeDef.Array && type.dimensions > 1) {
+                        return CodeBlock.builder()
+                            .add("!")
+                            .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                            .add(".contentDeepEquals(")
+                            .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                            .add(")")
+                            .build()
+                    }
+                    return CodeBlock.builder()
+                        .add("!")
+                        .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                        .add(".contentEquals(")
+                        .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                        .add(")")
+                        .build()
+                }
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                    .add(" != ")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                    .build()
+            }
             if (expressionDef is EqualsReferentially) {
                 return CodeBlock.builder()
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
                     .add(" === ")
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
+                    .build()
+            }
+            if (expressionDef is NotEqualsReferentially) {
+                return CodeBlock.builder()
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.instance))
+                    .add(" !== ")
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.other))
                     .build()
             }

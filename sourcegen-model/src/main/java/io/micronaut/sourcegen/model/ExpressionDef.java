@@ -58,6 +58,20 @@ public sealed interface ExpressionDef
     }
 
     /**
+     * Check an array element.
+     *
+     * @param index The index
+     * @return The array element
+     * @since 1.5
+     */
+    default ArrayElement arrayElement(ExpressionDef index) {
+        if (!index.type().equals(TypeDef.Primitive.INT)) {
+            throw new IllegalStateException("Illegal array index type: " + index.type());
+        }
+        return new ArrayElement(this, index);
+    }
+
+    /**
      * Check if the instance is of the type.
      *
      * @param instanceType The instance type
@@ -720,6 +734,17 @@ public sealed interface ExpressionDef
     }
 
     /**
+     * The structurally not-equals !{@link Object#equals(Object)} of this expression and the other expression.
+     *
+     * @param other The other expression to compare with
+     * @return The equals expression
+     * @since 1.5
+     */
+    default NotEqualsStructurally notEqualsStructurally(ExpressionDef other) {
+        return new NotEqualsStructurally(this, other);
+    }
+
+    /**
      * The referentially equals (==) of this expression and the other expression.
      *
      * @param other The other expression to compare with
@@ -728,6 +753,17 @@ public sealed interface ExpressionDef
      */
     default EqualsReferentially equalsReferentially(ExpressionDef other) {
         return new EqualsReferentially(this, other);
+    }
+
+    /**
+     * The referentially not-equals (!=) of this expression and the other expression.
+     *
+     * @param other The other expression to compare with
+     * @return The equals expression
+     * @since 1.5
+     */
+    default NotEqualsReferentially notEqualsReferentially(ExpressionDef other) {
+        return new NotEqualsReferentially(this, other);
     }
 
     /**
@@ -1226,6 +1262,19 @@ public sealed interface ExpressionDef
     }
 
     /**
+     * The structurally equals expression.
+     *
+     * @param instance The instance
+     * @param other    The other
+     * @author Denis Stepanov
+     * @since 1.3
+     */
+    @Experimental
+    record NotEqualsStructurally(ExpressionDef instance,
+                                 ExpressionDef other) implements ConditionExpressionDef {
+    }
+
+    /**
      * The referential equals expression.
      *
      * @param instance The instance
@@ -1236,6 +1285,19 @@ public sealed interface ExpressionDef
     @Experimental
     record EqualsReferentially(ExpressionDef instance,
                                ExpressionDef other) implements ConditionExpressionDef {
+    }
+
+    /**
+     * The referential non-equals expression.
+     *
+     * @param instance The instance
+     * @param other    The other
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record NotEqualsReferentially(ExpressionDef instance,
+                                 ExpressionDef other) implements ConditionExpressionDef {
     }
 
     /**
@@ -1254,20 +1316,31 @@ public sealed interface ExpressionDef
     /**
      * The get array element expression.
      *
-     * @param expression The expression
-     * @param type       The component type
-     * @param index      The index
+     * @param expression      The expression
+     * @param type            The component type
+     * @param indexExpression The index expression
      * @author Denis Stepanov
      * @since 1.5
      */
     @Experimental
     record ArrayElement(ExpressionDef expression,
                         TypeDef type,
-                        int index) implements ExpressionDef {
+                        ExpressionDef indexExpression) implements ExpressionDef {
+
+        public ArrayElement(ExpressionDef expression,
+                            TypeDef type,
+                            int index) {
+            this(expression, type, ExpressionDef.constant(index));
+        }
 
         public ArrayElement(ExpressionDef expression,
                             int index) {
             this(expression, findComponentType(expression.type()), index);
+        }
+
+        public ArrayElement(ExpressionDef expression,
+                            ExpressionDef indexExpression) {
+            this(expression, findComponentType(expression.type()), indexExpression);
         }
 
         private static TypeDef findComponentType(TypeDef arrayType) {

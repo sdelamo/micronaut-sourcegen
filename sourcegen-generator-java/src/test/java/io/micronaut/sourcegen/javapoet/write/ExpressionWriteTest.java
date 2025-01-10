@@ -18,6 +18,31 @@ public class ExpressionWriteTest extends AbstractWriteTest {
     private static final ClassTypeDef STRING = ClassTypeDef.STRING;
 
     @Test
+    public void equalsExpressions() throws IOException {
+        ExpressionDef exp1 = ExpressionDef.constant(
+            ClassElement.of(String.class), STRING, "hello"
+        );
+        ExpressionDef exp2 = ExpressionDef.constant(
+            ClassElement.of(String.class), STRING, "world"
+        );
+        String equalsReferentially = writeMethodWithExpression(exp1.equalsReferentially(exp2));
+
+        assertEquals("\"hello\" == \"world\"", equalsReferentially);
+
+        String notEqualsReferentially = writeMethodWithExpression(exp1.notEqualsReferentially(exp2));
+
+        assertEquals("\"hello\" != \"world\"", notEqualsReferentially);
+
+        String equalsStructurally = writeMethodWithExpression(exp1.equalsStructurally(exp2));
+
+        assertEquals("\"hello\".equals(\"world\")", equalsStructurally);
+
+        String notEqualsStructurally = writeMethodWithExpression(exp1.notEqualsStructurally(exp2));
+
+        assertEquals("(!\"hello\".equals(\"world\"))", notEqualsStructurally);
+    }
+
+    @Test
     public void returnConstantExpression() throws IOException {
         ExpressionDef helloString = ExpressionDef.constant(
             ClassElement.of(String.class), STRING, "hello"

@@ -51,8 +51,9 @@ public final class ClassDef extends ObjectDef {
                      List<TypeDef> superinterfaces,
                      ClassTypeDef superclass,
                      List<ObjectDef> innerTypes,
-                     StatementDef staticInitializer) {
-        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes);
+                     StatementDef staticInitializer,
+                     boolean synthetic) {
+        super(className, modifiers, annotations, javadoc, methods, properties, superinterfaces, innerTypes, synthetic);
         ClassTypeDef.of(this);
         this.fields = fields;
         this.typeVariables = typeVariables;
@@ -62,7 +63,7 @@ public final class ClassDef extends ObjectDef {
 
     @Override
     public ClassDef withClassName(ClassTypeDef.ClassName className) {
-        return new ClassDef(className, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
+        return new ClassDef(className, modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer, synthetic);
     }
 
     @Override
@@ -203,7 +204,7 @@ public final class ClassDef extends ObjectDef {
         }
 
         public ClassDef build() {
-            return new ClassDef(new ClassTypeDef.ClassName(name), modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer);
+            return new ClassDef(new ClassTypeDef.ClassName(name), modifiers, fields, methods, properties, annotations, javadoc, typeVariables, superinterfaces, superclass, innerTypes, staticInitializer, synthetic);
         }
 
         /**
