@@ -173,7 +173,7 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
 
                 return StatementDef.multi(
                     instance.equalsReferentially(o).ifTrue(ExpressionDef.trueValue().returning()),
-                    o.isNull().or(instance.invokeGetClass().asCondition(" != ", new ExpressionDef.InvokeGetClassMethod(o)))
+                    o.isNull().or(instance.invokeGetClass().notEqualsReferentially(o.invokeGetClass()))
                         .doIf(ExpressionDef.falseValue().returning()),
                     o.cast(selfType).newLocal("other", variableDef -> {
                         ExpressionDef.ConditionExpressionDef exp = null;
@@ -187,7 +187,7 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
                             var firstProperty = instance.getPropertyValue(beanProperty);
                             var secondProperty = variableDef.getPropertyValue(beanProperty);
 
-                            ExpressionDef.ConditionExpressionDef newEqualsExpression = new ExpressionDef.EqualsReferentially(firstProperty, secondProperty);
+                            ExpressionDef.ConditionExpressionDef newEqualsExpression = firstProperty.equalsReferentially(secondProperty);
                             if (!beanProperty.isPrimitive() || beanProperty.isArray()) {
                                 // Object.equals for objects
 //                                if (beanProperty.isArray()) {

@@ -734,6 +734,17 @@ public sealed interface ExpressionDef
     }
 
     /**
+     * The structurally not-equals !{@link Object#equals(Object)} of this expression and the other expression.
+     *
+     * @param other The other expression to compare with
+     * @return The equals expression
+     * @since 1.5
+     */
+    default NotEqualsStructurally notEqualsStructurally(ExpressionDef other) {
+        return new NotEqualsStructurally(this, other);
+    }
+
+    /**
      * The referentially equals (==) of this expression and the other expression.
      *
      * @param other The other expression to compare with
@@ -742,6 +753,17 @@ public sealed interface ExpressionDef
      */
     default EqualsReferentially equalsReferentially(ExpressionDef other) {
         return new EqualsReferentially(this, other);
+    }
+
+    /**
+     * The referentially not-equals (!=) of this expression and the other expression.
+     *
+     * @param other The other expression to compare with
+     * @return The equals expression
+     * @since 1.5
+     */
+    default NotEqualsReferentially notEqualsReferentially(ExpressionDef other) {
+        return new NotEqualsReferentially(this, other);
     }
 
     /**
@@ -1240,6 +1262,19 @@ public sealed interface ExpressionDef
     }
 
     /**
+     * The structurally equals expression.
+     *
+     * @param instance The instance
+     * @param other    The other
+     * @author Denis Stepanov
+     * @since 1.3
+     */
+    @Experimental
+    record NotEqualsStructurally(ExpressionDef instance,
+                                 ExpressionDef other) implements ConditionExpressionDef {
+    }
+
+    /**
      * The referential equals expression.
      *
      * @param instance The instance
@@ -1250,6 +1285,19 @@ public sealed interface ExpressionDef
     @Experimental
     record EqualsReferentially(ExpressionDef instance,
                                ExpressionDef other) implements ConditionExpressionDef {
+    }
+
+    /**
+     * The referential non-equals expression.
+     *
+     * @param instance The instance
+     * @param other    The other
+     * @author Denis Stepanov
+     * @since 1.5
+     */
+    @Experimental
+    record NotEqualsReferentially(ExpressionDef instance,
+                                 ExpressionDef other) implements ConditionExpressionDef {
     }
 
     /**

@@ -88,11 +88,19 @@ public abstract class AbstractConditionalWriter {
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {
-                pushEqualsReferentially(generatorAdapter, context, equalsReferentially, elseLabel, GeneratorAdapter.NE);
+                pushEqualsReferentially(generatorAdapter, context, equalsReferentially.instance(), equalsReferentially.other(), elseLabel, GeneratorAdapter.NE);
                 return;
             }
             if (expressionDef instanceof ExpressionDef.EqualsStructurally equalsStructurally) {
-                pushEqualsStructurally(generatorAdapter, context, equalsStructurally, elseLabel, GeneratorAdapter.NE);
+                pushEqualsStructurally(generatorAdapter, context, equalsStructurally.instance(), equalsStructurally.other(), elseLabel, GeneratorAdapter.NE);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.NotEqualsReferentially notEqualsReferentially) {
+                pushEqualsReferentially(generatorAdapter, context, notEqualsReferentially.instance(), notEqualsReferentially.other(), elseLabel, GeneratorAdapter.EQ);
+                return;
+            }
+            if (expressionDef instanceof ExpressionDef.NotEqualsStructurally notEqualsStructurally) {
+                pushEqualsStructurally(generatorAdapter, context, notEqualsStructurally.instance(), notEqualsStructurally.other(), elseLabel, GeneratorAdapter.EQ);
                 return;
             }
             throw new UnsupportedOperationException("Unrecognized conditional expression: " + conditionExpressionDef);
@@ -160,11 +168,19 @@ public abstract class AbstractConditionalWriter {
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.EqualsReferentially equalsReferentially) {
-                pushEqualsReferentially(generatorAdapter, context, equalsReferentially, ifLabel, GeneratorAdapter.EQ);
+                pushEqualsReferentially(generatorAdapter, context, equalsReferentially.instance(), equalsReferentially.other(), ifLabel, GeneratorAdapter.EQ);
                 return;
             }
             if (expressionDef instanceof ExpressionDef.EqualsStructurally equalsStructurally) {
-                pushEqualsStructurally(generatorAdapter, context, equalsStructurally, ifLabel, GeneratorAdapter.EQ);
+                pushEqualsStructurally(generatorAdapter, context, equalsStructurally.instance(), equalsStructurally.other(), ifLabel, GeneratorAdapter.EQ);
+                return;
+            }
+            if (conditionExpressionDef instanceof ExpressionDef.NotEqualsReferentially notEqualsReferentially) {
+                pushEqualsReferentially(generatorAdapter, context, notEqualsReferentially.instance(), notEqualsReferentially.other(), ifLabel, GeneratorAdapter.NE);
+                return;
+            }
+            if (expressionDef instanceof ExpressionDef.NotEqualsStructurally notEqualsStructurally) {
+                pushEqualsStructurally(generatorAdapter, context, notEqualsStructurally.instance(), notEqualsStructurally.other(), ifLabel, GeneratorAdapter.NE);
                 return;
             }
             throw new UnsupportedOperationException("Unrecognized conditional expression: " + conditionExpressionDef);
@@ -177,28 +193,24 @@ public abstract class AbstractConditionalWriter {
         generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, ifLabel);
     }
 
-    private static void pushEqualsStructurally(GeneratorAdapter generatorAdapter, MethodContext context, ExpressionDef.EqualsStructurally equalsStructurally, Label ifLabel, int op) {
-        TypeDef leftType = equalsStructurally.instance().type();
-        TypeDef rightType = equalsStructurally.other().type();
+    private static void pushEqualsStructurally(GeneratorAdapter generatorAdapter,
+                                               MethodContext context,
+                                               ExpressionDef left,
+                                               ExpressionDef right,
+                                               Label ifLabel, int op) {
+        TypeDef leftType = left.type();
+        TypeDef rightType = right.type();
         if (leftType.isPrimitive()) {
-            pushEqualsReferentially(generatorAdapter, context, equalsStructurally.instance(), equalsStructurally.other().cast(leftType), ifLabel, op);
+            pushEqualsReferentially(generatorAdapter, context, left, right.cast(leftType), ifLabel, op);
             return;
         }
         if (rightType.isPrimitive()) {
-            pushEqualsReferentially(generatorAdapter, context, equalsStructurally.instance().cast(rightType), equalsStructurally.other(), ifLabel, op);
+            pushEqualsReferentially(generatorAdapter, context, left.cast(rightType), right, ifLabel, op);
             return;
         }
-        pushEqualsStructurally(generatorAdapter, context, equalsStructurally);
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, JavaIdioms.equalsStructurally(left, right), TypeDef.Primitive.BOOLEAN);
         generatorAdapter.push(true);
         generatorAdapter.ifCmp(Type.BOOLEAN_TYPE, op, ifLabel);
-    }
-
-    private static void pushEqualsReferentially(GeneratorAdapter generatorAdapter, MethodContext context,
-                                                ExpressionDef.EqualsReferentially equalsReferentially,
-                                                Label label, int op) {
-        ExpressionDef left = equalsReferentially.instance();
-        ExpressionDef right = equalsReferentially.other();
-        pushEqualsReferentially(generatorAdapter, context, left, right, label, op);
     }
 
     private static void pushEqualsReferentially(GeneratorAdapter generatorAdapter,
@@ -216,10 +228,6 @@ public abstract class AbstractConditionalWriter {
         } else {
             generatorAdapter.ifCmp(TypeUtils.OBJECT_TYPE, op, label);
         }
-    }
-
-    private static void pushEqualsStructurally(GeneratorAdapter generatorAdapter, MethodContext context, ExpressionDef.EqualsStructurally equalsStructurally) {
-        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, JavaIdioms.equalsStructurally(equalsStructurally), TypeDef.Primitive.BOOLEAN);
     }
 
     private static int getInvertConditionOp(String op) {
