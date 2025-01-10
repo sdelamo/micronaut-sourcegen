@@ -707,18 +707,24 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         if (expressionDef instanceof ExpressionDef.GetPropertyValue getPropertyValue) {
             return renderExpression(objectDef, methodDef, JavaIdioms.getPropertyValue(getPropertyValue));
         }
-        if (expressionDef instanceof ExpressionDef.MathOp mathOp) {
+        if (expressionDef instanceof ExpressionDef.MathBinaryOperation mathOperation) {
             return CodeBlock.concat(
-                renderExpressionWithParentheses(objectDef, methodDef, mathOp.left()),
-                CodeBlock.of(mathOp.operator()),
-                renderExpressionWithParentheses(objectDef, methodDef, mathOp.right())
+                renderExpressionWithParentheses(objectDef, methodDef, mathOperation.left()),
+                CodeBlock.of(getMathOp(mathOperation)),
+                renderExpressionWithParentheses(objectDef, methodDef, mathOperation.right())
+            );
+        }
+        if (expressionDef instanceof ExpressionDef.MathUnaryOperation mathOperation) {
+            return CodeBlock.concat(
+                CodeBlock.of(getMathOp(mathOperation)),
+                renderExpressionWithParentheses(objectDef, methodDef, mathOperation.expression())
             );
         }
         if (expressionDef instanceof ExpressionDef.IfElse condition) {
             return CodeBlock.concat(
                 renderExpression(objectDef, methodDef, condition.condition()),
                 CodeBlock.of(" ? "),
-                renderExpression(objectDef, methodDef, condition.expression()),
+                renderExpression(objectDef, methodDef, condition.ifExpression()),
                 CodeBlock.of(" : "),
                 renderExpression(objectDef, methodDef, condition.elseExpression())
             );
@@ -788,6 +794,28 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
         throw new IllegalStateException("Unrecognized expression: " + expressionDef);
     }
 
+    private static String getMathOp(ExpressionDef.MathBinaryOperation mathOperation) {
+        return switch (mathOperation.opType()) {
+            case ADDITION -> " + ";
+            case SUBTRACTION -> " - ";
+            case MULTIPLICATION -> " * ";
+            case DIVISION -> " / ";
+            case MODULUS -> " % ";
+            case BITWISE_AND -> " & ";
+            case BITWISE_OR -> " | ";
+            case BITWISE_XOR -> " ^ ";
+            case BITWISE_LEFT_SHIFT -> " << ";
+            case BITWISE_RIGHT_SHIFT -> " >> ";
+            case BITWISE_UNSIGNED_RIGHT_SHIFT -> " >>> ";
+        };
+    }
+
+    private static String getMathOp(ExpressionDef.MathUnaryOperation mathOperation) {
+        return switch (mathOperation.opType()) {
+            case NEGATE -> "-";
+        };
+    }
+
     private CodeBlock renderExpressionWithParentheses(@Nullable ObjectDef objectDef, MethodDef methodDef, ExpressionDef expressionDef) {
         var rendered = renderExpression(objectDef, methodDef, expressionDef);
         while (expressionDef instanceof ExpressionDef.Cast cast) {
@@ -809,10 +837,10 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
 
     private CodeBlock renderCondition(@Nullable ObjectDef objectDef, MethodDef methodDef, ExpressionDef.ConditionExpressionDef expressionDef) {
         if (expressionDef instanceof ExpressionDef.IsNull isNull) {
-            return renderCondition(objectDef, methodDef, new ExpressionDef.Condition("==", isNull.expression(), ExpressionDef.nullValue()));
+            return renderCondition(objectDef, methodDef, new ExpressionDef.ComparisonOperation(ExpressionDef.ComparisonOperation.OpType.EQUAL_TO, isNull.expression(), ExpressionDef.nullValue()));
         }
         if (expressionDef instanceof ExpressionDef.IsNotNull isNotNull) {
-            return renderCondition(objectDef, methodDef, new ExpressionDef.Condition("!=", isNotNull.expression(), ExpressionDef.nullValue()));
+            return renderCondition(objectDef, methodDef, new ExpressionDef.ComparisonOperation(ExpressionDef.ComparisonOperation.OpType.NOT_EQUAL_TO, isNotNull.expression(), ExpressionDef.nullValue()));
         }
         if (expressionDef instanceof ExpressionDef.IsTrue isTrue) {
             return renderExpressionWithParentheses(objectDef, methodDef, isTrue.expression());
@@ -823,11 +851,11 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
                 renderExpressionWithParentheses(objectDef, methodDef, isFalse.expression())
             );
         }
-        if (expressionDef instanceof ExpressionDef.Condition condition) {
+        if (expressionDef instanceof ExpressionDef.ComparisonOperation comparisonOperation) {
             return CodeBlock.concat(
-                renderExpressionWithParentheses(objectDef, methodDef, condition.left()),
-                CodeBlock.of(condition.operator()),
-                renderExpressionWithParentheses(objectDef, methodDef, condition.right())
+                renderExpressionWithParentheses(objectDef, methodDef, comparisonOperation.left()),
+                CodeBlock.of(getOpType(comparisonOperation)),
+                renderExpressionWithParentheses(objectDef, methodDef, comparisonOperation.right())
             );
         }
         if (expressionDef instanceof ExpressionDef.And andExpressionDef) {
@@ -877,6 +905,17 @@ public sealed class JavaPoetSourceGenerator implements SourceGenerator permits G
             return renderNotEqualsReferentially(objectDef, methodDef, left, right);
         }
         throw new IllegalStateException("Unrecognized condition: " + expressionDef);
+    }
+
+    private static String getOpType(ExpressionDef.ComparisonOperation comparisonOperation) {
+        return switch (comparisonOperation.opType()) {
+            case EQUAL_TO -> " == ";
+            case NOT_EQUAL_TO -> " != ";
+            case GREATER_THAN -> " > ";
+            case LESS_THAN -> " < ";
+            case GREATER_THAN_OR_EQUAL -> " >= ";
+            case LESS_THAN_OR_EQUAL -> " <= ";
+        };
     }
 
     private CodeBlock renderEqualsReferentially(ObjectDef objectDef, MethodDef methodDef, ExpressionDef left, ExpressionDef right) {

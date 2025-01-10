@@ -46,12 +46,7 @@ public abstract class AbstractWriteTest {
      * Writes a class and returns the inner contents of the class.
      */
     protected String writeClassWithContents(ClassDef classDef) throws IOException {
-        JavaPoetSourceGenerator generator = new JavaPoetSourceGenerator();
-        String result;
-        try (StringWriter writer = new StringWriter()) {
-            generator.write(classDef, writer);
-            result = writer.toString();
-        }
+        String result = writeClass(classDef);
 
         final Pattern CLASS_REGEX = Pattern.compile("package test;[\\s\\S]+" +
             "public class " + classDef.getSimpleName() + " \\{\\s+" +
@@ -61,6 +56,16 @@ public abstract class AbstractWriteTest {
             fail("Expected class to match regex: \n" + CLASS_REGEX + "\nbut is: \n" + result);
         }
         return matcher.group(1).trim();
+    }
+
+    protected static String writeClass(ClassDef classDef) throws IOException {
+        JavaPoetSourceGenerator generator = new JavaPoetSourceGenerator();
+        String result;
+        try (StringWriter writer = new StringWriter()) {
+            generator.write(classDef, writer);
+            result = writer.toString();
+        }
+        return result;
     }
 
     /**

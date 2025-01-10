@@ -58,11 +58,11 @@ public abstract class AbstractConditionalWriter {
                 generatorAdapter.visitLabel(ifLabel);
                 return;
             }
-            if (conditionExpressionDef instanceof ExpressionDef.Condition condition) {
-                ExpressionWriter.writeExpression(generatorAdapter, context, condition.left());
-                ExpressionWriter.writeExpression(generatorAdapter, context, condition.right());
-                Type conditionType = TypeUtils.getType(condition.left().type(), context.objectDef());
-                generatorAdapter.ifCmp(conditionType, getInvertConditionOp(condition.operator()), elseLabel);
+            if (conditionExpressionDef instanceof ExpressionDef.ComparisonOperation comparisonOperation) {
+                ExpressionWriter.writeExpression(generatorAdapter, context, comparisonOperation.left());
+                ExpressionWriter.writeExpression(generatorAdapter, context, comparisonOperation.right());
+                Type conditionType = TypeUtils.getType(comparisonOperation.left().type(), context.objectDef());
+                generatorAdapter.ifCmp(conditionType, getInvertConditionOp(comparisonOperation.opType()), elseLabel);
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.IsNull isNull) {
@@ -138,11 +138,11 @@ public abstract class AbstractConditionalWriter {
                 pushIfConditionalExpression(generatorAdapter, context, orExpressionDef.right(), ifLabel);
                 return;
             }
-            if (conditionExpressionDef instanceof ExpressionDef.Condition condition) {
-                ExpressionWriter.writeExpression(generatorAdapter, context, condition.left());
-                ExpressionWriter.writeExpression(generatorAdapter, context, condition.right());
-                Type conditionType = TypeUtils.getType(condition.left().type(), context.objectDef());
-                generatorAdapter.ifCmp(conditionType, getConditionOp(condition.operator()), ifLabel);
+            if (conditionExpressionDef instanceof ExpressionDef.ComparisonOperation comparisonOperation) {
+                ExpressionWriter.writeExpression(generatorAdapter, context, comparisonOperation.left());
+                ExpressionWriter.writeExpression(generatorAdapter, context, comparisonOperation.right());
+                Type conditionType = TypeUtils.getType(comparisonOperation.left().type(), context.objectDef());
+                generatorAdapter.ifCmp(conditionType, getConditionOp(comparisonOperation.opType()), ifLabel);
                 return;
             }
             if (conditionExpressionDef instanceof ExpressionDef.IsNull isNull) {
@@ -230,22 +230,25 @@ public abstract class AbstractConditionalWriter {
         }
     }
 
-    private static int getInvertConditionOp(String op) {
-        int conditionOp = getConditionOp(op);
-        return switch (conditionOp) {
-            case GeneratorAdapter.EQ -> GeneratorAdapter.NE;
-            case GeneratorAdapter.NE -> GeneratorAdapter.EQ;
-            default ->
-                throw new UnsupportedOperationException("Unrecognized condition operator: " + conditionOp);
+    private static int getInvertConditionOp(ExpressionDef.ComparisonOperation.OpType op) {
+        return switch (op) {
+            case EQUAL_TO -> GeneratorAdapter.NE;
+            case NOT_EQUAL_TO -> GeneratorAdapter.EQ;
+            case GREATER_THAN -> GeneratorAdapter.LE;
+            case LESS_THAN -> GeneratorAdapter.GE;
+            case GREATER_THAN_OR_EQUAL -> GeneratorAdapter.LT;
+            case LESS_THAN_OR_EQUAL -> GeneratorAdapter.GT;
         };
     }
 
-    private static int getConditionOp(String op) {
-        return switch (op.trim()) {
-            case "==" -> GeneratorAdapter.EQ;
-            case "!=" -> GeneratorAdapter.NE;
-            default ->
-                throw new UnsupportedOperationException("Unrecognized condition operator: " + op);
+    private static int getConditionOp(ExpressionDef.ComparisonOperation.OpType op) {
+        return switch (op) {
+            case EQUAL_TO -> GeneratorAdapter.EQ;
+            case NOT_EQUAL_TO -> GeneratorAdapter.NE;
+            case GREATER_THAN -> GeneratorAdapter.GT;
+            case LESS_THAN -> GeneratorAdapter.LT;
+            case GREATER_THAN_OR_EQUAL -> GeneratorAdapter.GE;
+            case LESS_THAN_OR_EQUAL -> GeneratorAdapter.LE;
         };
     }
 

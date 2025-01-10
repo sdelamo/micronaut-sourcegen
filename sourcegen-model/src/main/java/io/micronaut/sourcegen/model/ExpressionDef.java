@@ -44,7 +44,7 @@ import java.util.function.Function;
  */
 @Experimental
 public sealed interface ExpressionDef
-    permits ExpressionDef.Cast, ExpressionDef.ConditionExpressionDef, ExpressionDef.Constant, ExpressionDef.ArrayElement, ExpressionDef.GetPropertyValue, ExpressionDef.IfElse, ExpressionDef.InstanceOf, ExpressionDef.InvokeGetClassMethod, ExpressionDef.InvokeHashCodeMethod, ExpressionDef.InvokeInstanceMethod, ExpressionDef.InvokeStaticMethod, ExpressionDef.MathOp, ExpressionDef.NewArrayInitialized, ExpressionDef.NewArrayOfSize, ExpressionDef.NewInstance, ExpressionDef.Switch, ExpressionDef.SwitchYieldCase, VariableDef {
+    permits ExpressionDef.ArrayElement, ExpressionDef.Cast, ExpressionDef.ConditionExpressionDef, ExpressionDef.Constant, ExpressionDef.GetPropertyValue, ExpressionDef.IfElse, ExpressionDef.InstanceOf, ExpressionDef.InvokeGetClassMethod, ExpressionDef.InvokeHashCodeMethod, ExpressionDef.InvokeInstanceMethod, ExpressionDef.InvokeStaticMethod, ExpressionDef.MathBinaryOperation, ExpressionDef.MathUnaryOperation, ExpressionDef.NewArrayInitialized, ExpressionDef.NewArrayOfSize, ExpressionDef.NewInstance, ExpressionDef.Switch, ExpressionDef.SwitchYieldCase, VariableDef {
 
     /**
      * Check an array element.
@@ -92,27 +92,38 @@ public sealed interface ExpressionDef
     }
 
     /**
-     * The condition of this variable.
+     * The compare condition expression.
      *
      * @param op         The operator
      * @param expression The expression of this variable
      * @return The condition expression
      * @since 1.2
      */
-    default ConditionExpressionDef asCondition(String op, ExpressionDef expression) {
-        return new ExpressionDef.Condition(op, this, expression);
+    default ConditionExpressionDef compare(ComparisonOperation.OpType op, ExpressionDef expression) {
+        return new ComparisonOperation(op, this, expression);
     }
 
     /**
-     * The math operation of this variable.
+     * The math binary operation of this variable.
      *
      * @param op         The operator
      * @param expression The expression of this variable
-     * @return The condition expression
+     * @return The math expression
      * @since 1.2
      */
-    default ExpressionDef math(String op, ExpressionDef expression) {
-        return new ExpressionDef.MathOp(op, this, expression);
+    default ExpressionDef math(MathBinaryOperation.OpType op, ExpressionDef expression) {
+        return new MathBinaryOperation(op, this, expression);
+    }
+
+    /**
+     * The math unary operation of this variable.
+     *
+     * @param op The operator
+     * @return The math expression
+     * @since 1.5
+     */
+    default ExpressionDef math(MathUnaryOperation.OpType op) {
+        return new MathUnaryOperation(op, this);
     }
 
     /**
@@ -1034,34 +1045,133 @@ public sealed interface ExpressionDef
     }
 
     /**
-     * The condition operator.
+     * The condition operation.
      *
-     * @param operator The operator
-     * @param left     The left expression
-     * @param right    The right expression
+     * @param opType The operation
+     * @param left   The left expression
+     * @param right  The right expression
      * @author Denis Stepanov
      */
     @Experimental
-    record Condition(String operator,
-                     ExpressionDef left,
-                     ExpressionDef right) implements ConditionExpressionDef {
+    record ComparisonOperation(OpType opType,
+                               ExpressionDef left,
+                               ExpressionDef right) implements ConditionExpressionDef {
+
+        public ComparisonOperation(OpType opType, ExpressionDef left, ExpressionDef right) {
+            if (opType != OpType.EQUAL_TO && opType != OpType.NOT_EQUAL_TO) {
+                if (isNull(left)) {
+                    throw new IllegalStateException("Comparison left type cannot be null for operation " + opType);
+                }
+                TypeDef leftType = TypeDef.Primitive.unboxIfPossible(left.type());
+                if (!(leftType instanceof TypeDef.Primitive leftPrimitive) || !leftPrimitive.isNumber()) {
+                    throw new IllegalStateException("Comparison left type should be a primitive number: " + leftType);
+                }
+                if (leftType != left.type()) {
+                    left = left.cast(leftType); // unbox
+                }
+                if (isNull(right)) {
+                    throw new IllegalStateException("Comparison right type cannot be null for operation " + opType);
+                }
+                TypeDef rightType = TypeDef.Primitive.unboxIfPossible(right.type());
+                if (!(rightType instanceof TypeDef.Primitive rightPrimitive) || !rightPrimitive.isNumber()) {
+                    throw new IllegalStateException("Comparison right type should be a primitive number: " + rightType);
+                }
+                if (rightType != right.type()) {
+                    right = right.cast(rightType); // unbox
+                }
+            }
+            this.opType = opType;
+            this.right = right.cast(left.type());
+            this.left = left;
+        }
+
+        private boolean isNull(ExpressionDef v) {
+            return (v instanceof Constant constant) && constant.value == null;
+        }
+
+        /**
+         * The operation type.
+         */
+        public enum OpType {
+            EQUAL_TO,
+            NOT_EQUAL_TO,
+            GREATER_THAN,
+            LESS_THAN,
+            GREATER_THAN_OR_EQUAL,
+            LESS_THAN_OR_EQUAL
+        }
+
     }
 
     /**
-     * The math operator.
+     * The binary math operation.
      *
-     * @param operator The operator
+     * @param opType The operation
      * @param left     The left expression
      * @param right    The right expression
      * @author Denis Stepanov
      */
     @Experimental
-    record MathOp(String operator,
-                  ExpressionDef left,
-                  ExpressionDef right) implements ExpressionDef {
+    record MathBinaryOperation(OpType opType,
+                               ExpressionDef left,
+                               ExpressionDef right) implements ExpressionDef {
+
+        public MathBinaryOperation(OpType opType, ExpressionDef left, ExpressionDef right) {
+            if (!(left.type() instanceof TypeDef.Primitive leftPrimitive) || !leftPrimitive.isNumber()) {
+                throw new IllegalStateException("Math left type should be a primitive number");
+            }
+            if (!(right.type() instanceof TypeDef.Primitive rightPrimitive) || !rightPrimitive.isNumber()) {
+                throw new IllegalStateException("Math right type should be a primitive number");
+            }
+            this.opType = opType;
+            this.left = left;
+            this.right = right.cast(left.type());
+        }
+
         @Override
         public TypeDef type() {
             return left.type();
+        }
+
+        /**
+         * The operation type.
+         */
+        public enum OpType {
+            ADDITION,
+            SUBTRACTION,
+            MULTIPLICATION,
+            DIVISION,
+            MODULUS,
+
+            BITWISE_AND,
+            BITWISE_OR,
+            BITWISE_XOR,
+            BITWISE_LEFT_SHIFT,
+            BITWISE_RIGHT_SHIFT,
+            BITWISE_UNSIGNED_RIGHT_SHIFT,
+        }
+    }
+
+    /**
+     * The unary math operation.
+     *
+     * @param opType     The operation
+     * @param expression The expression
+     * @author Denis Stepanov
+     */
+    @Experimental
+    record MathUnaryOperation(OpType opType,
+                              ExpressionDef expression) implements ExpressionDef {
+        @Override
+        public TypeDef type() {
+            return expression.type();
+        }
+
+        /**
+         * The operation type.
+         */
+        public enum OpType {
+            NEGATE
         }
     }
 
@@ -1133,15 +1243,23 @@ public sealed interface ExpressionDef
      * The if-else expression.
      *
      * @param condition      The condition
-     * @param expression     The expression if the condition is true
+     * @param ifExpression   The expression if the condition is true
      * @param elseExpression The expression if the condition is false
+     * @param type           The expression type
      */
     @Experimental
-    record IfElse(ExpressionDef condition, ExpressionDef expression,
-                  ExpressionDef elseExpression) implements ExpressionDef {
-        @Override
-        public TypeDef type() {
-            return expression.type();
+    record IfElse(ExpressionDef condition,
+                  ExpressionDef ifExpression,
+                  ExpressionDef elseExpression,
+                  TypeDef type) implements ExpressionDef {
+
+        public IfElse(ExpressionDef condition, ExpressionDef ifExpression, ExpressionDef elseExpression) {
+            this(
+                condition,
+                ifExpression,
+                elseExpression,
+                ifExpression.type().equals(elseExpression.type()) ? ifExpression.type() : TypeDef.OBJECT
+            );
         }
     }
 
@@ -1311,6 +1429,11 @@ public sealed interface ExpressionDef
     @Experimental
     record InstanceOf(ExpressionDef expression,
                       ClassTypeDef instanceType) implements ConditionExpressionDef, ExpressionDef {
+
+        public InstanceOf(ExpressionDef expression, ClassTypeDef instanceType) {
+            this.expression = expression.type().isPrimitive() ? expression.cast(TypeDef.OBJECT) : expression;
+            this.instanceType = instanceType;
+        }
     }
 
     /**
