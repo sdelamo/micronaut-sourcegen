@@ -38,6 +38,30 @@ public sealed interface ClassTypeDef extends TypeDef {
 
     ClassTypeDef OBJECT = of(Object.class);
 
+    private static int hashCode(ClassTypeDef classTypeDef) {
+        return classTypeDef.getName().hashCode();
+    }
+
+    private static boolean equals(ClassTypeDef classTypeDef, Object o) {
+        if (classTypeDef == o) {
+            return true;
+        }
+        if (classTypeDef == null || o == null) {
+            return false;
+        }
+        if (classTypeDef instanceof Parameterized parameterized1) {
+            if (o instanceof Parameterized parameterized2) {
+                return parameterized1.getName().equals(parameterized2.getName())
+                    && parameterized1.typeArguments.equals(parameterized2.typeArguments);
+            }
+            return false; // Avoid comparing not-parameterized and parameterized
+        }
+        if (o instanceof Parameterized) {
+            return false; // Avoid comparing not-parameterized and parameterized
+        }
+        return o instanceof ClassTypeDef other && classTypeDef.getName().equals(other.getName());
+    }
+
     /**
      * @return The type name
      */
@@ -504,6 +528,16 @@ public sealed interface ClassTypeDef extends TypeDef {
         public boolean isInner() {
             return type.isMemberClass();
         }
+
+        @Override
+        public int hashCode() {
+            return ClassTypeDef.hashCode(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return ClassTypeDef.equals(this, obj);
+        }
     }
 
     /**
@@ -546,6 +580,15 @@ public sealed interface ClassTypeDef extends TypeDef {
             return new ClassName(name,  isInner, true);
         }
 
+        @Override
+        public int hashCode() {
+            return ClassTypeDef.hashCode(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return ClassTypeDef.equals(this, obj);
+        }
     }
 
     /**
@@ -598,6 +641,16 @@ public sealed interface ClassTypeDef extends TypeDef {
         public boolean isInner() {
             return classElement.isInner();
         }
+
+        @Override
+        public int hashCode() {
+            return ClassTypeDef.hashCode(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return ClassTypeDef.equals(this, obj);
+        }
     }
 
     /**
@@ -634,6 +687,16 @@ public sealed interface ClassTypeDef extends TypeDef {
         @Override
         public ClassTypeDef makeNullable() {
             return new ClassDefType(objectDef, true);
+        }
+
+        @Override
+        public int hashCode() {
+            return ClassTypeDef.hashCode(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return ClassTypeDef.equals(this, obj);
         }
 
     }
@@ -684,6 +747,15 @@ public sealed interface ClassTypeDef extends TypeDef {
             return rawType.isInterface();
         }
 
+        @Override
+        public int hashCode() {
+            return ClassTypeDef.hashCode(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return ClassTypeDef.equals(this, obj);
+        }
     }
 
     /**
@@ -696,7 +768,28 @@ public sealed interface ClassTypeDef extends TypeDef {
      */
     @Experimental
     record AnnotatedClassTypeDef(ClassTypeDef typeDef,
-                                 List<AnnotationDef> annotations) implements TypeDef.Annotated {
+                                 List<AnnotationDef> annotations) implements TypeDef.Annotated, ClassTypeDef {
+
+
+        @Override
+        public String getName() {
+            return typeDef.getName();
+        }
+
+        @Override
+        public ClassTypeDef makeNullable() {
+            return new AnnotatedClassTypeDef(typeDef.makeNullable(), annotations);
+        }
+
+        @Override
+        public int hashCode() {
+            return ClassTypeDef.hashCode(this);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return ClassTypeDef.equals(this, obj);
+        }
     }
 
 }

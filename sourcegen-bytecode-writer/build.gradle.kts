@@ -10,9 +10,9 @@ repositories {
 
 dependencies {
     api(projects.sourcegenModel)
-    api(libs.asm)
-    api(libs.asm.commons)
-    api(libs.asm.util)
+    implementation(libs.asm)
+    implementation(libs.asm.commons)
+    implementation(libs.asm.util)
 
     compileOnly(mn.micronaut.core.processor)
 
