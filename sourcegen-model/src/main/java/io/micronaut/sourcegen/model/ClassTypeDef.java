@@ -770,7 +770,6 @@ public sealed interface ClassTypeDef extends TypeDef {
     record AnnotatedClassTypeDef(ClassTypeDef typeDef,
                                  List<AnnotationDef> annotations) implements TypeDef.Annotated, ClassTypeDef {
 
-
         @Override
         public String getName() {
             return typeDef.getName();
