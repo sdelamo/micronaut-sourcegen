@@ -52,14 +52,15 @@ public sealed interface ClassTypeDef extends TypeDef {
         if (classTypeDef instanceof Parameterized parameterized1) {
             if (o instanceof Parameterized parameterized2) {
                 return parameterized1.getName().equals(parameterized2.getName())
-                    && parameterized1.typeArguments.equals(parameterized2.typeArguments);
+                    && parameterized1.typeArguments.equals(parameterized2.typeArguments)
+                    && parameterized1.isNullable() == parameterized2.isNullable();
             }
             return false; // Avoid comparing not-parameterized and parameterized
         }
         if (o instanceof Parameterized) {
             return false; // Avoid comparing not-parameterized and parameterized
         }
-        return o instanceof ClassTypeDef other && classTypeDef.getName().equals(other.getName());
+        return o instanceof ClassTypeDef other && classTypeDef.getName().equals(other.getName()) && classTypeDef.isNullable() == other.isNullable();
     }
 
     /**
@@ -768,27 +769,8 @@ public sealed interface ClassTypeDef extends TypeDef {
      */
     @Experimental
     record AnnotatedClassTypeDef(ClassTypeDef typeDef,
-                                 List<AnnotationDef> annotations) implements TypeDef.Annotated, ClassTypeDef {
+                                 List<AnnotationDef> annotations) implements TypeDef.Annotated {
 
-        @Override
-        public String getName() {
-            return typeDef.getName();
-        }
-
-        @Override
-        public ClassTypeDef makeNullable() {
-            return new AnnotatedClassTypeDef(typeDef.makeNullable(), annotations);
-        }
-
-        @Override
-        public int hashCode() {
-            return ClassTypeDef.hashCode(this);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return ClassTypeDef.equals(this, obj);
-        }
     }
 
 }
