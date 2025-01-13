@@ -1,21 +1,113 @@
 package io.micronaut.sourcegen.javapoet.write;
 
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.ExpressionDef.Cast;
+import io.micronaut.sourcegen.model.MethodDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
 import org.junit.Test;
 
+import javax.lang.model.element.Modifier;
 import java.io.IOException;
-import java.util.List;
 
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.EQUAL_TO;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.GREATER_THAN;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.GREATER_THAN_OR_EQUAL;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.LESS_THAN;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.LESS_THAN_OR_EQUAL;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.NOT_EQUAL_TO;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.ADDITION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_AND;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_LEFT_SHIFT;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_OR;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_RIGHT_SHIFT;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_UNSIGNED_RIGHT_SHIFT;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_XOR;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.DIVISION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.MODULUS;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.MULTIPLICATION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.SUBTRACTION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathUnaryOperation.OpType.NEGATE;
 import static org.junit.Assert.assertEquals;
 
 public class ExpressionWriteTest extends AbstractWriteTest {
 
     private static final ClassTypeDef STRING = ClassTypeDef.STRING;
+
+    @Test
+    public void compareOperations() throws IOException {
+        String data = writeClass(
+            ClassDef.builder("example.Example")
+                .addModifiers(Modifier.PUBLIC)
+                .addMethod(MethodDef.builder("myMethod")
+                    .addParameters(int.class)
+                    .addParameters(int.class)
+                    .build((aThis, methodParameters) ->
+                        TypeDef.OBJECT.array().instantiate(
+                            methodParameters.get(0).compare(EQUAL_TO, methodParameters.get(1)),
+                            methodParameters.get(0).compare(NOT_EQUAL_TO, methodParameters.get(1)),
+                            methodParameters.get(0).compare(GREATER_THAN, methodParameters.get(1)),
+                            methodParameters.get(0).compare(LESS_THAN, methodParameters.get(1)),
+                            methodParameters.get(0).compare(GREATER_THAN_OR_EQUAL, methodParameters.get(1)),
+                            methodParameters.get(0).compare(LESS_THAN_OR_EQUAL, methodParameters.get(1))
+                        ).returning()))
+                .build()
+        );
+
+        assertEquals("""
+package example;
+
+import java.lang.Object;
+
+public class Example {
+  Object[] myMethod(int arg1, int arg2) {
+    return new Object[]{arg1 == arg2,arg1 != arg2,arg1 > arg2,arg1 < arg2,arg1 >= arg2,arg1 <= arg2};
+  }
+}
+""", data);
+    }
+
+    @Test
+    public void mathOperations() throws IOException {
+        String data = writeClass(
+            ClassDef.builder("example.Example")
+                .addModifiers(Modifier.PUBLIC)
+                .addMethod(MethodDef.builder("myMethod")
+                    .addParameters(int.class)
+                    .addParameters(int.class)
+                    .build((aThis, methodParameters) ->
+                        TypeDef.OBJECT.array().instantiate(
+                            methodParameters.get(0).math(ADDITION, methodParameters.get(1)),
+                            methodParameters.get(0).math(SUBTRACTION, methodParameters.get(1)),
+                            methodParameters.get(0).math(MULTIPLICATION, methodParameters.get(1)),
+                            methodParameters.get(0).math(DIVISION, methodParameters.get(1)),
+                            methodParameters.get(0).math(MODULUS, methodParameters.get(1)),
+                            methodParameters.get(0).math(BITWISE_AND, methodParameters.get(1)),
+                            methodParameters.get(0).math(BITWISE_OR, methodParameters.get(1)),
+                            methodParameters.get(0).math(BITWISE_XOR, methodParameters.get(1)),
+                            methodParameters.get(0).math(BITWISE_LEFT_SHIFT, methodParameters.get(1)),
+                            methodParameters.get(0).math(BITWISE_RIGHT_SHIFT, methodParameters.get(1)),
+                            methodParameters.get(0).math(BITWISE_UNSIGNED_RIGHT_SHIFT, methodParameters.get(1)),
+                            methodParameters.get(0).math(NEGATE)
+                        ).returning()))
+                .build()
+        );
+
+        assertEquals("""
+package example;
+
+import java.lang.Object;
+
+public class Example {
+  Object[] myMethod(int arg1, int arg2) {
+    return new Object[]{arg1 + arg2,arg1 - arg2,arg1 * arg2,arg1 / arg2,arg1 % arg2,arg1 & arg2,arg1 | arg2,arg1 ^ arg2,arg1 << arg2,arg1 >> arg2,arg1 >>> arg2,-arg1};
+  }
+}
+""", data);
+    }
 
     @Test
     public void equalsExpressions() throws IOException {

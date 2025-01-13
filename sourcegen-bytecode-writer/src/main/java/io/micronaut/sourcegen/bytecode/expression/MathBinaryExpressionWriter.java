@@ -20,11 +20,11 @@ import io.micronaut.sourcegen.bytecode.TypeUtils;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
-final class MathExpressionWriter implements ExpressionWriter {
+final class MathBinaryExpressionWriter implements ExpressionWriter {
 
-    private final ExpressionDef.MathOp math;
+    private final ExpressionDef.MathBinaryOperation math;
 
-    public MathExpressionWriter(ExpressionDef.MathOp math) {
+    public MathBinaryExpressionWriter(ExpressionDef.MathBinaryOperation math) {
         this.math = math;
     }
 
@@ -32,15 +32,23 @@ final class MathExpressionWriter implements ExpressionWriter {
     public void write(GeneratorAdapter generatorAdapter, MethodContext context) {
         ExpressionWriter.writeExpression(generatorAdapter, context, math.left());
         ExpressionWriter.writeExpression(generatorAdapter, context, math.right());
-        generatorAdapter.math(getMathOp(math.operator()), TypeUtils.getType(math.left().type(), context.objectDef()));
+        generatorAdapter.math(getMathOp(math.opType()), TypeUtils.getType(math.left().type(), context.objectDef()));
     }
 
-    private static int getMathOp(String op) {
-        return switch (op.trim()) {
-            case "+" -> GeneratorAdapter.ADD;
-            case "*" -> GeneratorAdapter.MUL;
-            case "|" -> GeneratorAdapter.OR;
-            default -> throw new UnsupportedOperationException("Unrecognized math operator: " + op);
+    private static int getMathOp(ExpressionDef.MathBinaryOperation.OpType opType) {
+        return switch (opType) {
+            case ADDITION -> GeneratorAdapter.ADD;
+            case SUBTRACTION -> GeneratorAdapter.SUB;
+            case MULTIPLICATION -> GeneratorAdapter.MUL;
+            case DIVISION -> GeneratorAdapter.DIV;
+            case MODULUS -> GeneratorAdapter.REM;
+
+            case BITWISE_AND -> GeneratorAdapter.AND;
+            case BITWISE_OR -> GeneratorAdapter.OR;
+            case BITWISE_XOR -> GeneratorAdapter.XOR;
+            case BITWISE_LEFT_SHIFT -> GeneratorAdapter.SHL;
+            case BITWISE_RIGHT_SHIFT -> GeneratorAdapter.SHR;
+            case BITWISE_UNSIGNED_RIGHT_SHIFT -> GeneratorAdapter.USHR;
         };
     }
 }

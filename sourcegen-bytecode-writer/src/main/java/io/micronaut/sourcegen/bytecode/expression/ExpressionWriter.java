@@ -28,7 +28,7 @@ import org.objectweb.asm.commons.GeneratorAdapter;
  * @author Denis Stepano
  * @since 1.5
  */
-public sealed interface ExpressionWriter permits ArrayElementExpressionWriter, CastExpressionWriter, ConditionExpressionWriter, ConstantExpressionWriter, GetPropertyExpressionWriter, IfElseExpressionWriter, InstanceOfExpressionWriter, InvokeGetClassExpressionWriter, InvokeHashCodeMethodExpressionWriter, InvokeInstanceMethodExpressionWriter, InvokeStaticMethodExpressionWriter, MathExpressionWriter, NewArrayInitializedExpressionWriter, NewArrayOfSizeExpressionWriter, NewInstanceExpressionWriter, AbstractStatementAwareExpressionWriter, SwitchExpressionWriter, SwitchYieldCaseExpressionWriter, VariableExpressionWriter {
+public sealed interface ExpressionWriter permits AbstractStatementAwareExpressionWriter, ArrayElementExpressionWriter, CastExpressionWriter, ConditionExpressionWriter, ConstantExpressionWriter, GetPropertyExpressionWriter, IfElseExpressionWriter, InstanceOfExpressionWriter, InvokeGetClassExpressionWriter, InvokeHashCodeMethodExpressionWriter, InvokeInstanceMethodExpressionWriter, InvokeStaticMethodExpressionWriter, MathBinaryExpressionWriter, MathUnaryExpressionWriter, NewArrayInitializedExpressionWriter, NewArrayOfSizeExpressionWriter, NewInstanceExpressionWriter, SwitchExpressionWriter, SwitchYieldCaseExpressionWriter, VariableExpressionWriter {
 
     /**
      * Create a writer from an expression.
@@ -46,8 +46,11 @@ public sealed interface ExpressionWriter permits ArrayElementExpressionWriter, C
         if (expressionDef instanceof ExpressionDef.ConditionExpressionDef) {
             return new ConditionExpressionWriter(expressionDef);
         }
-        if (expressionDef instanceof ExpressionDef.MathOp math) {
-            return new MathExpressionWriter(math);
+        if (expressionDef instanceof ExpressionDef.MathBinaryOperation math) {
+            return new MathBinaryExpressionWriter(math);
+        }
+        if (expressionDef instanceof ExpressionDef.MathUnaryOperation math) {
+            return new MathUnaryExpressionWriter(math);
         }
         if (expressionDef instanceof ExpressionDef.InvokeInstanceMethod invokeInstanceMethod) {
             return new InvokeInstanceMethodExpressionWriter(invokeInstanceMethod);

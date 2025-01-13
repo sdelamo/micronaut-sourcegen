@@ -33,7 +33,7 @@ final class IfElseExpressionWriter extends AbstractConditionalWriter implements 
         Label elseLabel = new Label();
         pushElseConditionalExpression(generatorAdapter, context, conditionIfElse.condition(), elseLabel);
         Label end = new Label();
-        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, conditionIfElse.expression(), conditionIfElse.type());
+        ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, conditionIfElse.ifExpression(), conditionIfElse.type());
         generatorAdapter.goTo(end);
         generatorAdapter.visitLabel(elseLabel);
         ExpressionWriter.writeExpressionCheckCast(generatorAdapter, context, conditionIfElse.elseExpression(), conditionIfElse.type());

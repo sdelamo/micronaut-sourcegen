@@ -1,6 +1,7 @@
 package io.micronaut.sourcegen.bytecode;
 
 import io.micronaut.context.BeanResolutionContext;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.custom.visitor.innerTypes.GenerateInnerTypeInEnumVisitor;
 import io.micronaut.sourcegen.model.ClassDef;
@@ -29,9 +30,777 @@ import java.util.List;
 import java.util.Map;
 
 import static io.micronaut.sourcegen.bytecode.DecompilerUtils.decompileToJava;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.EQUAL_TO;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.GREATER_THAN;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.GREATER_THAN_OR_EQUAL;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.LESS_THAN;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.LESS_THAN_OR_EQUAL;
+import static io.micronaut.sourcegen.model.ExpressionDef.ComparisonOperation.OpType.NOT_EQUAL_TO;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.ADDITION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_AND;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_LEFT_SHIFT;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_OR;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_RIGHT_SHIFT;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_UNSIGNED_RIGHT_SHIFT;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.BITWISE_XOR;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.DIVISION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.MODULUS;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.MULTIPLICATION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.SUBTRACTION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathUnaryOperation.OpType.NEGATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ByteCodeWriterTest {
+
+    @Test
+    void ifElseExpression() {
+
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(boolean.class)
+                .addParameters(int.class)
+                .addParameters(String.class)
+                .build((aThis, methodParameters) ->
+                    methodParameters.get(0)
+                        .isTrue()
+                        .doIfElse(methodParameters.get(1), methodParameters.get(2))
+                        .returning())
+            )
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(ZILjava/lang/String;)Ljava/lang/Object;
+   L0
+    ILOAD 1
+    ICONST_1
+    IF_ICMPNE L1
+    ILOAD 2
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    GOTO L2
+   L1
+    ALOAD 3
+   L2
+    ARETURN
+   L3
+    LOCALVARIABLE arg1 Z L0 L3 1
+    LOCALVARIABLE arg2 I L0 L3 2
+    LOCALVARIABLE arg3 Ljava/lang/String; L0 L3 3
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object myMethod(boolean arg1, int arg2, String arg3) {
+      return arg1 ? arg2 : arg3;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void compareOpsCast() {
+
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(int.class)
+                .addParameters(double.class)
+                .build((aThis, methodParameters) ->
+                    TypeDef.OBJECT.array().instantiate(
+                        methodParameters.get(0).compare(EQUAL_TO, methodParameters.get(1)),
+                        methodParameters.get(0).compare(NOT_EQUAL_TO, methodParameters.get(1)),
+                        methodParameters.get(0).compare(GREATER_THAN, methodParameters.get(1)),
+                        methodParameters.get(0).compare(LESS_THAN, methodParameters.get(1)),
+                        methodParameters.get(0).compare(GREATER_THAN_OR_EQUAL, methodParameters.get(1)),
+                        methodParameters.get(0).compare(LESS_THAN_OR_EQUAL, methodParameters.get(1))
+                    ).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(ID)[Ljava/lang/Object;
+   L0
+    BIPUSH 6
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ILOAD 1
+    DLOAD 2
+    D2I
+    IF_ICMPNE L1
+    ICONST_1
+    GOTO L2
+   L1
+    ICONST_0
+   L2
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_1
+    ILOAD 1
+    DLOAD 2
+    D2I
+    IF_ICMPEQ L3
+    ICONST_1
+    GOTO L4
+   L3
+    ICONST_0
+   L4
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_2
+    ILOAD 1
+    DLOAD 2
+    D2I
+    IF_ICMPLE L5
+    ICONST_1
+    GOTO L6
+   L5
+    ICONST_0
+   L6
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_3
+    ILOAD 1
+    DLOAD 2
+    D2I
+    IF_ICMPGE L7
+    ICONST_1
+    GOTO L8
+   L7
+    ICONST_0
+   L8
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_4
+    ILOAD 1
+    DLOAD 2
+    D2I
+    IF_ICMPLT L9
+    ICONST_1
+    GOTO L10
+   L9
+    ICONST_0
+   L10
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_5
+    ILOAD 1
+    DLOAD 2
+    D2I
+    IF_ICMPGT L11
+    ICONST_1
+    GOTO L12
+   L11
+    ICONST_0
+   L12
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    ARETURN
+   L13
+    LOCALVARIABLE arg1 I L0 L13 1
+    LOCALVARIABLE arg2 D L0 L13 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object[] myMethod(int arg1, double arg2) {
+      return new Object[]{arg1 == (int)arg2, arg1 != (int)arg2, arg1 > (int)arg2, arg1 < (int)arg2, arg1 >= (int)arg2, arg1 <= (int)arg2};
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void compareOps() {
+
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(int.class)
+                .addParameters(int.class)
+                .build((aThis, methodParameters) ->
+                    TypeDef.OBJECT.array().instantiate(
+                        methodParameters.get(0).compare(EQUAL_TO, methodParameters.get(1)),
+                        methodParameters.get(0).compare(NOT_EQUAL_TO, methodParameters.get(1)),
+                        methodParameters.get(0).compare(GREATER_THAN, methodParameters.get(1)),
+                        methodParameters.get(0).compare(LESS_THAN, methodParameters.get(1)),
+                        methodParameters.get(0).compare(GREATER_THAN_OR_EQUAL, methodParameters.get(1)),
+                        methodParameters.get(0).compare(LESS_THAN_OR_EQUAL, methodParameters.get(1))
+                    ).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(II)[Ljava/lang/Object;
+   L0
+    BIPUSH 6
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ILOAD 1
+    ILOAD 2
+    IF_ICMPNE L1
+    ICONST_1
+    GOTO L2
+   L1
+    ICONST_0
+   L2
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_1
+    ILOAD 1
+    ILOAD 2
+    IF_ICMPEQ L3
+    ICONST_1
+    GOTO L4
+   L3
+    ICONST_0
+   L4
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_2
+    ILOAD 1
+    ILOAD 2
+    IF_ICMPLE L5
+    ICONST_1
+    GOTO L6
+   L5
+    ICONST_0
+   L6
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_3
+    ILOAD 1
+    ILOAD 2
+    IF_ICMPGE L7
+    ICONST_1
+    GOTO L8
+   L7
+    ICONST_0
+   L8
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_4
+    ILOAD 1
+    ILOAD 2
+    IF_ICMPLT L9
+    ICONST_1
+    GOTO L10
+   L9
+    ICONST_0
+   L10
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    DUP
+    ICONST_5
+    ILOAD 1
+    ILOAD 2
+    IF_ICMPGT L11
+    ICONST_1
+    GOTO L12
+   L11
+    ICONST_0
+   L12
+    INVOKESTATIC java/lang/Boolean.valueOf (Z)Ljava/lang/Boolean;
+    AASTORE
+    ARETURN
+   L13
+    LOCALVARIABLE arg1 I L0 L13 1
+    LOCALVARIABLE arg2 I L0 L13 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object[] myMethod(int arg1, int arg2) {
+      return new Object[]{arg1 == arg2, arg1 != arg2, arg1 > arg2, arg1 < arg2, arg1 >= arg2, arg1 <= arg2};
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void mathOpsCast() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(int.class)
+                .addParameters(float.class)
+                .build((aThis, methodParameters) ->
+                    TypeDef.OBJECT.array().instantiate(
+                        methodParameters.get(0).math(ADDITION, methodParameters.get(1)),
+                        methodParameters.get(0).math(SUBTRACTION, methodParameters.get(1)),
+                        methodParameters.get(0).math(MULTIPLICATION, methodParameters.get(1)),
+                        methodParameters.get(0).math(DIVISION, methodParameters.get(1)),
+                        methodParameters.get(0).math(MODULUS, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_AND, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_OR, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_XOR, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_LEFT_SHIFT, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_RIGHT_SHIFT, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_UNSIGNED_RIGHT_SHIFT, methodParameters.get(1))
+                    ).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(IF)[Ljava/lang/Object;
+   L0
+    BIPUSH 11
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IADD
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_1
+    ILOAD 1
+    FLOAD 2
+    F2I
+    ISUB
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_2
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IMUL
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_3
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IDIV
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_4
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IREM
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_5
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IAND
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 6
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IOR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 7
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IXOR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 8
+    ILOAD 1
+    FLOAD 2
+    F2I
+    ISHL
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 9
+    ILOAD 1
+    FLOAD 2
+    F2I
+    ISHR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 10
+    ILOAD 1
+    FLOAD 2
+    F2I
+    IUSHR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 I L0 L1 1
+    LOCALVARIABLE arg2 F L0 L1 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object[] myMethod(int arg1, float arg2) {
+      return new Object[]{arg1 + (int)arg2, arg1 - (int)arg2, arg1 * (int)arg2, arg1 / (int)arg2, arg1 % (int)arg2, arg1 & (int)arg2, arg1 | (int)arg2, arg1 ^ (int)arg2, arg1 << (int)arg2, arg1 >> (int)arg2, arg1 >>> (int)arg2};
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void mathOpsCast2() {
+        final ClassTypeDef MATH_TYPE = ClassTypeDef.of(Math.class);
+        java.lang.reflect.Method POW_METHOD = ReflectionUtils.getRequiredMethod(Math.class, "pow", double.class, double.class);
+
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(double.class)
+                .addParameters(double.class)
+                .returns(TypeDef.OBJECT)
+                .build((aThis, methodParameters) ->
+                    MATH_TYPE.invokeStatic(POW_METHOD, methodParameters.get(0), methodParameters.get(1))
+                        .cast(TypeDef.Primitive.LONG)
+                        .returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(DD)Ljava/lang/Object;
+   L0
+    DLOAD 1
+    DLOAD 3
+    INVOKESTATIC java/lang/Math.pow (DD)D
+    D2L
+    INVOKESTATIC java/lang/Long.valueOf (J)Ljava/lang/Long;
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 D L0 L1 1
+    LOCALVARIABLE arg2 D L0 L1 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object myMethod(double arg1, double var3) {
+      return (long)Math.pow(arg1, var3);
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void mathOps() {
+
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(int.class)
+                .addParameters(int.class)
+                .build((aThis, methodParameters) ->
+                    TypeDef.OBJECT.array().instantiate(
+                        methodParameters.get(0).math(ADDITION, methodParameters.get(1)),
+                        methodParameters.get(0).math(SUBTRACTION, methodParameters.get(1)),
+                        methodParameters.get(0).math(MULTIPLICATION, methodParameters.get(1)),
+                        methodParameters.get(0).math(DIVISION, methodParameters.get(1)),
+                        methodParameters.get(0).math(MODULUS, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_AND, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_OR, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_XOR, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_LEFT_SHIFT, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_RIGHT_SHIFT, methodParameters.get(1)),
+                        methodParameters.get(0).math(BITWISE_UNSIGNED_RIGHT_SHIFT, methodParameters.get(1))
+                    ).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(II)[Ljava/lang/Object;
+   L0
+    BIPUSH 11
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ILOAD 1
+    ILOAD 2
+    IADD
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_1
+    ILOAD 1
+    ILOAD 2
+    ISUB
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_2
+    ILOAD 1
+    ILOAD 2
+    IMUL
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_3
+    ILOAD 1
+    ILOAD 2
+    IDIV
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_4
+    ILOAD 1
+    ILOAD 2
+    IREM
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    ICONST_5
+    ILOAD 1
+    ILOAD 2
+    IAND
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 6
+    ILOAD 1
+    ILOAD 2
+    IOR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 7
+    ILOAD 1
+    ILOAD 2
+    IXOR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 8
+    ILOAD 1
+    ILOAD 2
+    ISHL
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 9
+    ILOAD 1
+    ILOAD 2
+    ISHR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    DUP
+    BIPUSH 10
+    ILOAD 1
+    ILOAD 2
+    IUSHR
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 I L0 L1 1
+    LOCALVARIABLE arg2 I L0 L1 2
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object[] myMethod(int arg1, int arg2) {
+      return new Object[]{arg1 + arg2, arg1 - arg2, arg1 * arg2, arg1 / arg2, arg1 % arg2, arg1 & arg2, arg1 | arg2, arg1 ^ arg2, arg1 << arg2, arg1 >> arg2, arg1 >>> arg2};
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void mathOpsUnary() {
+
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(int.class)
+                .build((aThis, methodParameters) ->
+                    TypeDef.OBJECT.array().instantiate(
+                        methodParameters.get(0).math(NEGATE)
+                    ).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(I)[Ljava/lang/Object;
+   L0
+    ICONST_1
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ILOAD 1
+    INEG
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    AASTORE
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 I L0 L1 1
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   Object[] myMethod(int arg1) {
+      return new Object[]{-arg1};
+   }
+}
+""", decompileToJava(bytes));
+    }
 
     @Test
     void equalsAndNotEquals() {
@@ -155,9 +924,9 @@ public class Example {
                 .addParameters(double.class)
                 .build((aThis, methodParameters) ->
                     TypeDef.OBJECT.array().instantiate(
-                        methodParameters.get(0).math("+", methodParameters.get(1)),
-                        methodParameters.get(2).math("+", methodParameters.get(3)),
-                        methodParameters.get(4).math("+", methodParameters.get(5))
+                        methodParameters.get(0).math(ADDITION, methodParameters.get(1)),
+                        methodParameters.get(2).math(ADDITION, methodParameters.get(3)),
+                        methodParameters.get(4).math(ADDITION, methodParameters.get(5))
                     ).returning()))
             .build();
 
@@ -291,6 +1060,55 @@ public class Example {
     }
 
     @Test
+    void toStringTest() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(Object.class)
+                .build((aThis, methodParameters) -> JavaIdioms.convertToStringIfNeeded(methodParameters.get(0)).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(Ljava/lang/Object;)Ljava/lang/String;
+   L0
+    ALOAD 1
+    INVOKESTATIC java/lang/String.valueOf (Ljava/lang/Object;)Ljava/lang/String;
+    ARETURN
+   L1
+    LOCALVARIABLE arg1 Ljava/lang/Object; L0 L1 1
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   String myMethod(Object arg1) {
+      return String.valueOf(arg1);
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
     void instanceOf() {
         ClassDef def = ClassDef.builder("example.Example")
             .addModifiers(Modifier.PUBLIC)
@@ -333,6 +1151,56 @@ package example;
 
 public class Example {
    boolean myMethod(Object arg1) {
+      return arg1 instanceof String;
+   }
+}
+""", decompileToJava(bytes));
+    }
+
+    @Test
+    void instanceOfPrimitive() {
+        ClassDef def = ClassDef.builder("example.Example")
+            .addModifiers(Modifier.PUBLIC)
+            .addMethod(MethodDef.builder("myMethod")
+                .addParameters(int.class)
+                .build((aThis, methodParameters) -> methodParameters.get(0).instanceOf(TypeDef.STRING).returning()))
+            .build();
+
+        StringWriter bytecodeWriter = new StringWriter();
+        byte[] bytes = generateFile(def, bytecodeWriter);
+
+        String bytecode = bytecodeWriter.toString();
+        Assertions.assertEquals("""
+// class version 61.0 (61)
+// access flags 0x1
+// signature Ljava/lang/Object;
+// declaration: example/Example
+public class example/Example {
+
+
+  // access flags 0x1
+  public <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+
+  // access flags 0x0
+  myMethod(I)Z
+   L0
+    ILOAD 1
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    INSTANCEOF java/lang/String
+    IRETURN
+   L1
+    LOCALVARIABLE arg1 I L0 L1 1
+}
+""", bytecode);
+
+        Assertions.assertEquals("""
+package example;
+
+public class Example {
+   boolean myMethod(int arg1) {
       return arg1 instanceof String;
    }
 }
@@ -1592,7 +2460,7 @@ public enum MyEnumWithInnerTypes {
             .returns(int.class)
             .build((aThis, methodParameters) -> {
                 return methodParameters.get(0).invokeHashCode().newLocal("hc", hcVar -> {
-                    return hcVar.math("+", TypeDef.Primitive.INT.constant(4)).returning();
+                    return hcVar.math(ADDITION, TypeDef.Primitive.INT.constant(4)).returning();
                 });
             });
         ClassDef classDef = ClassDef.builder("example.Test")

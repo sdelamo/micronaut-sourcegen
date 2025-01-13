@@ -108,13 +108,13 @@ public final class JavaIdioms {
      */
     public static ExpressionDef convertToStringIfNeeded(ExpressionDef expression) {
         TypeDef type = expression.type();
-        if (type.equals(TypeDef.STRING)) {
+        if (type instanceof ClassTypeDef classTypeDef && classTypeDef.getName().equals(String.class.getName())) {
             return expression;
         }
         if (type.isArray()) {
             return ClassTypeDef.of(Arrays.class).invokeStatic("toString", TypeDef.STRING, expression);
         }
-        return ClassTypeDef.of(String.class).invokeStatic("valueOf", TypeDef.STRING, expression);
+        return ClassTypeDef.of(String.class).invokeStatic("valueOf", List.of(TypeDef.OBJECT), TypeDef.STRING, expression);
     }
 
     /**

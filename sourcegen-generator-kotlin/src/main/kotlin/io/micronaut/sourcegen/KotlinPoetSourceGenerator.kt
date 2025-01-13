@@ -992,7 +992,7 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     .add("if (")
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.condition, TypeDef.Primitive.BOOLEAN))
                     .add(") ")
-                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression, expressionDef.type()))
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.ifExpression, expressionDef.type()))
                     .add(" else ")
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.elseExpression, expressionDef.type()))
                     .build()
@@ -1068,17 +1068,23 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression))
                     .build()
             }
-            if (expressionDef is MathOp) {
+            if (expressionDef is MathBinaryOperation) {
                 return CodeBlock.builder()
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.left))
-                    .add(expressionDef.operator)
+                    .add(getMathOp(expressionDef.opType))
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.right))
                     .build()
             }
-            if (expressionDef is Condition) {
+            if (expressionDef is MathUnaryOperation) {
+                return CodeBlock.builder()
+                    .add(getMathOp(expressionDef.opType))
+                    .add(renderExpressionCode(objectDef, methodDef, expressionDef.expression))
+                    .build()
+            }
+            if (expressionDef is ComparisonOperation) {
                 return CodeBlock.builder()
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.left))
-                    .add(expressionDef.operator)
+                    .add(getOpType(expressionDef.opType))
                     .add(renderExpressionCode(objectDef, methodDef, expressionDef.right))
                     .build()
             }
@@ -1183,6 +1189,39 @@ class KotlinPoetSourceGenerator : SourceGenerator {
                     .build()
             }
             throw IllegalStateException("Unrecognized expression: $expressionDef")
+        }
+
+        private fun getMathOp(opType: MathBinaryOperation.OpType): String {
+            return when (opType) {
+                MathBinaryOperation.OpType.ADDITION -> " + "
+                MathBinaryOperation.OpType.SUBTRACTION -> " - "
+                MathBinaryOperation.OpType.MULTIPLICATION -> " * "
+                MathBinaryOperation.OpType.DIVISION -> " / "
+                MathBinaryOperation.OpType.MODULUS -> " % "
+                MathBinaryOperation.OpType.BITWISE_AND -> " & "
+                MathBinaryOperation.OpType.BITWISE_OR -> " | "
+                MathBinaryOperation.OpType.BITWISE_XOR -> " ^ "
+                MathBinaryOperation.OpType.BITWISE_LEFT_SHIFT -> " << "
+                MathBinaryOperation.OpType.BITWISE_RIGHT_SHIFT -> " >> "
+                MathBinaryOperation.OpType.BITWISE_UNSIGNED_RIGHT_SHIFT -> " >>> "
+            }
+        }
+
+        private fun getMathOp(opType: MathUnaryOperation.OpType): String {
+            return when (opType) {
+                MathUnaryOperation.OpType.NEGATE -> "-"
+            }
+        }
+
+        private fun getOpType(opType: ComparisonOperation.OpType): String {
+            return when (opType) {
+                ComparisonOperation.OpType.EQUAL_TO -> " == "
+                ComparisonOperation.OpType.NOT_EQUAL_TO -> " != "
+                ComparisonOperation.OpType.GREATER_THAN -> " > "
+                ComparisonOperation.OpType.LESS_THAN -> " < "
+                ComparisonOperation.OpType.GREATER_THAN_OR_EQUAL -> " >= "
+                ComparisonOperation.OpType.LESS_THAN_OR_EQUAL -> " <= "
+            }
         }
 
         private fun renderCondition(

@@ -26,7 +26,10 @@ import io.micronaut.inject.ast.WildcardElement;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * The type definition.
@@ -400,6 +403,44 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
         public static final ExpressionDef.Constant TRUE = BOOLEAN.constant(true);
         public static final ExpressionDef.Constant FALSE = BOOLEAN.constant(false);
 
+        // Wrappers
+        public static final ClassTypeDef BOOLEAN_WRAPPER = TypeDef.Primitive.BOOLEAN.wrapperType();
+        public static final ClassTypeDef INT_WRAPPER = TypeDef.Primitive.INT.wrapperType();
+        public static final ClassTypeDef LONG_WRAPPER = TypeDef.Primitive.LONG.wrapperType();
+        public static final ClassTypeDef DOUBLE_WRAPPER = TypeDef.Primitive.DOUBLE.wrapperType();
+        public static final ClassTypeDef FLOAT_WRAPPER = TypeDef.Primitive.FLOAT.wrapperType();
+        public static final ClassTypeDef SHORT_WRAPPER = TypeDef.Primitive.SHORT.wrapperType();
+        public static final ClassTypeDef BYTE_WRAPPER = TypeDef.Primitive.BYTE.wrapperType();
+        public static final ClassTypeDef CHAR_WRAPPER = TypeDef.Primitive.CHAR.wrapperType();
+
+        private static final Map<TypeDef, ClassTypeDef> PRIMITIVE_TO_WRAPPER = Map.of(
+            BOOLEAN, BOOLEAN_WRAPPER,
+            INT, INT_WRAPPER,
+            DOUBLE, DOUBLE_WRAPPER,
+            LONG, LONG_WRAPPER,
+            FLOAT, FLOAT_WRAPPER,
+            SHORT, SHORT_WRAPPER,
+            CHAR, CHAR_WRAPPER,
+            BYTE, BYTE_WRAPPER);
+
+        private static final Map<String, TypeDef> WRAPPER_TO_PRIMITIVE =
+            PRIMITIVE_TO_WRAPPER.entrySet()
+                .stream()
+                .collect(toMap(e -> e.getValue().getName(), Map.Entry::getKey));
+
+        /**
+         * Unbox if possible.
+         * @param typeDef The type
+         * @return The unboxed or an original type.
+         * @since 1.5
+         */
+        public static TypeDef unboxIfPossible(TypeDef typeDef) {
+            if (typeDef instanceof ClassTypeDef classTypeDef) {
+                return WRAPPER_TO_PRIMITIVE.getOrDefault(classTypeDef.getName(), typeDef);
+            }
+            return typeDef;
+        }
+
         public String name() {
             return clazz.getName();
         }
@@ -436,6 +477,30 @@ public sealed interface TypeDef permits ClassTypeDef, TypeDef.Annotated, TypeDef
         @Experimental
         public ExpressionDef.Constant constant(Object value) {
             return new ExpressionDef.Constant(this, value);
+        }
+
+        /**
+         * @return Is a whole number
+         * @since 1.5
+         */
+        public boolean isWholeNumber() {
+            return equals(BYTE) || equals(SHORT) || equals(INT) || equals(LONG);
+        }
+
+        /**
+         * @return Is a float number
+         * @since 1.5
+         */
+        public boolean isFloatNumber() {
+            return equals(DOUBLE) || equals(FLOAT);
+        }
+
+        /**
+         * @return Is a number
+         * @since 1.5
+         */
+        public boolean isNumber() {
+            return isWholeNumber() || isFloatNumber();
         }
     }
 

@@ -43,6 +43,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.ADDITION;
+import static io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType.MULTIPLICATION;
+
 /**
  * The visitor that generates the Object class of a bean.
  * The Object class can have functions substituting toString, equals, and hashcode.
@@ -236,8 +239,8 @@ public final class ObjectAnnotationVisitor implements TypeElementVisitor<Object,
                             List<StatementDef> hashUpdates = new ArrayList<>();
                             while (iterator.hasNext()) {
                                 PropertyElement propertyElement = iterator.next();
-                                ExpressionDef condition = hashValue.math(" * ", HASH_MULTIPLIER)
-                                    .math(" + ", instance.getPropertyValue(propertyElement).invokeHashCode());
+                                ExpressionDef condition = hashValue.math(MULTIPLICATION, HASH_MULTIPLIER)
+                                    .math(ADDITION, instance.getPropertyValue(propertyElement).invokeHashCode());
                                 hashUpdates.add(hashValue.assign(condition));
                             }
                             hashUpdates.add(hashValue.returning());
