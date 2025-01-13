@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.generator.visitors.builder.gradle;
+package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.PropertyElement;
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type;
-import io.micronaut.sourcegen.generator.visitors.builder.PluginBuilder;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassDef.ClassDefBuilder;
 import io.micronaut.sourcegen.model.ClassTypeDef;
@@ -43,7 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A builder for {@link io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type#GRADLE_TASK}.
+ * A builder for {@link GenerateGradlePlugin.Type#GRADLE_TASK}.
  * Creates a task, work action and work action parameters given a plugin task configuration.
  */
 public class GradleTaskBuilder implements PluginBuilder {
@@ -57,36 +56,34 @@ public class GradleTaskBuilder implements PluginBuilder {
 
     @Override
     @NonNull
-    public List<ObjectDef> build(ClassElement source, TaskConfig taskConfig) {
+    public List<ObjectDef> build(GradleTaskConfig taskConfig) {
         String taskType = taskConfig.packageName() + "." + taskConfig.namePrefix() + TASK_SUFFIX;
         ClassDefBuilder builder = ClassDef.builder(taskType)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .superclass(ClassTypeDef.of("org.gradle.api.DefaultTask"))
             .addAnnotation("org.gradle.api.tasks.CacheableTask");
-        builder.addInnerType(createWorkAction(source, taskConfig));
-        builder.addInnerType(createWorkActionParameters(source, taskConfig));
-        builder.addInnerType(createWorkActionParameterConfigurator(source, TypeDef.of(taskType), taskConfig));
+        builder.addInnerType(createWorkAction(taskConfig));
+        builder.addInnerType(createWorkActionParameters(taskConfig));
+        builder.addInnerType(createWorkActionParameterConfigurator(TypeDef.of(taskType), taskConfig));
         builder.addInnerType(createClasspathConfigurator(TypeDef.of(taskType), taskConfig));
 
-        for (PropertyElement property: source.getBeanProperties()) {
-            ParameterConfig parameterConfig = PluginBuilder.getParameterConfig(property);
-
-            if (parameterConfig.internal()) {
+        for (ParameterConfig parameter: taskConfig.parameters()) {
+            if (parameter.internal()) {
                 MethodDefBuilder propBuilder = MethodDef
-                    .builder("get" + NameUtils.capitalize(property.getName()))
+                    .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                     .returns(TypeDef.parameterized(
                         ClassTypeDef.of("org.gradle.api.provider.Provider"),
-                        TypeDef.of(property)
+                        TypeDef.of(parameter.source())
                     ));
                 builder.addMethod(propBuilder.build());
             } else {
                 MethodDefBuilder propBuilder = MethodDef
-                    .builder("get" + NameUtils.capitalize(property.getName()))
+                    .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                    .returns(createGradleProperty(property))
+                    .returns(createGradleProperty(parameter))
                     .addAnnotation("org.gradle.api.tasks.Input");
-                if (!parameterConfig.required()) {
+                if (!parameter.required()) {
                     propBuilder.addAnnotation("org.gradle.api.tasks.Optional");
                 }
                 builder.addMethod(propBuilder.build());
@@ -129,7 +126,7 @@ public class GradleTaskBuilder implements PluginBuilder {
         return List.of(builder.build());
     }
 
-    private ClassDef createWorkActionParameterConfigurator(ClassElement source, TypeDef taskType, TaskConfig taskConfig) {
+    private ClassDef createWorkActionParameterConfigurator(TypeDef taskType, GradleTaskConfig taskConfig) {
         TypeDef parametersType = TypeDef.of(taskConfig.namePrefix() + "WorkActionParameters");
         FieldDef taskField = FieldDef.builder("task").ofType(taskType).build();
         return ClassDef.builder(taskConfig.namePrefix() + "WorkActionParameterConfigurator")
@@ -147,21 +144,20 @@ public class GradleTaskBuilder implements PluginBuilder {
                 .addParameter(ParameterDef.of("params", parametersType))
                 .build((t, params) -> {
                     List<StatementDef> statements = new ArrayList<>();
-                    for (PropertyElement property: source.getBeanProperties()) {
-                        ParameterConfig parameterConfig = PluginBuilder.getParameterConfig(property);
-                        String getterName = "get" + NameUtils.capitalize(property.getName());
-                        TypeDef getterType = createGradleProperty(property);
+                    for (ParameterConfig parameter: taskConfig.parameters()) {
+                        String getterName = "get" + NameUtils.capitalize(parameter.source().getName());
+                        TypeDef getterType = createGradleProperty(parameter);
                         ExpressionDef def = t.field(taskField).invoke(getterName, getterType);
-                        if (!parameterConfig.required()) {
-                            if (parameterConfig.defaultValue() != null) {
-                                ClassElement type = property.getType();
+                        if (!parameter.required()) {
+                            if (parameter.defaultValue() != null) {
+                                ClassElement type = parameter.source().getType();
                                 def = def.invoke(
                                     "orElse",
-                                    TypeDef.of(property.getType()),
-                                    ExpressionDef.constant(type, TypeDef.of(type), parameterConfig.defaultValue())
+                                    TypeDef.of(parameter.source().getType()),
+                                    ExpressionDef.constant(type, TypeDef.of(type), parameter.defaultValue())
                                 );
                             } else {
-                                def = def.invoke("getOrNull", TypeDef.of(property.getType()));
+                                def = def.invoke("getOrNull", TypeDef.of(parameter.source().getType()));
                             }
                         }
                         statements.add(params.get(0)
@@ -175,7 +171,7 @@ public class GradleTaskBuilder implements PluginBuilder {
             .build();
     }
 
-    private ClassDef createClasspathConfigurator(TypeDef taskType, TaskConfig taskConfig) {
+    private ClassDef createClasspathConfigurator(TypeDef taskType, GradleTaskConfig taskConfig) {
         FieldDef taskField = FieldDef.builder("task").ofType(taskType).build();
         TypeDef specType = TypeDef.of("org.gradle.workers.ClassLoaderWorkerSpec");
         TypeDef classpathType = TypeDef.of("org.gradle.api.file.ConfigurableFileCollection");
@@ -201,27 +197,27 @@ public class GradleTaskBuilder implements PluginBuilder {
             .build();
     }
 
-    private InterfaceDef createWorkActionParameters(ClassElement source, TaskConfig taskConfig) {
+    private InterfaceDef createWorkActionParameters(GradleTaskConfig taskConfig) {
         InterfaceDefBuilder builder = InterfaceDef.builder(taskConfig.namePrefix() + "WorkActionParameters")
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(ClassTypeDef.of("org.gradle.workers.WorkParameters"));
-        for (PropertyElement property: source.getBeanProperties()) {
+        for (ParameterConfig parameter: taskConfig.parameters()) {
             MethodDefBuilder propBuilder = MethodDef
-                .builder("get" + NameUtils.capitalize(property.getName()))
+                .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .returns(createGradleProperty(property));
+                .returns(createGradleProperty(parameter));
             builder.addMethod(propBuilder.build());
         }
         return builder.build();
     }
 
-    private ClassDef createWorkAction(ClassElement source, TaskConfig taskConfig) {
+    private ClassDef createWorkAction(GradleTaskConfig taskConfig) {
         ClassTypeDef parametersType = ClassTypeDef.of(taskConfig.namePrefix() + "WorkActionParameters");
         List<ExpressionDef> params = new ArrayList<>();
-        for (PropertyElement property: source.getBeanProperties()) {
+        for (ParameterConfig parameter: taskConfig.parameters()) {
             params.add(new VariableDef.Local("parameters", parametersType)
-                .invoke("get" + NameUtils.capitalize(property.getName()), createGradleProperty(property))
-                .invoke("get", TypeDef.of(property.getType()))
+                .invoke("get" + NameUtils.capitalize(parameter.source().getName()), createGradleProperty(parameter))
+                .invoke("get", TypeDef.of(parameter.source().getType()))
             );
         }
         MethodDef executeMethod = MethodDef
@@ -235,7 +231,7 @@ public class GradleTaskBuilder implements PluginBuilder {
                     .newLocal("parameters")
             )
             .addStatement(
-                ClassTypeDef.of(source).instantiate(params).invoke(taskConfig.methodName(), TypeDef.VOID)
+                ClassTypeDef.of(taskConfig.source()).instantiate(params).invoke(taskConfig.methodName(), TypeDef.VOID)
             )
             .build();
         return ClassDef.builder(taskConfig.namePrefix() + "WorkAction")
@@ -248,8 +244,8 @@ public class GradleTaskBuilder implements PluginBuilder {
             .build();
     }
 
-    static TypeDef createGradleProperty(PropertyElement source) {
-        ClassElement type = source.getType();
+    static TypeDef createGradleProperty(ParameterConfig parameter) {
+        ClassElement type = parameter.source().getType();
         if (type.isAssignable(Map.class)) {
             Map<String, ClassElement> typeArgs = type.getGenericType().getTypeArguments();
             return TypeDef.parameterized(
@@ -272,7 +268,7 @@ public class GradleTaskBuilder implements PluginBuilder {
         } else {
             return TypeDef.parameterized(
                 ClassTypeDef.of("org.gradle.api.provider.Property"),
-                ClassTypeDef.of(source.getGenericType())
+                ClassTypeDef.of(parameter.source().getGenericType())
             );
         }
     }

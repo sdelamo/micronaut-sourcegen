@@ -30,7 +30,8 @@ include("test-suite-bytecode")
 include("test-suite-kotlin")
 include("test-suite-custom-annotations")
 include("test-suite-custom-generators")
-include("test-suite-plugin-java")
+include("test-suite-plugin-common")
+include("test-suite-plugin-gradle")
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 

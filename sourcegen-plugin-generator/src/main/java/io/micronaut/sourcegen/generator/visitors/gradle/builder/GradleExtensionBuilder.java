@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.generator.visitors.builder.gradle;
+package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.PropertyElement;
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type;
-import io.micronaut.sourcegen.generator.visitors.builder.PluginBuilder;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassDef.ClassDefBuilder;
 import io.micronaut.sourcegen.model.ClassTypeDef;
@@ -43,8 +41,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleTaskBuilder.TASK_SUFFIX;
-import static io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleTaskBuilder.createGradleProperty;
+import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTaskBuilder.TASK_SUFFIX;
+import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTaskBuilder.createGradleProperty;
 
 /**
  * A builder for {@link Type#GRADLE_EXTENSION}.
@@ -66,7 +64,7 @@ public class GradleExtensionBuilder implements PluginBuilder {
 
     @Override
     @NonNull
-    public List<ObjectDef> build(ClassElement source, TaskConfig taskConfig) {
+    public List<ObjectDef> build(GradleTaskConfig taskConfig) {
         ClassTypeDef specificationType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + GradleSpecificationBuilder.SPECIFICATION_NAME_SUFFIX);
         String methodName = taskConfig.gradleExtensionMethodName();
         if (methodName == null) {
@@ -74,13 +72,13 @@ public class GradleExtensionBuilder implements PluginBuilder {
         }
 
         return List.of(
-            buildExtensionInterface(source, taskConfig, specificationType, methodName),
-            buildDefaultExtension(source, taskConfig, specificationType, methodName)
+            buildExtensionInterface(taskConfig, specificationType, methodName),
+            buildDefaultExtension(taskConfig, specificationType, methodName)
         );
     }
 
-    private ObjectDef buildExtensionInterface(ClassElement source, TaskConfig taskConfig, TypeDef specificationType, String methodName) {
-        InterfaceDefBuilder builder = InterfaceDef.builder( taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX)
+    private ObjectDef buildExtensionInterface(GradleTaskConfig taskConfig, TypeDef specificationType, String methodName) {
+        InterfaceDefBuilder builder = InterfaceDef.builder(taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX)
             .addModifiers(Modifier.PUBLIC)
             .addJavadoc("Configures the " + taskConfig.namePrefix() + " execution.");
 
@@ -99,10 +97,10 @@ public class GradleExtensionBuilder implements PluginBuilder {
         return builder.build();
     }
 
-    private ObjectDef buildDefaultExtension(ClassElement source, TaskConfig taskConfig, ClassTypeDef specificationType, String methodName) {
+    private ObjectDef buildDefaultExtension(GradleTaskConfig taskConfig, ClassTypeDef specificationType, String methodName) {
         TypeDef interfaceType = TypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
 
-        ClassDefBuilder builder = ClassDef.builder( taskConfig.packageName() + "." + DEFAULT_EXTENSION_NAME_PREFIX + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX)
+        ClassDefBuilder builder = ClassDef.builder(taskConfig.packageName() + "." + DEFAULT_EXTENSION_NAME_PREFIX + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addSuperinterface(interfaceType)
             .addField(
@@ -139,14 +137,14 @@ public class GradleExtensionBuilder implements PluginBuilder {
         builder.addMethod(MethodDef.builder("configureSpec")
             .addModifiers(Modifier.PROTECTED)
             .addParameter("spec", specificationType)
-            .build((t, params) -> buildConfigureSpecMethod(source, t, params))
+            .build((t, params) -> buildConfigureSpecMethod(taskConfig, t, params))
         );
 
-        builder.addInnerType(buildTaskConfigurator(source, taskConfig, specificationType, methodName));
+        builder.addInnerType(buildTaskConfigurator(taskConfig, specificationType, methodName));
         return builder.build();
     }
 
-    private ClassDef buildTaskConfigurator(ClassElement source, TaskConfig taskConfig, TypeDef specificationType, String methodName) {
+    private ClassDef buildTaskConfigurator(GradleTaskConfig taskConfig, TypeDef specificationType, String methodName) {
         ClassTypeDef taskType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + TASK_SUFFIX);
         FieldDef specField = FieldDef.builder("spec", specificationType).build();
         FieldDef classpathField = FieldDef.builder("classpath", CONFIGURATION_TYPE).build();
@@ -165,11 +163,10 @@ public class GradleExtensionBuilder implements PluginBuilder {
                     .invoke("from", TypeDef.VOID, t.field(classpathField))
                 );
                 statements.add(task.invoke("setDescription", TypeDef.VOID, ExpressionDef.constant("Configure the " + methodName)));
-                for (PropertyElement property: source.getBeanProperties()) {
-                    ParameterConfig parameterConfig = PluginBuilder.getParameterConfig(property);
-                    String getterName = "get" + NameUtils.capitalize(property.getName());
-                    TypeDef getterType = createGradleProperty(property);
-                    if (!parameterConfig.internal()) {
+                for (ParameterConfig parameter: taskConfig.parameters()) {
+                    String getterName = "get" + NameUtils.capitalize(parameter.source().getName());
+                    TypeDef getterType = createGradleProperty(parameter);
+                    if (!parameter.internal()) {
                         StatementDef convention = task
                             .invoke(getterName, getterType)
                             .invoke("convention", getterType, t.field(specField).invoke(getterName, getterType));
@@ -188,24 +185,23 @@ public class GradleExtensionBuilder implements PluginBuilder {
             .build();
     }
 
-    private StatementDef buildConfigureSpecMethod(ClassElement source, VariableDef t, List<VariableDef.MethodParameter> params) {
+    private StatementDef buildConfigureSpecMethod(GradleTaskConfig taskConfig, VariableDef t, List<VariableDef.MethodParameter> params) {
         List<StatementDef> statements = new ArrayList<>();
-        for (PropertyElement property: source.getBeanProperties()) {
-            ParameterConfig parameterConfig = PluginBuilder.getParameterConfig(property);
-            String getterName = "get" + NameUtils.capitalize(property.getName());
-            TypeDef getterType = createGradleProperty(property);
-            if (parameterConfig.defaultValue() != null && !parameterConfig.internal()) {
-                ClassElement type = property.getType();
+        for (ParameterConfig parameter: taskConfig.parameters()) {
+            String getterName = "get" + NameUtils.capitalize(parameter.source().getName());
+            TypeDef getterType = createGradleProperty(parameter);
+            if (parameter.defaultValue() != null && !parameter.internal()) {
+                ClassElement type = parameter.source().getType();
                 StatementDef convention = params.get(0)
                     .invoke(getterName, getterType)
-                    .invoke("convention", getterType, ExpressionDef.constant(type, TypeDef.of(type), parameterConfig.defaultValue()));
+                    .invoke("convention", getterType, ExpressionDef.constant(type, TypeDef.of(type), parameter.defaultValue()));
                 statements.add(convention);
             }
         }
         return StatementDef.multi(statements);
     }
 
-    private StatementDef buildExtensionMethod(VariableDef t, List<VariableDef.MethodParameter> params, TaskConfig taskConfig, ClassTypeDef specificationType, String methodName) {
+    private StatementDef buildExtensionMethod(VariableDef t, List<VariableDef.MethodParameter> params, GradleTaskConfig taskConfig, ClassTypeDef specificationType, String methodName) {
         StatementDef ifStatement = new StatementDef.If(
             t.field("names", TypeDef.of(String.class)).invoke("add", TypeDef.of(boolean.class), params.get(0)).isFalse(),
             new StatementDef.Throw(ClassTypeDef.of("org.gradle.api.GradleException")

@@ -22,10 +22,7 @@ import io.micronaut.sourcegen.annotations.PluginTaskParameter;
 import java.util.List;
 import java.util.Map;
 
-@PluginTaskConfig(
-    namePrefix = "Test",
-    micronautPlugin = false
-)
+@PluginTaskConfig
 public record TestConfig(
     @PluginTaskParameter(required = true)
     String header,

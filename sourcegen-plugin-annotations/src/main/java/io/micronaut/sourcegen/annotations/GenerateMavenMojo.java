@@ -23,9 +23,7 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * An annotation that configures a plugin task.
- * The annotation is used for generation of particular plugin implementations, like Maven
- * Mojos or Gradle Tasks.
+ * An annotation that triggers the generation of plugin sources.
  *
  * @author Andriy Dmytruk
  * @since 1.5.x
@@ -33,6 +31,23 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Documented
 @Retention(CLASS)
 @Target({ ElementType.TYPE })
-public @interface PluginTaskConfig {
+public @interface GenerateMavenMojo {
+
+    /**
+     * The prefix to use for the mojo name.
+     * For example if the prefix is {@code Test}, mojo will be generated as {@code TestMojo}.
+     * The default is the annotated class name.
+     *
+     * @return The prefix
+     */
+    String namePrefix() default "";
+
+    /**
+     * The property prefix to use for parameters generated in Maven Mojo.
+     *
+     * @see PluginTaskParameter#mavenProperty()
+     * @return The property prefix
+     */
+    String mavenPropertyPrefix() default "";
 
 }

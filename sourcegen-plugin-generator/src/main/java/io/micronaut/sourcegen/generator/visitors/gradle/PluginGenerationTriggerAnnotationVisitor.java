@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.generator.visitors;
+package io.micronaut.sourcegen.generator.visitors.gradle;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
@@ -22,16 +22,16 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger;
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
-import io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleExtensionBuilder;
-import io.micronaut.sourcegen.generator.visitors.builder.gradle.GradlePluginBuilder;
-import io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleSpecificationBuilder;
-import io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleTaskBuilder;
-import io.micronaut.sourcegen.generator.visitors.builder.PluginBuilder;
-import io.micronaut.sourcegen.generator.visitors.builder.PluginBuilder.TaskConfig;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleExtensionBuilder;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradlePluginBuilder;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleSpecificationBuilder;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTaskBuilder;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.PluginBuilder;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.PluginBuilder.GradleTaskConfig;
 import io.micronaut.sourcegen.model.ObjectDef;
 
 import java.util.ArrayList;
@@ -46,15 +46,16 @@ import java.util.Set;
  * @since 1.5.x
  */
 @Internal
-public final class PluginGenerationTriggerAnnotationVisitor implements TypeElementVisitor<PluginGenerationTrigger, Object> {
+public final class PluginGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateGradlePlugin, Object> {
 
-    private final Set<String> processed = new HashSet<>();
-    private static final List<PluginBuilder> builders = List.of(
+    private static final List<PluginBuilder> BUILDERS = List.of(
         new GradleTaskBuilder(),
         new GradleExtensionBuilder(),
         new GradleSpecificationBuilder(),
         new GradlePluginBuilder()
     );
+
+    private final Set<String> processed = new HashSet<>();
 
     @Override
     public @NonNull VisitorKind getVisitorKind() {
@@ -68,7 +69,7 @@ public final class PluginGenerationTriggerAnnotationVisitor implements TypeEleme
 
     @Override
     public Set<String> getSupportedAnnotationNames() {
-        return Set.of(PluginGenerationTrigger.class.getName());
+        return Set.of(GenerateGradlePlugin.class.getName());
     }
 
     @Override
@@ -77,24 +78,23 @@ public final class PluginGenerationTriggerAnnotationVisitor implements TypeEleme
         if (processed.contains(element.getName())) {
             return;
         }
-        AnnotationValue<PluginGenerationTrigger> annotation = element.getAnnotation(PluginGenerationTrigger.class);
+        AnnotationValue<GenerateGradlePlugin> annotation = element.getAnnotation(GenerateGradlePlugin.class);
         if (annotation == null) {
             return;
         }
-        ClassElement source = element.stringValue(PluginGenerationTrigger.class, "source")
+        ClassElement source = element.stringValue(GenerateGradlePlugin.class, "source")
             .flatMap(context::getClassElement).orElse(null);
         if (source == null) {
             throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
         }
-        PluginGenerationTrigger.Type[] types = annotation.getRequiredValue("types", PluginGenerationTrigger.Type[].class);
 
+        GradleTaskConfig taskConfig = PluginBuilder.getTaskConfig(source, annotation);
         List<ObjectDef> definitions = new ArrayList<>();
-        for (Type type: types) {
-            TaskConfig taskConfig = PluginBuilder.getTaskConfig(source);
+        for (Type type: taskConfig.types()) {
             List<ObjectDef> typeDefinitions = new ArrayList<>();
-            for (PluginBuilder pluginBuilder : builders) {
+            for (PluginBuilder pluginBuilder : BUILDERS) {
                 if (pluginBuilder.getType().equals(type)) {
-                    typeDefinitions = pluginBuilder.build(source, taskConfig);
+                    typeDefinitions = pluginBuilder.build(taskConfig);
                 }
             }
             if (typeDefinitions == null) {
@@ -115,7 +115,7 @@ public final class PluginGenerationTriggerAnnotationVisitor implements TypeEleme
         } catch (ProcessingException e) {
             throw e;
         } catch (Exception e) {
-            SourceGenerators.handleFatalException(element, PluginGenerationTrigger.class, e,
+            SourceGenerators.handleFatalException(element, GenerateGradlePlugin.class, e,
                 (exception -> {
                     processed.remove(element.getName());
                     throw exception;

@@ -31,7 +31,17 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Documented
 @Retention(CLASS)
 @Target({ ElementType.TYPE })
-public @interface PluginGenerationTrigger {
+public @interface GenerateGradlePlugin {
+
+    /**
+     * The prefix to use for all names.
+     * For example if the prefix is {@code Test}, task will be generated as {@code TestTask}.
+     * The default is the annotated class name.
+     *
+     * @return The prefix
+     */
+    String namePrefix() default "";
+
 
     /**
      * The plugin types to generate.
@@ -43,8 +53,39 @@ public @interface PluginGenerationTrigger {
      */
     String source();
 
+    /**
+     * The gradle task group that will be set for all tasks.
+     *
+     * @return The task group
+     */
+    String taskGroup() default "";
+
+    /**
+     * The name to use for the generated extension.
+     *
+     * @return The extension name
+     */
+    String extensionMethodName() default "";
+
+    /**
+     * Whether to extend the micronaut plugin.
+     *
+     * @return extend the plugin
+     */
+    boolean micronautPlugin() default true;
+
+    /**
+     * The coordinate of dependency to add, like
+     * {@code io.micronaut.jsonschema:micronaut-jsonschema-generator}.
+     *
+     * @return The dependency.
+     */
+    String dependency() default "";
+
+    /**
+     * Enum defining the types that could be generated.
+     */
     enum Type {
-        MAVEN_MOJO,
         GRADLE_TASK,
         GRADLE_SPECIFICATION,
         GRADLE_EXTENSION,

@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.generator.visitors.builder.gradle;
+package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.PropertyElement;
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type;
-import io.micronaut.sourcegen.generator.visitors.builder.PluginBuilder;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 import io.micronaut.sourcegen.model.InterfaceDef;
 import io.micronaut.sourcegen.model.InterfaceDef.InterfaceDefBuilder;
 import io.micronaut.sourcegen.model.MethodDef;
@@ -30,7 +27,7 @@ import io.micronaut.sourcegen.model.ObjectDef;
 import javax.lang.model.element.Modifier;
 import java.util.List;
 
-import static io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleTaskBuilder.createGradleProperty;
+import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTaskBuilder.createGradleProperty;
 
 /**
  * A builder for {@link Type#GRADLE_SPECIFICATION}.
@@ -47,17 +44,17 @@ public class GradleSpecificationBuilder implements PluginBuilder {
 
     @Override
     @NonNull
-    public List<ObjectDef> build(ClassElement source, TaskConfig taskConfig) {
-        InterfaceDefBuilder builder = InterfaceDef.builder( taskConfig.packageName() + "." + taskConfig.namePrefix() + SPECIFICATION_NAME_SUFFIX)
+    public List<ObjectDef> build(GradleTaskConfig taskConfig) {
+        InterfaceDefBuilder builder = InterfaceDef.builder(taskConfig.packageName() + "." + taskConfig.namePrefix() + SPECIFICATION_NAME_SUFFIX)
             .addModifiers(Modifier.PUBLIC);
-        for (PropertyElement property: source.getBeanProperties()) {
-            if (PluginBuilder.getParameterConfig(property).internal()) {
+        for (ParameterConfig parameter: taskConfig.parameters()) {
+            if (parameter.internal()) {
                 continue;
             }
             MethodDefBuilder propBuilder = MethodDef
-                .builder("get" + NameUtils.capitalize(property.getName()))
+                .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .returns(createGradleProperty(property));
+                .returns(createGradleProperty(parameter));
             builder.addMethod(propBuilder.build());
         }
         return List.of(builder.build());

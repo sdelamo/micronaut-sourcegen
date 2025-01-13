@@ -15,10 +15,12 @@
  */
 package io.micronaut.sourcegen.example.plugin;
 
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger;
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 
-@PluginGenerationTrigger(
+@GenerateGradlePlugin(
+    namePrefix = "Test",
+    micronautPlugin = false,
     types = {
         Type.GRADLE_TASK,
         Type.GRADLE_EXTENSION,
@@ -27,5 +29,5 @@ import io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type;
     },
     source = "io.micronaut.sourcegen.example.plugin.TestConfig"
 )
-public class Trigger {
+public class GradlePluginTrigger {
 }

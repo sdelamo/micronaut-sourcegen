@@ -1,1 +1,1 @@
-io.micronaut.sourcegen.generator.visitors.PluginGenerationTriggerAnnotationVisitor
+io.micronaut.sourcegen.generator.visitors.gradle.PluginGenerationTriggerAnnotationVisitor

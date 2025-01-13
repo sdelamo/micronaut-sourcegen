@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.generator.visitors.builder.gradle;
+package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.sourcegen.annotations.PluginGenerationTrigger.Type;
-import io.micronaut.sourcegen.generator.visitors.builder.PluginBuilder;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassDef.ClassDefBuilder;
 import io.micronaut.sourcegen.model.ClassTypeDef;
@@ -34,8 +32,8 @@ import javax.lang.model.element.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleExtensionBuilder.DEFAULT_EXTENSION_NAME_PREFIX;
-import static io.micronaut.sourcegen.generator.visitors.builder.gradle.GradleExtensionBuilder.EXTENSION_NAME_SUFFIX;
+import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleExtensionBuilder.DEFAULT_EXTENSION_NAME_PREFIX;
+import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleExtensionBuilder.EXTENSION_NAME_SUFFIX;
 
 /**
  * A builder for {@link Type#GRADLE_PLUGIN}.
@@ -57,7 +55,7 @@ public class GradlePluginBuilder implements PluginBuilder {
 
     @Override
     @NonNull
-    public List<ObjectDef> build(ClassElement source, TaskConfig taskConfig) {
+    public List<ObjectDef> build(GradleTaskConfig taskConfig) {
         String pluginType = taskConfig.packageName() + "." + taskConfig.namePrefix() + PLUGIN_SUFFIX;
         ClassDefBuilder builder = ClassDef.builder(pluginType)
             .addModifiers(Modifier.PUBLIC)
@@ -70,8 +68,8 @@ public class GradlePluginBuilder implements PluginBuilder {
         return List.of(builder.build());
     }
 
-    private MethodDef createApplyMethod(TaskConfig taskConfig) {
-        ClassTypeDef extensionType = ClassTypeDef.of( taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
+    private MethodDef createApplyMethod(GradleTaskConfig taskConfig) {
+        ClassTypeDef extensionType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
 
         return MethodDef.builder("apply")
             .addModifiers(Modifier.PUBLIC)
@@ -115,9 +113,9 @@ public class GradlePluginBuilder implements PluginBuilder {
             });
     }
 
-    private MethodDef createExtensionMethod(TaskConfig taskConfig) {
-        ClassTypeDef extensionType = ClassTypeDef.of( taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
-        ClassTypeDef defaultExtensionType = ClassTypeDef.of( taskConfig.packageName() + "." + DEFAULT_EXTENSION_NAME_PREFIX + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
+    private MethodDef createExtensionMethod(GradleTaskConfig taskConfig) {
+        ClassTypeDef extensionType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
+        ClassTypeDef defaultExtensionType = ClassTypeDef.of(taskConfig.packageName() + "." + DEFAULT_EXTENSION_NAME_PREFIX + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
 
         return MethodDef.builder("createExtension")
             .addModifiers(Modifier.PROTECTED)
