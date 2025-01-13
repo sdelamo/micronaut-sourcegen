@@ -18,6 +18,7 @@ package io.micronaut.sourcegen.model;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -84,12 +85,18 @@ public final class AnnotationDef {
             .orElseThrow(() -> new RuntimeException("Could not create class element for " + annotation.getAnnotationName()));
         Map<String, ClassElement> fieldTypes = annotationElement.getMethods().stream()
             .collect(Collectors.toMap(MethodElement::getName, MethodElement::getReturnType));
+        if (fieldTypes.isEmpty()) {
+            // kotlin annotation
+            fieldTypes = annotationElement.getFields().stream()
+                .collect(Collectors.toMap(FieldElement::getName, FieldElement::getType));
+        }
 
         // The other way to determine if the annotation is inner would be use the context to get the class element
         ClassTypeDef annotationType = ClassTypeDef.of(annotation.getAnnotationName(), annotation.getAnnotationName().contains("$"));
         AnnotationDefBuilder builder = AnnotationDef.builder(annotationType);
+        Map<String, ClassElement> finalFieldTypes = fieldTypes;
         annotation.getConvertibleValues().asMap().forEach((key, value) ->
-            copyAnnotationValue(value, fieldTypes.get(key), context)
+            copyAnnotationValue(value, finalFieldTypes.get(key), context)
                     .ifPresent(copiedValue -> builder.addMember(key, copiedValue))
         );
         return builder.build();

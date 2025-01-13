@@ -57,9 +57,9 @@ class AnnotationTest {
         val result = writeClass(classDef)
 
         val expected = """
-        @Simple(value = listOf(1,
+        @Simple(value = [1,
         2,
-        3))
+        3])
         public class SimpleClass
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())
@@ -75,9 +75,9 @@ class AnnotationTest {
         val result = writeClass(classDef)
 
         val expected = """
-        @JsonSubTypes(value = listOf(@com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Cat"),
-        @com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Dog"),
-        @com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Fish")))
+        @JsonSubTypes(value = [com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Cat"),
+        com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Dog"),
+        com.fasterxml.jackson.`annotation`.JsonSubTypes.Type(value = String::class, name = "Fish")])
         public class SimpleClass
         """.trimIndent()
         Assert.assertEquals(expected.trim(), result.trim())
