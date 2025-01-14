@@ -18,6 +18,10 @@ package io.micronaut.sourcegen.example.plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 
+/**
+ * This extends the generated plugin to make sure that the correct extension class is used.
+ * Only this plugin is registered with gradle, not the generated one.
+ */
 public class TestPluginImpl extends TestPlugin {
 
     @Override

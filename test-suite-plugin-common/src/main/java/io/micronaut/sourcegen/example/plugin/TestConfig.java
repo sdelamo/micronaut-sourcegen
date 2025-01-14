@@ -27,6 +27,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * This is a configuration for a plugin task run.
+ * The properties are parameters and the single method defines the task execution.
+ * The plugin generates a simple record.
+ *
+ * @param typeName The generated class name
+ * @param version The version
+ * @param packageName The package name
+ * @param properties The properties
+ * @param javadoc The javadoc
+ * @param outputFolder The output folder
+ */
 @PluginTaskConfig
 public record TestConfig(
     @PluginTaskParameter(required = true)
@@ -37,7 +49,7 @@ public record TestConfig(
     String packageName,
     Map<String, String> properties,
     List<String> javadoc,
-    @PluginTaskParameter(internal = true, directory = true)
+    @PluginTaskParameter(output = true, directory = true, required = true)
     File outputFolder
 ) {
 

@@ -44,33 +44,27 @@ public @interface GenerateGradlePlugin {
 
 
     /**
-     * The plugin types to generate.
+     * @return The plugin types to generate
      */
     Type[] types();
 
     /**
-     * The source configuration class that has {@link PluginTaskConfig} annotation.
+     * @return The source configuration class that has {@link PluginTaskConfig} annotation
      */
     String source();
 
     /**
-     * The gradle task group that will be set for all tasks.
-     *
-     * @return The task group
+     * @return The gradle task group that will be set for all tasks
      */
     String taskGroup() default "";
 
     /**
-     * The name to use for the generated extension.
-     *
-     * @return The extension name
+     * @return The name to use for the generated extension
      */
     String extensionMethodName() default "";
 
     /**
-     * Whether to extend the micronaut plugin.
-     *
-     * @return extend the plugin
+     * @return Whether to extend the micronaut plugin
      */
     boolean micronautPlugin() default true;
 
@@ -78,7 +72,7 @@ public @interface GenerateGradlePlugin {
      * The coordinate of dependency to add, like
      * {@code io.micronaut.jsonschema:micronaut-jsonschema-generator}.
      *
-     * @return The dependency.
+     * @return The dependency
      */
     String dependency() default "";
 

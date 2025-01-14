@@ -84,4 +84,12 @@ public @interface PluginTaskParameter {
      */
     boolean directory() default false;
 
+    /**
+     * Whether the parameter is output of the task.
+     * Most likely, the parameter is a file or directory.
+     *
+     * @return Whether it is output
+     */
+    boolean output() default false;
+
 }

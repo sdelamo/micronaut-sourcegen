@@ -21,8 +21,7 @@ class TestPluginTest extends AbstractPluginTest {
         }
 
         test {
-            generateSimpleRecord("generate1", spec -> {
-                spec.getTypeName().set("MyRecord")
+            generateRecordWithName("MyRecord", "io.micronaut.test", spec -> {
                 spec.getJavadoc().add("A simple record")
                 spec.getProperties().put("title", "java.lang.String")
                 spec.getProperties().put("age", "java.lang.Integer")
@@ -41,13 +40,13 @@ class TestPluginTest extends AbstractPluginTest {
         var result = configureRunner(":build").build();
 
         System.out.println("Tasks: " + result.getTasks().stream().map(BuildTask::getPath).toList());
-        assertEquals(TaskOutcome.SUCCESS, result.task(":generate1").getOutcome());
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateMyRecord").getOutcome());
         assertEquals(TaskOutcome.SUCCESS, result.task(":compileJava").getOutcome());
 
-        File generated = file("build/generated/generate1/src/main/java/com/example/MyRecord.java");
+        File generated = file("build/generated/generateMyRecord/src/main/java/io/micronaut/test/MyRecord.java");
         assertTrue(generated.exists());
         assertEquals(content(generated), """
-            package com.example;
+            package io.micronaut.test;
 
             /**
              * Version: 1
@@ -60,7 +59,7 @@ class TestPluginTest extends AbstractPluginTest {
             }
             """);
 
-        assertTrue(file("build/classes/java/main/com/example/MyRecord.class").exists());
+        assertTrue(file("build/classes/java/main/io/micronaut/test/MyRecord.class").exists());
     }
 
     @Test

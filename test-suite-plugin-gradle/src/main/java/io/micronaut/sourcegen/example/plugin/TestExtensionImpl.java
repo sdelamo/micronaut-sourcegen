@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.example.plugin;
 
+import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -25,15 +26,42 @@ import org.gradle.api.tasks.TaskProvider;
 
 import java.util.function.Consumer;
 
+/**
+ * This extends a generated class to modify some behavior.
+ */
 public abstract class TestExtensionImpl extends DefaultTestExtension {
 
     public TestExtensionImpl(Project project, Configuration classpath) {
         super(project, classpath);
     }
 
+    /**
+     * This is an example of how you can add a utility method to the generated extension.
+     * Inside it calls the generated method.
+     *
+     * @param typeName The type name
+     * @param packageName The package name
+     * @param action The spec action
+     */
+    public void generateRecordWithName(String typeName, String packageName, Action<TestSpec> action) {
+        super.generateSimpleRecord("generate" + typeName, spec -> {
+            spec.getTypeName().set(typeName);
+            spec.getPackageName().set(packageName);
+            action.execute(spec);
+        });
+    }
+
+    /**
+     * Overriding a method to make sure that output directory has a correct default value.
+     * We are also adding to source sets here.
+     *
+     * @param name The task name
+     * @param configurator The configurator action
+     * @return The task
+     */
     @Override
     TaskProvider<? extends TestTask> createTask(String name, TestTaskConfigurator configurator) {
-        TaskProvider<TestTaskImpl> task = project.getTasks().register(name, TestTaskImpl.class, t -> {
+        TaskProvider<TestTask> task = project.getTasks().register(name, TestTask.class, t -> {
             configurator.execute(t);
             t.getOutputFolder().convention(
                 project.getLayout().getBuildDirectory().dir("generated/" + t.getName())

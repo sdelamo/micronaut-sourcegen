@@ -75,14 +75,15 @@ public interface PluginBuilder {
     private static @NonNull ParameterConfig getParameterConfig(@NonNull PropertyElement property) {
         AnnotationValue<PluginTaskParameter> annotation = property.getAnnotation(PluginTaskParameter.class);
         if (annotation == null) {
-            return new ParameterConfig(property, false, null, false, false);
+            return new ParameterConfig(property, false, null, false, false, false);
         }
         return new ParameterConfig(
             property,
             annotation.booleanValue("required").orElse(false),
             annotation.stringValue("defaultValue").orElse(null),
             annotation.booleanValue("internal").orElse(false),
-            annotation.booleanValue("directory").orElse(false)
+            annotation.booleanValue("directory").orElse(false),
+            annotation.booleanValue("output").orElse(false)
         );
     }
 
@@ -121,14 +122,15 @@ public interface PluginBuilder {
      * @param required Whether it is required
      * @param defaultValue The default value
      * @param internal Whether it is internal
-     * @param isDirectory Whether it is a directory
+     * @param directory Whether it is a directory
      */
     record ParameterConfig(
         PropertyElement source,
         boolean required,
         String defaultValue,
         boolean internal,
-        boolean isDirectory
+        boolean directory,
+        boolean output
     ) {
     }
 
