@@ -19,25 +19,67 @@ import io.micronaut.sourcegen.annotations.PluginTaskConfig;
 import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 import io.micronaut.sourcegen.annotations.PluginTaskParameter;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @PluginTaskConfig
 public record TestConfig(
     @PluginTaskParameter(required = true)
-    String header,
+    String typeName,
     @PluginTaskParameter(defaultValue = "1")
-    Integer repeatNum,
-    @PluginTaskParameter(defaultValue = "<!-- Hello -->")
-    String prefix,
-    Map<String, String> contentMap,
-    List<String> contentLines
+    Integer version,
+    @PluginTaskParameter(defaultValue = "com.example")
+    String packageName,
+    Map<String, String> properties,
+    List<String> javadoc,
+    @PluginTaskParameter(internal = true, directory = true)
+    File outputFolder
 ) {
 
+    private static final String CONTENT = """
+package %s;
+
+/**
+ * Version: %s
+%s
+ */
+public record %s(
+%s
+) {
+}
+""";
+
     @PluginTaskExecutable
-    public void run() {
-        System.out.println("Running test task!");
-        System.out.flush();
+    public void generateSimpleRecord() {
+        System.out.println("Generating record " + typeName);
+
+        File packageFolder = new File(outputFolder, "src" + File.separator
+            + "main" + File.separator + "java" + File.separator
+            + packageName.replace(".", File.separator));
+        packageFolder.mkdirs();
+        String content = String.format(
+            CONTENT,
+            packageName,
+            version,
+            javadoc.stream().map(v -> " * " + v).collect(Collectors.joining("\n")),
+            typeName,
+            properties.entrySet().stream().map(e -> "    " + e.getValue() + " " + e.getKey())
+                .collect(Collectors.joining(",\n"))
+        );
+        File outputFile = new File(packageFolder, typeName + ".java");
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            writer.write(content);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.out.println("Finished record " + typeName);
     }
 
 }

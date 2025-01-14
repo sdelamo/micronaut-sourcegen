@@ -78,32 +78,32 @@ public final class PluginGenerationTriggerAnnotationVisitor implements TypeEleme
         if (processed.contains(element.getName())) {
             return;
         }
-        AnnotationValue<GenerateGradlePlugin> annotation = element.getAnnotation(GenerateGradlePlugin.class);
-        if (annotation == null) {
-            return;
-        }
-        ClassElement source = element.stringValue(GenerateGradlePlugin.class, "source")
-            .flatMap(context::getClassElement).orElse(null);
-        if (source == null) {
-            throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
-        }
-
-        GradleTaskConfig taskConfig = PluginBuilder.getTaskConfig(source, annotation);
-        List<ObjectDef> definitions = new ArrayList<>();
-        for (Type type: taskConfig.types()) {
-            List<ObjectDef> typeDefinitions = new ArrayList<>();
-            for (PluginBuilder pluginBuilder : BUILDERS) {
-                if (pluginBuilder.getType().equals(type)) {
-                    typeDefinitions = pluginBuilder.build(taskConfig);
-                }
-            }
-            if (typeDefinitions == null) {
-                throw new ProcessingException(source, "Building plugin sources of type " + type + " not supported!");
-            }
-            definitions.addAll(typeDefinitions);
-        }
-
         try {
+            AnnotationValue<GenerateGradlePlugin> annotation = element.getAnnotation(GenerateGradlePlugin.class);
+            if (annotation == null) {
+                return;
+            }
+            ClassElement source = element.stringValue(GenerateGradlePlugin.class, "source")
+                .flatMap(context::getClassElement).orElse(null);
+            if (source == null) {
+                throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
+            }
+
+            GradleTaskConfig taskConfig = PluginBuilder.getTaskConfig(source, annotation);
+            List<ObjectDef> definitions = new ArrayList<>();
+            for (Type type: taskConfig.types()) {
+                List<ObjectDef> typeDefinitions = new ArrayList<>();
+                for (PluginBuilder pluginBuilder : BUILDERS) {
+                    if (pluginBuilder.getType().equals(type)) {
+                        typeDefinitions = pluginBuilder.build(taskConfig);
+                    }
+                }
+                if (typeDefinitions == null) {
+                    throw new ProcessingException(source, "Building plugin sources of type " + type + " not supported!");
+                }
+                definitions.addAll(typeDefinitions);
+            }
+
             SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
             if (sourceGenerator == null) {
                 throw new ProcessingException(element, "Could not find SourceGenerator for language " + context.getLanguage());
@@ -113,8 +113,10 @@ public final class PluginGenerationTriggerAnnotationVisitor implements TypeEleme
                 sourceGenerator.write(definition, context, element);
             }
         } catch (ProcessingException e) {
+            e.printStackTrace();
             throw e;
         } catch (Exception e) {
+            e.printStackTrace();
             SourceGenerators.handleFatalException(element, GenerateGradlePlugin.class, e,
                 (exception -> {
                     processed.remove(element.getName());

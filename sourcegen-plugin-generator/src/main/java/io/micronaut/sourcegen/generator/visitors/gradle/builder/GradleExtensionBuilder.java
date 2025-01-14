@@ -105,14 +105,14 @@ public class GradleExtensionBuilder implements PluginBuilder {
             .addSuperinterface(interfaceType)
             .addField(
                 FieldDef.builder("names", TypeDef.parameterized(Set.class, String.class))
-                    .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                    .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
                     .initializer(ClassTypeDef.of(HashSet.class).instantiate())
                     .build()
             )
             .addField(FieldDef.builder("project", PROJECT_TYPE)
-                .addModifiers(Modifier.PRIVATE, Modifier.FINAL).build())
+                .addModifiers(Modifier.PROTECTED, Modifier.FINAL).build())
             .addField(FieldDef.builder("classpath", CONFIGURATION_TYPE)
-                .addModifiers(Modifier.PRIVATE, Modifier.FINAL).build());
+                .addModifiers(Modifier.PROTECTED, Modifier.FINAL).build());
 
         builder.addMethod(MethodDef.builder(MethodDef.CONSTRUCTOR)
             .addModifiers(Modifier.PUBLIC)
@@ -134,6 +134,7 @@ public class GradleExtensionBuilder implements PluginBuilder {
             .addParameter(ParameterDef.builder("action", actionType).build())
             .build((t, params) -> buildExtensionMethod(t, params, taskConfig, specificationType, methodName))
         );
+        builder.addMethod(buildCreateTaskMethod(taskConfig));
         builder.addMethod(MethodDef.builder("configureSpec")
             .addModifiers(Modifier.PROTECTED)
             .addParameter("spec", specificationType)
@@ -185,6 +186,27 @@ public class GradleExtensionBuilder implements PluginBuilder {
             .build();
     }
 
+    private MethodDef buildCreateTaskMethod(GradleTaskConfig taskConfig) {
+        ClassTypeDef taskType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + TASK_SUFFIX);
+        TypeDef taskProviderType = TypeDef.parameterized(ClassTypeDef.of("org.gradle.api.tasks.TaskProvider"), TypeDef.wildcardSubtypeOf(taskType));
+        TypeDef taskContainerType = TypeDef.of("org.gradle.api.tasks.TaskContainer");
+        TypeDef taskConfiguratorType = ClassTypeDef.of(taskConfig.namePrefix() + TASK_CONFIGURATOR_SUFFIX);
+
+        return MethodDef.builder("createTask")
+            .returns(taskProviderType)
+            .addParameter("name", String.class)
+            .addParameter("configurator", taskConfiguratorType)
+            .build((t, params) ->
+                    t.field("project", PROJECT_TYPE)
+                    .invoke("getTasks", taskContainerType)
+                    .invoke("register", taskProviderType,
+                        params.get(0),
+                        taskType.getStaticField("class", TypeDef.CLASS),
+                        params.get(1)
+                    ).returning()
+            );
+    }
+
     private StatementDef buildConfigureSpecMethod(GradleTaskConfig taskConfig, VariableDef t, List<VariableDef.MethodParameter> params) {
         List<StatementDef> statements = new ArrayList<>();
         for (ParameterConfig parameter: taskConfig.parameters()) {
@@ -220,22 +242,15 @@ public class GradleExtensionBuilder implements PluginBuilder {
         StatementDef actionCall = params.get(1).invoke("execute", TypeDef.VOID, spec);
 
         ClassTypeDef taskType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + TASK_SUFFIX);
-        TypeDef taskProviderType = TypeDef.parameterized(ClassTypeDef.of("org.gradle.api.tasks.TaskProvider"), taskType);
+        TypeDef taskProviderType = TypeDef.parameterized(ClassTypeDef.of("org.gradle.api.tasks.TaskProvider"), TypeDef.wildcardSubtypeOf(taskType));
+        ExpressionDef taskConfigurator = ClassTypeDef.of(taskConfig.namePrefix() + TASK_CONFIGURATOR_SUFFIX)
+           .instantiate(spec, t.field("classpath", CONFIGURATION_TYPE));
         Local task = new Local("task", taskProviderType);
-        TypeDef taskContainerType = TypeDef.of("org.gradle.api.tasks.TaskContainer");
         StatementDef taskCreation = new StatementDef.DefineAndAssign(
             task,
-            t.field("project", PROJECT_TYPE)
-                .invoke("getTasks", taskContainerType)
-                .invoke("register", taskProviderType,
-                    params.get(0),
-                    taskType.getStaticField("class", TypeDef.CLASS),
-                    ClassTypeDef.of(taskConfig.namePrefix() + TASK_CONFIGURATOR_SUFFIX)
-                        .instantiate(spec, t.field("classpath", CONFIGURATION_TYPE))
-                )
+            t.invoke("createTask", taskProviderType, params.get(0), taskConfigurator)
         );
         // TODO source sets
-
         return StatementDef.multi(
             ifStatement,
             specCreation,

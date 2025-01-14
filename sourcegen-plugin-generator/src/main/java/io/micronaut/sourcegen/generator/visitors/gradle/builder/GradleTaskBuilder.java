@@ -20,6 +20,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
+import io.micronaut.sourcegen.model.AnnotationDef;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassDef.ClassDefBuilder;
 import io.micronaut.sourcegen.model.ClassTypeDef;
@@ -36,6 +37,7 @@ import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
 
 import javax.lang.model.element.Modifier;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,12 +71,20 @@ public class GradleTaskBuilder implements PluginBuilder {
 
         for (ParameterConfig parameter: taskConfig.parameters()) {
             if (parameter.internal()) {
+                TypeDef type = TypeDef.of(parameter.source().getType());
+                if (parameter.source().getType().isAssignable(File.class)) {
+                    if (parameter.isDirectory()) {
+                        type = ClassTypeDef.of("org.gradle.api.file.Directory");
+                    } else {
+                        type = ClassTypeDef.of("org.gradle.api.file.RegularFile");
+                    }
+                }
                 MethodDefBuilder propBuilder = MethodDef
                     .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                     .returns(TypeDef.parameterized(
                         ClassTypeDef.of("org.gradle.api.provider.Provider"),
-                        TypeDef.of(parameter.source())
+                        type
                     ));
                 builder.addMethod(propBuilder.build());
             } else {
@@ -83,6 +93,18 @@ public class GradleTaskBuilder implements PluginBuilder {
                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                     .returns(createGradleProperty(parameter))
                     .addAnnotation("org.gradle.api.tasks.Input");
+                if (parameter.source().getType().isAssignable(File.class)) {
+                    if (parameter.isDirectory()) {
+                        propBuilder.addAnnotation(AnnotationDef.builder(ClassTypeDef.of("org.gradle.api.tasks.InputDirectory")).build());
+                    } else {
+                        propBuilder.addAnnotation(AnnotationDef.builder(ClassTypeDef.of("org.gradle.api.tasks.InputFile")).build());
+                    }
+                    propBuilder.addAnnotation(AnnotationDef.builder(ClassTypeDef.of("org.gradle.api.tasks.PathSensitive"))
+                        .addMember("value", ClassTypeDef.of("org.gradle.api.tasks.PathSensitivity")
+                            .getStaticField("NONE", TypeDef.of("org.gradle.api.tasks.PathSensitivity"))
+                        ).build()
+                    );
+                }
                 if (!parameter.required()) {
                     propBuilder.addAnnotation("org.gradle.api.tasks.Optional");
                 }
@@ -215,10 +237,13 @@ public class GradleTaskBuilder implements PluginBuilder {
         ClassTypeDef parametersType = ClassTypeDef.of(taskConfig.namePrefix() + "WorkActionParameters");
         List<ExpressionDef> params = new ArrayList<>();
         for (ParameterConfig parameter: taskConfig.parameters()) {
-            params.add(new VariableDef.Local("parameters", parametersType)
+            ExpressionDef expression = new VariableDef.Local("parameters", parametersType)
                 .invoke("get" + NameUtils.capitalize(parameter.source().getName()), createGradleProperty(parameter))
-                .invoke("get", TypeDef.of(parameter.source().getType()))
-            );
+                .invoke("get", TypeDef.of(parameter.source().getType()));
+            if (parameter.source().getType().isAssignable(File.class)) {
+                expression = expression.invoke("getAsFile", TypeDef.of(File.class));
+            }
+            params.add(expression);
         }
         MethodDef executeMethod = MethodDef
             .builder("execute")
@@ -246,6 +271,12 @@ public class GradleTaskBuilder implements PluginBuilder {
 
     static TypeDef createGradleProperty(ParameterConfig parameter) {
         ClassElement type = parameter.source().getType();
+        if (type.isAssignable(File.class)) {
+            if (parameter.isDirectory()) {
+                return ClassTypeDef.of("org.gradle.api.file.DirectoryProperty");
+            }
+            return ClassTypeDef.of("org.gradle.api.file.RegularFileProperty");
+        }
         if (type.isAssignable(Map.class)) {
             Map<String, ClassElement> typeArgs = type.getGenericType().getTypeArguments();
             return TypeDef.parameterized(

@@ -76,4 +76,12 @@ public @interface PluginTaskParameter {
      */
     String mavenProperty() default "";
 
+    /**
+     * Whether the file is a directory.
+     * Will only work for parameters of type {@link java.io.File}.
+     *
+     * @return Whether it is a directory.
+     */
+    boolean directory() default false;
+
 }

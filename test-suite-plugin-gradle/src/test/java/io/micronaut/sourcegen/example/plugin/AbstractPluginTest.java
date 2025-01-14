@@ -1,15 +1,15 @@
 package io.micronaut.sourcegen.example.plugin;
 
 import org.gradle.testkit.runner.GradleRunner;
-import org.junit.Rule;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.rules.TemporaryFolder;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,6 +68,14 @@ abstract class AbstractPluginTest {
 
     File file(String relativePath) {
         return baseDir.toPath().resolve(relativePath).toFile();
+    }
+
+    String content(File file) {
+        try (InputStream stream = new BufferedInputStream(new FileInputStream(file))) {
+            return new String(stream.readAllBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
