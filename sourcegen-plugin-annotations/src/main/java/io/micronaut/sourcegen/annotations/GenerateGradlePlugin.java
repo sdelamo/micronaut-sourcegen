@@ -42,7 +42,6 @@ public @interface GenerateGradlePlugin {
      */
     String namePrefix() default "";
 
-
     /**
      * @return The plugin types to generate
      */

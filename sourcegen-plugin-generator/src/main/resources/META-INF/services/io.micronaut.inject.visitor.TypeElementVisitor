@@ -1,1 +1,2 @@
-io.micronaut.sourcegen.generator.visitors.gradle.PluginGenerationTriggerAnnotationVisitor
+io.micronaut.sourcegen.generator.visitors.gradle.GradlePluginGenerationTriggerAnnotationVisitor
+io.micronaut.sourcegen.generator.visitors.maven.MavenPluginGenerationTriggerAnnotationVisitor

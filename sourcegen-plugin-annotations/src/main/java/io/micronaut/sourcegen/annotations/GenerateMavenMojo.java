@@ -43,6 +43,16 @@ public @interface GenerateMavenMojo {
     String namePrefix() default "";
 
     /**
+     * @return The source configuration class that has {@link PluginTaskConfig} annotation
+     */
+    String source();
+
+    /**
+     * @return Whether to extend abstract micronaut mojo.
+     */
+    boolean micronautPlugin() default true;
+
+    /**
      * The property prefix to use for parameters generated in Maven Mojo.
      *
      * @see PluginTaskParameter#mavenProperty()

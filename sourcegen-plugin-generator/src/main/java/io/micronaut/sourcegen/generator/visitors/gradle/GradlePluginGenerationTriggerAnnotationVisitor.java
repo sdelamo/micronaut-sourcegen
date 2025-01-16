@@ -46,7 +46,7 @@ import java.util.Set;
  * @since 1.5.x
  */
 @Internal
-public final class PluginGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateGradlePlugin, Object> {
+public final class GradlePluginGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateGradlePlugin, Object> {
 
     private static final List<PluginBuilder> BUILDERS = List.of(
         new GradleTaskBuilder(),
@@ -89,7 +89,7 @@ public final class PluginGenerationTriggerAnnotationVisitor implements TypeEleme
                 throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
             }
 
-            GradleTaskConfig taskConfig = PluginBuilder.getTaskConfig(source, annotation);
+            GradleTaskConfig taskConfig = GradlePluginUtils.getTaskConfig(source, annotation);
             List<ObjectDef> definitions = new ArrayList<>();
             for (Type type: taskConfig.types()) {
                 List<ObjectDef> typeDefinitions = new ArrayList<>();

@@ -32,6 +32,7 @@ include("test-suite-custom-annotations")
 include("test-suite-custom-generators")
 include("test-suite-plugin-common")
 include("test-suite-plugin-gradle")
+include("test-suite-plugin-maven")
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
