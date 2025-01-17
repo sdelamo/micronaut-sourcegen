@@ -22,7 +22,9 @@ import com.github.javaparser.javadoc.JavadocBlockTag.Type;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.io.BufferedReader;
@@ -123,6 +125,13 @@ public class JavadocUtils {
         for (JavadocBlockTag tag: parsed.getBlockTags()) {
             if (tag.getType() == Type.PARAM) {
                 elements.put(tag.getName().orElse(null), tag.getContent().toText() + ".");
+            }
+        }
+        for (PropertyElement property: element.getBeanProperties()) {
+            if (property.getDocumentation().isPresent()) {
+                elements.put(property.getName(), property.getDocumentation().get());
+            } else if (property.getField().flatMap(Element::getDocumentation).isPresent()) {
+                elements.put(property.getName(), property.getField().get().getDocumentation().get());
             }
         }
         for (MethodElement method: element.getMethods()) {

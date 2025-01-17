@@ -21,12 +21,23 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 import io.micronaut.sourcegen.annotations.PluginTaskParameter;
+import io.micronaut.sourcegen.model.ClassTypeDef;
+import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.StatementDef;
+import io.micronaut.sourcegen.model.VariableDef.Local;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Common utility methods for plugin generation.
@@ -85,6 +96,70 @@ public class PluginUtils {
             annotation.stringValue("globalProperty").orElse(null),
             javadoc
         );
+    }
+
+    /**
+     * A common method for executing the main task executable.
+     *
+     * @param source The source annotated with {@link io.micronaut.sourcegen.annotations.PluginTask}
+     * @param methodName The name of the method annotated with {@link PluginTaskExecutable}
+     * @param parameters The parameters of the task
+     * @param arguments The prepared arguments for the task
+     * @return The statements to execute the task method
+     */
+    public static StatementDef executeTaskMethod(
+            ClassElement source, String methodName, List<ParameterConfig> parameters, List<ExpressionDef> arguments
+    ) {
+        List<StatementDef> statements = new ArrayList<>();
+        ClassTypeDef taskType = ClassTypeDef.of(source);
+        Local task = new Local("task", taskType);
+
+        MethodElement constructor = source.getPrimaryConstructor().orElse(null);
+        if (constructor == null) {
+            throw new ProcessingException(source, "No constructor found for " + source.getName());
+        }
+        if (source.isRecord()) {
+            statements.add(new StatementDef.DefineAndAssign(task,
+                taskType.instantiate(constructor, arguments)
+            ));
+        } else {
+            Set<String> fulfilledArgs = new HashSet<>();
+            Map<String, ExpressionDef> argsByName = new HashMap<>();
+            for (int i = 0; i < parameters.size(); i++) {
+                argsByName.put(parameters.get(i).source().getName(), arguments.get(i));
+            }
+
+            constructor.getParameters();
+            List<ExpressionDef> constructorArgs = new ArrayList<>();
+            for (ParameterElement param : constructor.getParameters()) {
+                fulfilledArgs.add(param.getName());
+                constructorArgs.add(argsByName.containsValue(param.getName())
+                    ? argsByName.get(param.getName()) : ExpressionDef.constant(null));
+            }
+            statements.add(task.defineAndAssign(
+                taskType.instantiate(constructor, constructorArgs)));
+
+            for (PropertyElement property : source.getBeanProperties()) {
+                if (fulfilledArgs.contains(property.getName())
+                    || !argsByName.containsKey(property.getName())
+                ) {
+                    continue;
+                }
+                Optional<MethodElement> writeMethod = property.getWriteMethod();
+                if (writeMethod.isPresent()) {
+                    statements.add(task.invoke(writeMethod.get(), argsByName.get(property.getName())));
+                    fulfilledArgs.add(property.getName());
+                } else if (property.getField().isPresent()
+                    && (property.isPublic() || property.isPackagePrivate())
+                ) {
+                    statements.add(task.field(property.getField().get()).assign(argsByName.get(property.getName())));
+                    fulfilledArgs.add(property.getName());
+                }
+            }
+        }
+
+        statements.add(task.invoke(methodName, ClassTypeDef.VOID));
+        return StatementDef.multi(statements);
     }
 
     /**

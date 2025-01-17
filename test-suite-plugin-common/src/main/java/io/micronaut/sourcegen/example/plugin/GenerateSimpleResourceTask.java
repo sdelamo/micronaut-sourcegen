@@ -26,22 +26,30 @@ import java.io.IOException;
 
 /**
  * This is a configuration for another plugin task run.
+ * In this case it is a class instead of a record.
  * The properties are parameters and the single method defines the task execution.
  * The plugin generates a simple record.
- *
- * @param fileName The generated file name
- * @param content The content of the file
- * @param outputFolder The output folder
  */
 @PluginTask
-public record GenerateSimpleResourceTask(
+public final class GenerateSimpleResourceTask {
+
+    /**
+     * The generated file name.
+     */
     @PluginTaskParameter(required = true, globalProperty = "fileName")
-    String fileName,
+    private String fileName;
+
+    /**
+     * The content of the file.
+     */
     @PluginTaskParameter(required = true, globalProperty = "content")
-    String content,
+    private String content;
+
+    /**
+     * The output folder.
+     */
     @PluginTaskParameter(output = true, directory = true, required = true)
-    File outputFolder
-) {
+    private File outputFolder;
 
     /**
      * Generate a simple record in the supplied package and with the specified version.
@@ -62,4 +70,15 @@ public record GenerateSimpleResourceTask(
         System.out.println("Finished resource " + fileName);
     }
 
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setOutputFolder(File outputFolder) {
+        this.outputFolder = outputFolder;
+    }
 }

@@ -17,6 +17,7 @@ package io.micronaut.sourcegen.generator.visitors.maven;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.sourcegen.generator.visitors.PluginUtils;
 import io.micronaut.sourcegen.generator.visitors.maven.MavenPluginUtils.MavenTaskConfig;
 import io.micronaut.sourcegen.generator.visitors.PluginUtils.ParameterConfig;
 import io.micronaut.sourcegen.model.AnnotationDef;
@@ -135,8 +136,7 @@ public class MavenMojoBuilder {
                 params.add(t.field(parameter.source().getName(), TypeDef.of(parameter.source().getType())));
             }
         }
-        return ClassTypeDef.of(taskConfig.source()).instantiate(params)
-            .invoke(taskConfig.methodName(), TypeDef.VOID);
+        return PluginUtils.executeTaskMethod(taskConfig.source(), taskConfig.methodName(), taskConfig.parameters(), params);
     }
 
 }

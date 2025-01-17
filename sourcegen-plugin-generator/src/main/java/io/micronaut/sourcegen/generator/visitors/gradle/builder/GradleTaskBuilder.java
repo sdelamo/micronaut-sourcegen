@@ -21,6 +21,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
+import io.micronaut.sourcegen.generator.visitors.PluginUtils;
 import io.micronaut.sourcegen.generator.visitors.PluginUtils.ParameterConfig;
 import io.micronaut.sourcegen.generator.visitors.gradle.GradlePluginUtils.GradlePluginConfig;
 import io.micronaut.sourcegen.generator.visitors.gradle.GradlePluginUtils.GradleTaskConfig;
@@ -264,7 +265,7 @@ public class GradleTaskBuilder implements GradleTypeBuilder {
                     .newLocal("parameters")
             )
             .addStatement(
-                ClassTypeDef.of(taskConfig.source()).instantiate(params).invoke(taskConfig.methodName(), TypeDef.VOID)
+                PluginUtils.executeTaskMethod(taskConfig.source(), taskConfig.methodName(), taskConfig.parameters(), params)
             )
             .build();
         return ClassDef.builder(taskConfig.namePrefix() + "WorkAction")
