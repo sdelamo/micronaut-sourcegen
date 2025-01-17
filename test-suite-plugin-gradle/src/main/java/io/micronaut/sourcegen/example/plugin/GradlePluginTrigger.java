@@ -16,6 +16,7 @@
 package io.micronaut.sourcegen.example.plugin;
 
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.GenerateGradleTask;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 
 @GenerateGradlePlugin(
@@ -27,7 +28,13 @@ import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
         Type.GRADLE_SPECIFICATION,
         Type.GRADLE_PLUGIN
     },
-    source = "io.micronaut.sourcegen.example.plugin.TestConfig"
+    tasks = {
+        @GenerateGradleTask(
+            namePrefix = "GenerateSimpleRecord",
+            extensionMethodName = "generateSimpleRecord",
+            source = "io.micronaut.sourcegen.example.plugin.TestConfig"
+        )
+    }
 )
 public class GradlePluginTrigger {
 }

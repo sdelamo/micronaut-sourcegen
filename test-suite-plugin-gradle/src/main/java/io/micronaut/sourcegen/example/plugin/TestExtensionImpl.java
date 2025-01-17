@@ -43,7 +43,7 @@ public abstract class TestExtensionImpl extends DefaultTestExtension {
      * @param packageName The package name
      * @param action The spec action
      */
-    public void generateRecordWithName(String typeName, String packageName, Action<TestSpec> action) {
+    public void generateRecordWithName(String typeName, String packageName, Action<GenerateSimpleRecordSpec> action) {
         super.generateSimpleRecord("generate" + typeName, spec -> {
             spec.getTypeName().set(typeName);
             spec.getPackageName().set(packageName);
@@ -60,8 +60,10 @@ public abstract class TestExtensionImpl extends DefaultTestExtension {
      * @return The task
      */
     @Override
-    TaskProvider<? extends TestTask> createTask(String name, TestTaskConfigurator configurator) {
-        TaskProvider<TestTask> task = project.getTasks().register(name, TestTask.class, t -> {
+    TaskProvider<? extends GenerateSimpleRecordTask> createGenerateSimpleRecordTask(
+            String name, GenerateSimpleRecordTaskConfigurator configurator
+    ) {
+        TaskProvider<GenerateSimpleRecordTask> task = project.getTasks().register(name, GenerateSimpleRecordTask.class, t -> {
             configurator.execute(t);
             t.getOutputFolder().convention(
                 project.getLayout().getBuildDirectory().dir("generated/" + t.getName())

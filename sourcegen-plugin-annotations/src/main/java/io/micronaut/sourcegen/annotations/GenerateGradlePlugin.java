@@ -43,24 +43,26 @@ public @interface GenerateGradlePlugin {
     String namePrefix() default "";
 
     /**
-     * @return The plugin types to generate
+     * Configure gradle tasks that will be generated.
+     *
+     * @return gradle task configurations
      */
-    Type[] types();
+    GenerateGradleTask[] tasks();
 
     /**
-     * @return The source configuration class that has {@link PluginTaskConfig} annotation
+     * The types of classes to generate.
+     * By default, all are generated.
+     *
+     * @return The plugin types to generate.
      */
-    String source();
+    Type[] types() default {
+        Type.GRADLE_TASK, Type.GRADLE_EXTENSION, Type.GRADLE_SPECIFICATION, Type.GRADLE_PLUGIN
+    };
 
     /**
      * @return The gradle task group that will be set for all tasks
      */
     String taskGroup() default "";
-
-    /**
-     * @return The name to use for the generated extension
-     */
-    String extensionMethodName() default "";
 
     /**
      * @return Whether to extend the micronaut plugin
@@ -84,4 +86,25 @@ public @interface GenerateGradlePlugin {
         GRADLE_EXTENSION,
         GRADLE_PLUGIN
     }
+
+    @interface GenerateGradleTask {
+
+        /**
+         * @return The prefix to use for task name.
+         */
+        String namePrefix();
+
+        /**
+         * @return The source configuration class that has {@link PluginTaskConfig} annotation
+         */
+        String source();
+
+        /**
+         * @return The name to use for the generated extension
+         */
+        String extensionMethodName() default "";
+
+    }
+
+
 }

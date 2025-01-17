@@ -39,7 +39,7 @@ import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleExt
  * A builder for {@link Type#GRADLE_PLUGIN}.
  * Creates a plugin that configures an extension and task.
  */
-public class GradlePluginBuilder implements PluginBuilder {
+public class GradlePluginBuilder implements GradleTypeBuilder {
 
     public static final String PLUGIN_SUFFIX = "Plugin";
 
@@ -55,28 +55,29 @@ public class GradlePluginBuilder implements PluginBuilder {
 
     @Override
     @NonNull
-    public List<ObjectDef> build(GradleTaskConfig taskConfig) {
-        String pluginType = taskConfig.packageName() + "." + taskConfig.namePrefix() + PLUGIN_SUFFIX;
+    public List<ObjectDef> build(GradlePluginConfig pluginConfig) {
+        String pluginType = pluginConfig.packageName() + "." + pluginConfig.namePrefix() + PLUGIN_SUFFIX;
         ClassDefBuilder builder = ClassDef.builder(pluginType)
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(TypeDef.parameterized(
                 ClassTypeDef.of("org.gradle.api.Plugin"),
                 PROJECT_TYPE
             ));
-        builder.addMethod(createExtensionMethod(taskConfig));
-        builder.addMethod(createApplyMethod(taskConfig));
+        builder.addMethod(createExtensionMethod(pluginConfig));
+        builder.addMethod(createApplyMethod(pluginConfig));
         return List.of(builder.build());
     }
 
-    private MethodDef createApplyMethod(GradleTaskConfig taskConfig) {
-        ClassTypeDef extensionType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
+    private MethodDef createApplyMethod(GradlePluginConfig pluginConfig) {
+        ClassTypeDef extensionType = ClassTypeDef.of(pluginConfig.packageName() + "."
+            + pluginConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
 
         return MethodDef.builder("apply")
             .addModifiers(Modifier.PUBLIC)
             .addParameter("project", ClassTypeDef.of("org.gradle.api.Project"))
             .build((t, params) -> {
                 List<StatementDef> statements = new ArrayList<>();
-                if (taskConfig.micronautPlugin()) {
+                if (pluginConfig.micronautPlugin()) {
                     params.get(0)
                         .invoke("getPluginManager", ClassTypeDef.of("org.gradle.api.plugins.PluginManager"))
                         .invoke("apply", TypeDef.VOID, ClassTypeDef.of(MICRONAUT_BASE_PLUGIN).getStaticField("class", TypeDef.CLASS));
@@ -88,24 +89,24 @@ public class GradlePluginBuilder implements PluginBuilder {
                 Local dependencies = new Local("dependencies", CONFIGURATION_TYPE);
                 statements.add(new DefineAndAssign(
                     dependencies,
-                    configurations.invoke("create", CONFIGURATION_TYPE, ExpressionDef.constant(taskConfig.namePrefix() + "Configuration"))
+                    configurations.invoke("create", CONFIGURATION_TYPE, ExpressionDef.constant(pluginConfig.namePrefix() + "Configuration"))
                 ));
                 statements.add(dependencies.invoke("setCanBeResolved", TypeDef.VOID, ExpressionDef.constant(false)));
                 statements.add(dependencies.invoke("setCanBeConsumed", TypeDef.VOID, ExpressionDef.constant(false)));
-                statements.add(dependencies.invoke("setDescription", TypeDef.VOID, ExpressionDef.constant("The " + taskConfig.namePrefix() + " worker dependencies")));
-                if (taskConfig.dependency() != null) {
+                statements.add(dependencies.invoke("setDescription", TypeDef.VOID, ExpressionDef.constant("The " + pluginConfig.namePrefix() + " worker dependencies")));
+                if (pluginConfig.dependency() != null) {
                     statements.add(dependencies.invoke("getDependencies", TypeDef.of("org.gradle.api.artifacts.DependencySet"))
-                        .invoke("add", TypeDef.VOID, dependencyHandler.invoke("create", dependencyType, ExpressionDef.constant(taskConfig.dependency()))));
+                        .invoke("add", TypeDef.VOID, dependencyHandler.invoke("create", dependencyType, ExpressionDef.constant(pluginConfig.dependency()))));
                 }
 
                 Local classpath = new Local("classpath", CONFIGURATION_TYPE);
                 statements.add(new DefineAndAssign(
                     classpath,
-                    configurations.invoke("create", CONFIGURATION_TYPE, ExpressionDef.constant(taskConfig.namePrefix() + "Classpath"))
+                    configurations.invoke("create", CONFIGURATION_TYPE, ExpressionDef.constant(pluginConfig.namePrefix() + "Classpath"))
                 ));
                 statements.add(classpath.invoke("setCanBeResolved", TypeDef.VOID, ExpressionDef.constant(true)));
                 statements.add(classpath.invoke("setCanBeConsumed", TypeDef.VOID, ExpressionDef.constant(false)));
-                statements.add(classpath.invoke("setDescription", TypeDef.VOID, ExpressionDef.constant("The " + taskConfig.namePrefix() + " worker classpath")));
+                statements.add(classpath.invoke("setDescription", TypeDef.VOID, ExpressionDef.constant("The " + pluginConfig.namePrefix() + " worker classpath")));
                 statements.add(classpath.invoke("extendsFrom", TypeDef.VOID, dependencies));
 
                 statements.add(t.invoke("createExtension", extensionType, params.get(0), classpath));
@@ -113,9 +114,9 @@ public class GradlePluginBuilder implements PluginBuilder {
             });
     }
 
-    private MethodDef createExtensionMethod(GradleTaskConfig taskConfig) {
-        ClassTypeDef extensionType = ClassTypeDef.of(taskConfig.packageName() + "." + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
-        ClassTypeDef defaultExtensionType = ClassTypeDef.of(taskConfig.packageName() + "." + DEFAULT_EXTENSION_NAME_PREFIX + taskConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
+    private MethodDef createExtensionMethod(GradlePluginConfig pluginConfig) {
+        ClassTypeDef extensionType = ClassTypeDef.of(pluginConfig.packageName() + "." + pluginConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
+        ClassTypeDef defaultExtensionType = ClassTypeDef.of(pluginConfig.packageName() + "." + DEFAULT_EXTENSION_NAME_PREFIX + pluginConfig.namePrefix() + EXTENSION_NAME_SUFFIX);
 
         return MethodDef.builder("createExtension")
             .addModifiers(Modifier.PROTECTED)
@@ -124,14 +125,14 @@ public class GradlePluginBuilder implements PluginBuilder {
             .addParameter("classpath", CONFIGURATION_TYPE)
             .build((t, params) -> {
                 ExpressionDef root = params.get(0);
-                if (taskConfig.micronautPlugin()) {
+                if (pluginConfig.micronautPlugin()) {
                     root = ClassTypeDef.of(MICRONAUT_PLUGINS_HELPER)
                         .invokeStatic("findMicronautExtension", TypeDef.of("io.micronaut.gradle.MicronautExtension"), params.get(0));
                 }
                 ExpressionDef extensions = root.invoke("getExtensions", ClassTypeDef.of("org.gradle.api.plugins.ExtensionContainer"));
                 return new StatementDef.Return(extensions.invoke("create", extensionType,
                     extensionType.getStaticField("class", TypeDef.CLASS),
-                    ExpressionDef.constant(taskConfig.namePrefix()),
+                    ExpressionDef.constant(pluginConfig.namePrefix()),
                     defaultExtensionType.getStaticField("class", TypeDef.CLASS),
                     params.get(0),
                     params.get(1)

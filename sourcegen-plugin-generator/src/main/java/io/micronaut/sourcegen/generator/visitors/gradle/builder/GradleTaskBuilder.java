@@ -47,7 +47,7 @@ import java.util.Set;
  * A builder for {@link GenerateGradlePlugin.Type#GRADLE_TASK}.
  * Creates a task, work action and work action parameters given a plugin task configuration.
  */
-public class GradleTaskBuilder implements PluginBuilder {
+public class GradleTaskBuilder implements GradleTypeBuilder {
 
     public static final String TASK_SUFFIX = "Task";
 
@@ -58,8 +58,16 @@ public class GradleTaskBuilder implements PluginBuilder {
 
     @Override
     @NonNull
-    public List<ObjectDef> build(GradleTaskConfig taskConfig) {
-        String taskType = taskConfig.packageName() + "." + taskConfig.namePrefix() + TASK_SUFFIX;
+    public List<ObjectDef> build(GradlePluginConfig pluginConfig) {
+        List<ObjectDef> objects = new ArrayList<>();
+        for (GradleTaskConfig taskConfig: pluginConfig.tasks()) {
+            objects.addAll(buildTask(pluginConfig.packageName(), taskConfig));
+        }
+        return objects;
+    }
+
+    private List<ObjectDef> buildTask(String packageName, GradleTaskConfig taskConfig) {
+        String taskType = packageName + "." + taskConfig.namePrefix() + TASK_SUFFIX;
         ClassDefBuilder builder = ClassDef.builder(taskType)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .superclass(ClassTypeDef.of("org.gradle.api.DefaultTask"))

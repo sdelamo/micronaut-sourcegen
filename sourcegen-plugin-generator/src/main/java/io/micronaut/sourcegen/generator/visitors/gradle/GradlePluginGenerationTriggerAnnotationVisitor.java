@@ -15,7 +15,6 @@
  */
 package io.micronaut.sourcegen.generator.visitors.gradle;
 
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
@@ -30,8 +29,8 @@ import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleExtensionB
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradlePluginBuilder;
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleSpecificationBuilder;
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTaskBuilder;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.PluginBuilder;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.PluginBuilder.GradleTaskConfig;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.GradlePluginConfig;
 import io.micronaut.sourcegen.model.ObjectDef;
 
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ import java.util.Set;
 @Internal
 public final class GradlePluginGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateGradlePlugin, Object> {
 
-    private static final List<PluginBuilder> BUILDERS = List.of(
+    private static final List<GradleTypeBuilder> BUILDERS = List.of(
         new GradleTaskBuilder(),
         new GradleExtensionBuilder(),
         new GradleSpecificationBuilder(),
@@ -79,27 +78,21 @@ public final class GradlePluginGenerationTriggerAnnotationVisitor implements Typ
             return;
         }
         try {
-            AnnotationValue<GenerateGradlePlugin> annotation = element.getAnnotation(GenerateGradlePlugin.class);
-            if (annotation == null) {
+            if (!element.hasAnnotation(GenerateGradlePlugin.class)) {
                 return;
             }
-            ClassElement source = element.stringValue(GenerateGradlePlugin.class, "source")
-                .flatMap(context::getClassElement).orElse(null);
-            if (source == null) {
-                throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
-            }
 
-            GradleTaskConfig taskConfig = GradlePluginUtils.getTaskConfig(source, annotation);
+            GradlePluginConfig taskConfig = GradlePluginUtils.getPluginConfig(element, context);
             List<ObjectDef> definitions = new ArrayList<>();
             for (Type type: taskConfig.types()) {
                 List<ObjectDef> typeDefinitions = new ArrayList<>();
-                for (PluginBuilder pluginBuilder : BUILDERS) {
-                    if (pluginBuilder.getType().equals(type)) {
-                        typeDefinitions = pluginBuilder.build(taskConfig);
+                for (GradleTypeBuilder gradleTypeBuilder : BUILDERS) {
+                    if (gradleTypeBuilder.getType().equals(type)) {
+                        typeDefinitions = gradleTypeBuilder.build(taskConfig);
                     }
                 }
                 if (typeDefinitions == null) {
-                    throw new ProcessingException(source, "Building plugin sources of type " + type + " not supported!");
+                    throw new ProcessingException(element, "Building plugin sources of type " + type + " not supported!");
                 }
                 definitions.addAll(typeDefinitions);
             }

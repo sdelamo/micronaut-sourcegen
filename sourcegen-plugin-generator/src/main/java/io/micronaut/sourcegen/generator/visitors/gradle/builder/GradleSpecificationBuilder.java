@@ -25,6 +25,7 @@ import io.micronaut.sourcegen.model.MethodDef.MethodDefBuilder;
 import io.micronaut.sourcegen.model.ObjectDef;
 
 import javax.lang.model.element.Modifier;
+import java.util.ArrayList;
 import java.util.List;
 
 import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTaskBuilder.createGradleProperty;
@@ -33,7 +34,7 @@ import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTas
  * A builder for {@link Type#GRADLE_SPECIFICATION}.
  * Creates a Gradle specification for configuring a gradle task.
  */
-public class GradleSpecificationBuilder implements PluginBuilder {
+public class GradleSpecificationBuilder implements GradleTypeBuilder {
 
     public static final String SPECIFICATION_NAME_SUFFIX = "Spec";
 
@@ -44,8 +45,16 @@ public class GradleSpecificationBuilder implements PluginBuilder {
 
     @Override
     @NonNull
-    public List<ObjectDef> build(GradleTaskConfig taskConfig) {
-        InterfaceDefBuilder builder = InterfaceDef.builder(taskConfig.packageName() + "." + taskConfig.namePrefix() + SPECIFICATION_NAME_SUFFIX)
+    public List<ObjectDef> build(GradlePluginConfig pluginConfig) {
+        List<ObjectDef> objects = new ArrayList<>();
+        for (GradleTaskConfig taskConfig: pluginConfig.tasks()) {
+            objects.add(buildForTask(pluginConfig.packageName(), taskConfig));
+        }
+        return objects;
+    }
+
+    private ObjectDef buildForTask(String packageName, GradleTaskConfig taskConfig) {
+        InterfaceDefBuilder builder = InterfaceDef.builder(packageName + "." + taskConfig.namePrefix() + SPECIFICATION_NAME_SUFFIX)
             .addModifiers(Modifier.PUBLIC);
         for (ParameterConfig parameter: taskConfig.parameters()) {
             if (parameter.internal()) {
@@ -57,7 +66,7 @@ public class GradleSpecificationBuilder implements PluginBuilder {
                 .returns(createGradleProperty(parameter));
             builder.addMethod(propBuilder.build());
         }
-        return List.of(builder.build());
+        return builder.build();
     }
 
 }

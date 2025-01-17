@@ -21,12 +21,15 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
+import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
+import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.GenerateGradleTask;
 import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 import io.micronaut.sourcegen.annotations.PluginTaskParameter;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.PluginBuilder;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.PluginBuilder.GradleTaskConfig;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.PluginBuilder.ParameterConfig;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.GradlePluginConfig;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.GradleTaskConfig;
+import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.ParameterConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,37 +39,67 @@ import java.util.List;
  */
 public final class GradlePluginUtils {
 
-    static @NonNull PluginBuilder.GradleTaskConfig getTaskConfig(@NonNull ClassElement type, @NonNull AnnotationValue<GenerateGradlePlugin> annotation) {
-        List<MethodElement> executables = type.getMethods().stream()
-            .filter(m -> m.hasAnnotation(PluginTaskExecutable.class))
-            .toList();
-        if (executables.size() != 1) {
-            throw new ProcessingException(type, "Expected exactly one method annotated with @PluginTaskExecutable but found " + executables.size());
-        }
-        if (executables.get(0).getParameters().length != 0) {
-            throw new ProcessingException(type, "Expected @PluginTaskExecutable method to have no parameters");
-        }
-        if (!executables.get(0).getReturnType().isVoid()) {
-            throw new ProcessingException(type, "Expected @PluginTaskExecutable to have void return type");
-        }
-        String executable = executables.get(0).getName();
+    static @NonNull GradleTypeBuilder.GradlePluginConfig getPluginConfig(
+            @NonNull ClassElement element,
+            @NonNull VisitorContext context
+    ) {
+        AnnotationValue<GenerateGradlePlugin> annotation = element.getAnnotation(GenerateGradlePlugin.class);
 
-        List<ParameterConfig> parameters = new ArrayList<>();
-        for (PropertyElement property: type.getBeanProperties()) {
-            parameters.add(getParameterConfig(property));
+        List<GradleTaskConfig> taskConfigs = new ArrayList<>();
+        for (AnnotationValue<GenerateGradleTask> taskAnn:
+            annotation.getAnnotations("tasks", GenerateGradleTask.class)
+        ) {
+            taskConfigs.add(getTaskConfig(element, taskAnn, context));
         }
 
-        return new GradleTaskConfig(
-            type,
-            parameters,
-            executable,
-            type.getPackageName(),
-            annotation.stringValue("namePrefix").orElse(type.getSimpleName()),
-            annotation.stringValue("extensionMethodName").orElse(null),
+        return new GradlePluginConfig(
+            taskConfigs,
+            element.getPackageName(),
+            annotation.stringValue("namePrefix").orElse(element.getSimpleName()),
             annotation.stringValue("taskGroup").orElse(null),
             annotation.booleanValue("micronautPlugin").orElse(true),
             annotation.stringValue("dependency").orElse(null),
             annotation.getRequiredValue("types", GenerateGradlePlugin.Type[].class)
+        );
+    }
+
+    private static @NonNull GradleTaskConfig getTaskConfig(
+            @NonNull ClassElement element,
+            @NonNull AnnotationValue<GenerateGradleTask> annotation,
+            @NonNull VisitorContext context
+    ) {
+        ClassElement source = annotation.stringValue("source")
+            .flatMap(context::getClassElement).orElse(null);
+        if (source == null) {
+            throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
+        }
+
+        List<MethodElement> executables = source.getMethods().stream()
+            .filter(m -> m.hasAnnotation(PluginTaskExecutable.class))
+            .toList();
+
+        if (executables.size() != 1) {
+            throw new ProcessingException(source, "Expected exactly one method annotated with @PluginTaskExecutable but found " + executables.size());
+        }
+        if (executables.get(0).getParameters().length != 0) {
+            throw new ProcessingException(source, "Expected @PluginTaskExecutable method to have no parameters");
+        }
+        if (!executables.get(0).getReturnType().isVoid()) {
+            throw new ProcessingException(source, "Expected @PluginTaskExecutable to have void return type");
+        }
+        String methodName = executables.get(0).getName();
+
+        List<ParameterConfig> parameters = new ArrayList<>();
+        for (PropertyElement property: source.getBeanProperties()) {
+            parameters.add(getParameterConfig(property));
+        }
+
+        return new GradleTaskConfig(
+            source,
+            parameters,
+            methodName,
+            annotation.stringValue("namePrefix").orElse(source.getSimpleName()),
+            annotation.stringValue("extensionMethodName").orElse(methodName)
         );
     }
 

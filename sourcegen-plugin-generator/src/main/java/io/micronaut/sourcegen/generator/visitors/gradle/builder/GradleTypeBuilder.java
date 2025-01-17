@@ -26,37 +26,49 @@ import java.util.List;
 /**
  * An interface for a Gradle plugin builder type.
  */
-public interface PluginBuilder {
+public interface GradleTypeBuilder {
 
     @NonNull GenerateGradlePlugin.Type getType();
 
-    @NonNull List<ObjectDef> build(@NonNull PluginBuilder.GradleTaskConfig taskConfig);
+    @NonNull List<ObjectDef> build(@NonNull GradleTypeBuilder.GradlePluginConfig taskConfig);
 
     /**
-     * Configuration for a gradle task type.
+     * Configuration for a gradle plugin.
      *
-     * @param source The configuration source
-     * @param parameters The parameters
-     * @param methodName The run method name
+     * @param tasks The task configuration
      * @param packageName The package name
      * @param namePrefix The type name prefix
-     * @param gradleExtensionMethodName The extension method name
-     * @param gradleGroup The gradle group to use
+     * @param taskGroup The gradle group to use
      * @param micronautPlugin Whether to extend micronaut plugin
      * @param dependency The dependency
      * @param types The types to generate
      */
-    record GradleTaskConfig(
-        ClassElement source,
-        List<ParameterConfig> parameters,
-        String methodName,
+    record GradlePluginConfig(
+        List<GradleTaskConfig> tasks,
         String packageName,
         String namePrefix,
-        String gradleExtensionMethodName,
-        String gradleGroup,
+        String taskGroup,
         boolean micronautPlugin,
         String dependency,
         GenerateGradlePlugin.Type[] types
+    ) {
+    }
+
+    /**
+     * Configuration for a gradle task.
+     *
+     * @param source The source element
+     * @param parameters The parameters
+     * @param methodName The run method name
+     * @param namePrefix The prefix to use for classnames
+     * @param extensionMethodName The method name for gradle extension
+     */
+    record GradleTaskConfig (
+        ClassElement source,
+        List<ParameterConfig> parameters,
+        String methodName,
+        String namePrefix,
+        String extensionMethodName
     ) {
     }
 
