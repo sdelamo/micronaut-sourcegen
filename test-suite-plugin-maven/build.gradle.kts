@@ -21,15 +21,9 @@ dependencies {
     implementation("org.apache.maven:maven-core:3.9.4")
     testImplementation("org.apache.maven:maven-core:3.9.4")
     testImplementation("org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0")
-    testImplementation("org.apache.maven.resolver:maven-resolver-api:1.9.6")
-    testImplementation("org.apache.maven.resolver:maven-resolver-impl:1.9.6")
-    testImplementation("org.apache.maven.resolver:maven-resolver-spi:1.9.6")
-    testImplementation("org.apache.maven.resolver:maven-resolver-transport-wagon:1.9.6")
-    testImplementation("org.codehaus.plexus:plexus-classworlds:2.6.0")
-
 
     testImplementation(mnTest.micronaut.test.junit5)
-    testImplementation(libs.junit.jupiter.engine)
+    testImplementation(mnTest.junit.jupiter.engine)
 }
 
 tasks.withType<Test> {

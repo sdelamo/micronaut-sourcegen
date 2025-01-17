@@ -27,6 +27,7 @@ import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassDef.ClassDefBuilder;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
+import io.micronaut.sourcegen.model.ExpressionDef.MathBinaryOperation.OpType;
 import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.InterfaceDef;
 import io.micronaut.sourcegen.model.InterfaceDef.InterfaceDefBuilder;
@@ -244,7 +245,10 @@ public class GradleExtensionBuilder implements GradleTypeBuilder {
         StatementDef ifStatement = new StatementDef.If(
             t.field("names", TypeDef.of(String.class)).invoke("add", TypeDef.of(boolean.class), params.get(0)).isFalse(),
             new StatementDef.Throw(ClassTypeDef.of("org.gradle.api.GradleException")
-                .instantiate(ExpressionDef.constant("An " + taskConfig.extensionMethodName() + " definition with name '").math("+", params.get(0)).math("+", ExpressionDef.constant("' was already created")))
+                .instantiate(ExpressionDef.constant("An " + taskConfig.extensionMethodName() + " definition with name '")
+                    .math(OpType.ADDITION, params.get(0))
+                    .math(OpType.ADDITION, ExpressionDef.constant("' was already created"))
+                )
             )
         );
         TypeDef objectFactoryType = TypeDef.of("org.gradle.api.model.ObjectFactory");

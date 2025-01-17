@@ -17,7 +17,7 @@ dependencies {
     implementation(projects.sourcegenPluginAnnotations)
 
     testImplementation(mnTest.micronaut.test.junit5)
-    testImplementation(libs.junit.jupiter.engine)
+    testImplementation(mnTest.junit.jupiter.engine)
 }
 
 tasks.withType<Test> {
