@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.example.plugin;
+package io.micronaut.sourcegen.example.plugin.gradle;
 
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;

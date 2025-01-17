@@ -3,7 +3,7 @@
         <component>
             <role>org.apache.maven.plugin.Mojo</role>
             <role-hint>io.micronaut.test:test:1.0.0:generateSimpleRecord</role-hint>
-            <implementation>io.micronaut.sourcegen.example.plugin.TestMojo</implementation>
+            <implementation>io.micronaut.sourcegen.example.plugin.maven.GenerateSimpleRecordMojo</implementation>
         </component>
     </components>
 </component-set>

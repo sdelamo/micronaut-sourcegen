@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.generator.visitors.maven;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.sourcegen.generator.visitors.maven.MavenPluginUtils.MavenTaskConfig;
 import io.micronaut.sourcegen.generator.visitors.maven.MavenPluginUtils.ParameterConfig;
@@ -37,6 +38,7 @@ import java.util.List;
 /**
  * A builder for Maven Mojos.
  */
+@Internal
 public class MavenMojoBuilder {
 
     public static final String MOJO_SUFFIX = "Mojo";

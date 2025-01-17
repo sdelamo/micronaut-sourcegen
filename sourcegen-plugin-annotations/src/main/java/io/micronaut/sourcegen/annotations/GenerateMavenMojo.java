@@ -17,6 +17,7 @@ package io.micronaut.sourcegen.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -31,6 +32,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Documented
 @Retention(CLASS)
 @Target({ ElementType.TYPE })
+@Repeatable(GenerateMavenMojo.List.class)
 public @interface GenerateMavenMojo {
 
     /**
@@ -43,7 +45,7 @@ public @interface GenerateMavenMojo {
     String namePrefix() default "";
 
     /**
-     * @return The source configuration class that has {@link PluginTaskConfig} annotation
+     * @return The task configuration class name that has {@link PluginTask} annotation
      */
     String source();
 
@@ -59,5 +61,19 @@ public @interface GenerateMavenMojo {
      * @return The property prefix
      */
     String mavenPropertyPrefix() default "";
+
+    /**
+     * A container for repeated MavenMojo.
+     */
+    @Documented
+    @Retention(CLASS)
+    @Target({ ElementType.TYPE })
+    @interface List {
+
+        /**
+         * @return Repeated annotations
+         */
+        GenerateMavenMojo[] value();
+    }
 
 }

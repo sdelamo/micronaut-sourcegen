@@ -33,6 +33,6 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Documented
 @Retention(CLASS)
 @Target({ ElementType.TYPE })
-public @interface PluginTaskConfig {
+public @interface PluginTask {
 
 }

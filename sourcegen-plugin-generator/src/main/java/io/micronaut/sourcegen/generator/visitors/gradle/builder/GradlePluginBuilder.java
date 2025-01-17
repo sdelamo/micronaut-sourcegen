@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 import io.micronaut.sourcegen.model.ClassDef;
@@ -39,6 +40,7 @@ import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleExt
  * A builder for {@link Type#GRADLE_PLUGIN}.
  * Creates a plugin that configures an extension and task.
  */
+@Internal
 public class GradlePluginBuilder implements GradleTypeBuilder {
 
     public static final String PLUGIN_SUFFIX = "Plugin";

@@ -1,4 +1,4 @@
-package io.micronaut.sourcegen.example.plugin;
+package io.micronaut.sourcegen.example.plugin.gradle;
 
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;

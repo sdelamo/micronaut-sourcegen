@@ -24,7 +24,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * An annotation that configures a parameter for plugin task.
- * Should be inside a type annotated with {@link PluginTaskConfig}.
+ * Should be inside a type annotated with {@link PluginTask}.
  *
  * <p>The annotation is used during generation of particular plugin implementations, like Maven
  * Mojos or Gradle Tasks.</p>

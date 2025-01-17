@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.example.plugin;
+package io.micronaut.sourcegen.example.plugin.gradle;
 
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.GenerateGradleTask;
@@ -32,9 +32,9 @@ import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
         @GenerateGradleTask(
             namePrefix = "GenerateSimpleRecord",
             extensionMethodName = "generateSimpleRecord",
-            source = "io.micronaut.sourcegen.example.plugin.TestConfig"
+            source = "io.micronaut.sourcegen.example.plugin.GenerateSimpleRecordTask"
         )
     }
 )
-public class GradlePluginTrigger {
+public final class GeneratePluginTrigger {
 }

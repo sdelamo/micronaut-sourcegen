@@ -1,7 +1,6 @@
-package io.micronaut.sourcegen.example.plugin;
+package io.micronaut.sourcegen.example.plugin.maven;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 
@@ -11,7 +10,7 @@ public class TestMavenPluginTest extends AbstractMavenPluginTest {
     void generateAndBuildSimpleRecord() throws Exception {
         File pom = new File("src/test/resources/test-pom.xml");
 
-        TestMojo mojo = (TestMojo) findConfiguredMojo("generateSimpleRecord", pom);
+        GenerateSimpleRecordMojo mojo = (GenerateSimpleRecordMojo) findConfiguredMojo("generateSimpleRecord", pom);
         mojo.execute();
 
         File generated = file("src/main/java/io/micronaut/test/MyRecord.java");

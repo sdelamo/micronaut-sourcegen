@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * Utility class for Gradle plugin generation.
  */
-public final class GradlePluginUtils {
+final class GradlePluginUtils {
 
     static @NonNull GradleTypeBuilder.GradlePluginConfig getPluginConfig(
             @NonNull ClassElement element,
@@ -71,7 +71,7 @@ public final class GradlePluginUtils {
         ClassElement source = annotation.stringValue("source")
             .flatMap(context::getClassElement).orElse(null);
         if (source == null) {
-            throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
+            throw new ProcessingException(element, "Could not load source type defined in @GenerateGradleTask");
         }
 
         List<MethodElement> executables = source.getMethods().stream()

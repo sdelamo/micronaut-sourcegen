@@ -21,6 +21,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
+import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.GenerateMavenMojo;
 import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 import io.micronaut.sourcegen.annotations.PluginTaskParameter;
@@ -31,34 +32,51 @@ import java.util.List;
 /**
  * Utils class for Maven plugin generation.
  */
-public final class MavenPluginUtils {
+final class MavenPluginUtils {
 
-    static @NonNull MavenTaskConfig getTaskConfig(@NonNull ClassElement type, @NonNull AnnotationValue<GenerateMavenMojo> annotation) {
-        List<MethodElement> executables = type.getMethods().stream()
+    static @NonNull List<MavenTaskConfig> getTaskConfigs(
+        @NonNull ClassElement element, @NonNull VisitorContext context
+    ) {
+        List<AnnotationValue<GenerateMavenMojo>> annotations =
+            element.getAnnotationValuesByType(GenerateMavenMojo.class);
+        return annotations.stream().map(a -> getTaskConfig(element, a, context)).toList();
+    }
+
+    private static @NonNull MavenTaskConfig getTaskConfig(
+            @NonNull ClassElement element, @NonNull AnnotationValue<GenerateMavenMojo> annotation, @NonNull VisitorContext context
+    ) {
+        ClassElement source = annotation.stringValue("source")
+            .flatMap(context::getClassElement).orElse(null);
+        if (source == null) {
+            throw new ProcessingException(element, "Could not load source type defined in @GenerateMavenMojo");
+        }
+
+        List<MethodElement> executables = source.getMethods().stream()
             .filter(m -> m.hasAnnotation(PluginTaskExecutable.class))
             .toList();
+
         if (executables.size() != 1) {
-            throw new ProcessingException(type, "Expected exactly one method annotated with @PluginTaskExecutable but found " + executables.size());
+            throw new ProcessingException(source, "Expected exactly one method annotated with @PluginTaskExecutable but found " + executables.size());
         }
         if (executables.get(0).getParameters().length != 0) {
-            throw new ProcessingException(type, "Expected @PluginTaskExecutable method to have no parameters");
+            throw new ProcessingException(source, "Expected @PluginTaskExecutable method to have no parameters");
         }
         if (!executables.get(0).getReturnType().isVoid()) {
-            throw new ProcessingException(type, "Expected @PluginTaskExecutable to have void return type");
+            throw new ProcessingException(source, "Expected @PluginTaskExecutable to have void return type");
         }
-        String executable = executables.get(0).getName();
+        String methodName = executables.get(0).getName();
 
         List<ParameterConfig> parameters = new ArrayList<>();
-        for (PropertyElement property: type.getBeanProperties()) {
+        for (PropertyElement property: source.getBeanProperties()) {
             parameters.add(getParameterConfig(property));
         }
 
         return new MavenTaskConfig(
-            type,
+            source,
             parameters,
-            executable,
-            type.getPackageName(),
-            annotation.stringValue("namePrefix").orElse(type.getSimpleName()),
+            methodName,
+            element.getPackageName(),
+            annotation.stringValue("namePrefix").orElse(element.getSimpleName()),
             annotation.booleanValue("micronautPlugin").orElse(true),
             annotation.stringValue("mavenPropertyPrefix").orElse(null)
         );

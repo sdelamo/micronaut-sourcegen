@@ -15,7 +15,6 @@
  */
 package io.micronaut.sourcegen.generator.visitors.maven;
 
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
@@ -34,13 +33,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The visitor that is generation a builder.
+ * Visitor for generating maven mojos.
  *
  * @author Andriy Dmytruk
  * @since 1.5.x
  */
 @Internal
-public final class MavenPluginGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateMavenMojo, Object> {
+public final class MavenMojoGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateMavenMojo.List, Object> {
 
     private final Set<String> processed = new HashSet<>();
 
@@ -56,7 +55,10 @@ public final class MavenPluginGenerationTriggerAnnotationVisitor implements Type
 
     @Override
     public Set<String> getSupportedAnnotationNames() {
-        return Set.of(GenerateMavenMojo.class.getName());
+        return Set.of(
+            GenerateMavenMojo.class.getName(),
+            GenerateMavenMojo.List.class.getName()
+        );
     }
 
     @Override
@@ -66,19 +68,11 @@ public final class MavenPluginGenerationTriggerAnnotationVisitor implements Type
             return;
         }
         try {
-            AnnotationValue<GenerateMavenMojo> annotation = element.getAnnotation(GenerateMavenMojo.class);
-            if (annotation == null) {
-                return;
-            }
-            ClassElement source = element.stringValue(GenerateMavenMojo.class, "source")
-                .flatMap(context::getClassElement).orElse(null);
-            if (source == null) {
-                throw new ProcessingException(element, "Could not load source type defined in @PluginGenerationTrigger");
-            }
-
-            MavenTaskConfig taskConfig = MavenPluginUtils.getTaskConfig(source, annotation);
             List<ObjectDef> definitions = new ArrayList<>();
-            definitions.add(new MavenMojoBuilder().build(taskConfig));
+            List<MavenTaskConfig> taskConfigs = MavenPluginUtils.getTaskConfigs(element, context);
+            for (MavenTaskConfig taskConfig : taskConfigs) {
+                definitions.add(new MavenMojoBuilder().build(taskConfig));
+            }
 
             SourceGenerator sourceGenerator = SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
             if (sourceGenerator == null) {

@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
@@ -34,6 +35,7 @@ import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTas
  * A builder for {@link Type#GRADLE_SPECIFICATION}.
  * Creates a Gradle specification for configuring a gradle task.
  */
+@Internal
 public class GradleSpecificationBuilder implements GradleTypeBuilder {
 
     public static final String SPECIFICATION_NAME_SUFFIX = "Spec";

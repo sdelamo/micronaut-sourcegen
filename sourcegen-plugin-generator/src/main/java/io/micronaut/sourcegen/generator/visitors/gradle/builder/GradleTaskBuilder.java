@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
@@ -47,6 +48,7 @@ import java.util.Set;
  * A builder for {@link GenerateGradlePlugin.Type#GRADLE_TASK}.
  * Creates a task, work action and work action parameters given a plugin task configuration.
  */
+@Internal
 public class GradleTaskBuilder implements GradleTypeBuilder {
 
     public static final String TASK_SUFFIX = "Task";

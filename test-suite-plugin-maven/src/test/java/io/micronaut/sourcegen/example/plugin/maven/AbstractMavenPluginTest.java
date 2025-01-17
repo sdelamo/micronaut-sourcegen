@@ -1,4 +1,4 @@
-package io.micronaut.sourcegen.example.plugin;
+package io.micronaut.sourcegen.example.plugin.maven;
 
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;

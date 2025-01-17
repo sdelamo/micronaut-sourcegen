@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.example.plugin;
+package io.micronaut.sourcegen.example.plugin.maven;
 
 import io.micronaut.sourcegen.annotations.GenerateMavenMojo;
 
@@ -21,9 +21,9 @@ import io.micronaut.sourcegen.annotations.GenerateMavenMojo;
  * A class that triggers Maven Mojo generation.
  */
 @GenerateMavenMojo(
-    namePrefix = "AbstractTest",
+    namePrefix = "AbstractGenerateSimpleRecord",
     micronautPlugin = false,
-    source = "io.micronaut.sourcegen.example.plugin.TestConfig"
+    source = "io.micronaut.sourcegen.example.plugin.GenerateSimpleRecordTask"
 )
-public class MavenMojoTrigger {
+public final class GenerateMojoTrigger {
 }

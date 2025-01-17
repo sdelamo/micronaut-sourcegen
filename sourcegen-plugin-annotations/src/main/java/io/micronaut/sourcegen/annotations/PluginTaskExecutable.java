@@ -24,7 +24,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * An annotation that configures the executable method to run for a plugin task.
- * Should be inside a type annotated with {@link PluginTaskConfig}.
+ * Should be inside a type annotated with {@link PluginTask}.
  *
  * @author Andriy Dmytruk
  * @since 1.5.x

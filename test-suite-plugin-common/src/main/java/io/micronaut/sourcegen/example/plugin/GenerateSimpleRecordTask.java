@@ -15,7 +15,7 @@
  */
 package io.micronaut.sourcegen.example.plugin;
 
-import io.micronaut.sourcegen.annotations.PluginTaskConfig;
+import io.micronaut.sourcegen.annotations.PluginTask;
 import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 import io.micronaut.sourcegen.annotations.PluginTaskParameter;
 
@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
  * @param javadoc The javadoc
  * @param outputFolder The output folder
  */
-@PluginTaskConfig
-public record TestConfig(
+@PluginTask
+public record GenerateSimpleRecordTask(
     @PluginTaskParameter(required = true)
     String typeName,
     @PluginTaskParameter(defaultValue = "1")

@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.inject.ast.ClassElement;
@@ -48,6 +49,7 @@ import static io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTas
  * A builder for {@link Type#GRADLE_EXTENSION}.
  * Creates a Gradle extension for calling a gradle task with the specification.
  */
+@Internal
 public class GradleExtensionBuilder implements GradleTypeBuilder {
 
     public static final String EXTENSION_NAME_SUFFIX = "Extension";

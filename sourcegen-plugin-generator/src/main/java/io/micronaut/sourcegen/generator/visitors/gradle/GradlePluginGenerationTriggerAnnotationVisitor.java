@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The visitor that is generation a builder.
+ * The visitor for generating Gradle plugins.
  *
  * @author Andriy Dmytruk
  * @since 1.5.x

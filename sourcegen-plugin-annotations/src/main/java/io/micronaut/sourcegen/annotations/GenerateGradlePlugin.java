@@ -95,7 +95,7 @@ public @interface GenerateGradlePlugin {
         String namePrefix();
 
         /**
-         * @return The source configuration class that has {@link PluginTaskConfig} annotation
+         * @return The task configuration class name that has {@link PluginTask} annotation
          */
         String source();
 

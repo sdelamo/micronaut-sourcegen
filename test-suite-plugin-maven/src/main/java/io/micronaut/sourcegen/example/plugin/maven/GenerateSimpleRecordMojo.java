@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.sourcegen.example.plugin;
+package io.micronaut.sourcegen.example.plugin.maven;
 
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -25,7 +25,7 @@ import java.io.File;
  * An extension of the generated mojo that configures the output folder.
  */
 @Mojo(name = "generateSimpleRecord")
-public class TestMojo extends AbstractTestMojo {
+public class GenerateSimpleRecordMojo extends AbstractGenerateSimpleRecordMojo {
 
     @Parameter(
         required = true,

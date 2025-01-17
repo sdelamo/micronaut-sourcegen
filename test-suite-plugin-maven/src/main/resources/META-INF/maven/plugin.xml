@@ -6,7 +6,7 @@
     <mojos>
         <mojo>
             <goal>generateSimpleRecord</goal>
-            <implementation>io.micronaut.sourcegen.example.plugin.TestMojo</implementation>
+            <implementation>io.micronaut.sourcegen.example.plugin.GenerateSimpleRecordMojo</implementation>
             <phase>generate-sources</phase>
             <requiresProject>false</requiresProject>
         </mojo>

@@ -15,6 +15,7 @@
  */
 package io.micronaut.sourcegen.generator.visitors.gradle.builder;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
@@ -26,6 +27,7 @@ import java.util.List;
 /**
  * An interface for a Gradle plugin builder type.
  */
+@Internal
 public interface GradleTypeBuilder {
 
     @NonNull GenerateGradlePlugin.Type getType();
