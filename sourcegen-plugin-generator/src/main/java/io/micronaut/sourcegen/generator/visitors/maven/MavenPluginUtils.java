@@ -16,15 +16,15 @@
 package io.micronaut.sourcegen.generator.visitors.maven;
 
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.GenerateMavenMojo;
-import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
-import io.micronaut.sourcegen.annotations.PluginTaskParameter;
+import io.micronaut.sourcegen.generator.visitors.PluginUtils;
+import io.micronaut.sourcegen.generator.visitors.PluginUtils.ParameterConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +32,47 @@ import java.util.List;
 /**
  * Utils class for Maven plugin generation.
  */
-final class MavenPluginUtils {
+@Internal
+public final class MavenPluginUtils {
 
-    static @NonNull List<MavenTaskConfig> getTaskConfigs(
+    /**
+     * Get task configurations configured for a given element
+     * with {@link GenerateMavenMojo} annotations.
+     *
+     * @param element The element
+     * @param context The visitor context
+     * @return The maven task config
+     */
+    public static @NonNull List<MavenTaskConfig> getTaskConfigs(
         @NonNull ClassElement element, @NonNull VisitorContext context
     ) {
         List<AnnotationValue<GenerateMavenMojo>> annotations =
             element.getAnnotationValuesByType(GenerateMavenMojo.class);
         return annotations.stream().map(a -> getTaskConfig(element, a, context)).toList();
+    }
+
+    /**
+     * Convert to dot-separated string.
+     *
+     * @param camelCase Camel case name
+     * @return Dot separated name
+     */
+    public static String toDotSeparated(String camelCase) {
+        StringBuilder result = new StringBuilder();
+        boolean isStartOfWord = true;
+        for (int i = 0; i < camelCase.length(); i++) {
+            if (Character.isUpperCase(camelCase.charAt(i))) {
+                if (!isStartOfWord) {
+                    result.append(".");
+                }
+                result.append(Character.toLowerCase(camelCase.charAt(i)));
+                isStartOfWord = true;
+            } else {
+                result.append(camelCase.charAt(i));
+                isStartOfWord = camelCase.charAt(i) == '.';
+            }
+        }
+        return result.toString();
     }
 
     private static @NonNull MavenTaskConfig getTaskConfig(
@@ -51,49 +84,20 @@ final class MavenPluginUtils {
             throw new ProcessingException(element, "Could not load source type defined in @GenerateMavenMojo");
         }
 
-        List<MethodElement> executables = source.getMethods().stream()
-            .filter(m -> m.hasAnnotation(PluginTaskExecutable.class))
-            .toList();
-
-        if (executables.size() != 1) {
-            throw new ProcessingException(source, "Expected exactly one method annotated with @PluginTaskExecutable but found " + executables.size());
-        }
-        if (executables.get(0).getParameters().length != 0) {
-            throw new ProcessingException(source, "Expected @PluginTaskExecutable method to have no parameters");
-        }
-        if (!executables.get(0).getReturnType().isVoid()) {
-            throw new ProcessingException(source, "Expected @PluginTaskExecutable to have void return type");
-        }
-        String methodName = executables.get(0).getName();
-
         List<ParameterConfig> parameters = new ArrayList<>();
         for (PropertyElement property: source.getBeanProperties()) {
-            parameters.add(getParameterConfig(property));
+            parameters.add(PluginUtils.getParameterConfig(property));
         }
 
+        String namePrefix = annotation.stringValue("namePrefix").orElse(element.getSimpleName());
         return new MavenTaskConfig(
             source,
             parameters,
-            methodName,
+            PluginUtils.getTaskExecutableMethodName(source),
             element.getPackageName(),
-            annotation.stringValue("namePrefix").orElse(element.getSimpleName()),
+            namePrefix,
             annotation.booleanValue("micronautPlugin").orElse(true),
-            annotation.stringValue("mavenPropertyPrefix").orElse(null)
-        );
-    }
-
-    private static @NonNull ParameterConfig getParameterConfig(@NonNull PropertyElement property) {
-        AnnotationValue<PluginTaskParameter> annotation = property.getAnnotation(PluginTaskParameter.class);
-        if (annotation == null) {
-            return new ParameterConfig(property, false, null, false, false, false);
-        }
-        return new ParameterConfig(
-            property,
-            annotation.booleanValue("required").orElse(false),
-            annotation.stringValue("defaultValue").orElse(null),
-            annotation.booleanValue("internal").orElse(false),
-            annotation.booleanValue("directory").orElse(false),
-            annotation.booleanValue("output").orElse(false)
+            annotation.stringValue("mavenPropertyPrefix").orElse(toDotSeparated(namePrefix))
         );
     }
 
@@ -116,26 +120,6 @@ final class MavenPluginUtils {
         String namePrefix,
         boolean micronautPlugin,
         String mavenPropertyPrefix
-    ) {
-    }
-
-    /**
-     * Configuration for a plugin parameter.
-     *
-     * @param source The source parameter
-     * @param required Whether it is required
-     * @param defaultValue The default value
-     * @param internal Whether it is internal
-     * @param directory Whether it is a directory
-     * @param output Whether it is an output
-     */
-    public record ParameterConfig(
-        PropertyElement source,
-        boolean required,
-        String defaultValue,
-        boolean internal,
-        boolean directory,
-        boolean output
     ) {
     }
 

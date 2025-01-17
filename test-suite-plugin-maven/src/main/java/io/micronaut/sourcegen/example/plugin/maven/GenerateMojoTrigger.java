@@ -23,7 +23,8 @@ import io.micronaut.sourcegen.annotations.GenerateMavenMojo;
 @GenerateMavenMojo(
     namePrefix = "AbstractGenerateSimpleRecord",
     micronautPlugin = false,
-    source = "io.micronaut.sourcegen.example.plugin.GenerateSimpleRecordTask"
+    source = "io.micronaut.sourcegen.example.plugin.GenerateSimpleRecordTask",
+    mavenPropertyPrefix = "test.generate.simple.record"
 )
 public final class GenerateMojoTrigger {
 }

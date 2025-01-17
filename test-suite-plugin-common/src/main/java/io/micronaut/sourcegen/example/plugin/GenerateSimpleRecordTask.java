@@ -41,11 +41,11 @@ import java.util.stream.Collectors;
  */
 @PluginTask
 public record GenerateSimpleRecordTask(
-    @PluginTaskParameter(required = true)
+    @PluginTaskParameter(required = true, globalProperty = "typeName")
     String typeName,
-    @PluginTaskParameter(defaultValue = "1")
+    @PluginTaskParameter(defaultValue = "1", globalProperty = "version")
     Integer version,
-    @PluginTaskParameter(defaultValue = "com.example")
+    @PluginTaskParameter(defaultValue = "com.example", globalProperty = "packageName")
     String packageName,
     Map<String, String> properties,
     List<String> javadoc,

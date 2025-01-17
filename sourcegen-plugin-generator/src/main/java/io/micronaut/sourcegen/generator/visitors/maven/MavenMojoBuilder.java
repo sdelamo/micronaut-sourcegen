@@ -18,7 +18,7 @@ package io.micronaut.sourcegen.generator.visitors.maven;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.sourcegen.generator.visitors.maven.MavenPluginUtils.MavenTaskConfig;
-import io.micronaut.sourcegen.generator.visitors.maven.MavenPluginUtils.ParameterConfig;
+import io.micronaut.sourcegen.generator.visitors.PluginUtils.ParameterConfig;
 import io.micronaut.sourcegen.model.AnnotationDef;
 import io.micronaut.sourcegen.model.AnnotationDef.AnnotationDefBuilder;
 import io.micronaut.sourcegen.model.ClassDef;
@@ -60,7 +60,7 @@ public class MavenMojoBuilder {
         }
 
         for (ParameterConfig parameter : taskConfig.parameters()) {
-            addParameter(parameter, builder);
+            addParameter(taskConfig, parameter, builder);
         }
 
         builder.addMethod(MethodDef.builder("isEnabled")
@@ -74,7 +74,7 @@ public class MavenMojoBuilder {
         return builder.build();
     }
 
-    private void addParameter(ParameterConfig parameter, ClassDefBuilder builder) {
+    private void addParameter(MavenTaskConfig taskConfig, ParameterConfig parameter, ClassDefBuilder builder) {
         if (parameter.internal() || parameter.output()) {
             builder.addMethod(MethodDef
                 .builder("get" + NameUtils.capitalize(parameter.source().getName()))
@@ -89,6 +89,10 @@ public class MavenMojoBuilder {
             }
             if (parameter.required()) {
                 ann.addMember("required", true);
+            }
+            if (parameter.globalProperty() != null) {
+                ann.addMember("property",  taskConfig.mavenPropertyPrefix()
+                    + "." + MavenPluginUtils.toDotSeparated(parameter.globalProperty()));
             }
             FieldDef field = FieldDef.builder(parameter.source().getName())
                 .ofType(TypeDef.of(parameter.source().getType()))

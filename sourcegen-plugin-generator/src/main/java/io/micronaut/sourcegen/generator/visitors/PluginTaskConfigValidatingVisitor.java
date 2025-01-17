@@ -18,15 +18,11 @@ package io.micronaut.sourcegen.generator.visitors;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.PluginTask;
-import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -61,18 +57,8 @@ public final class PluginTaskConfigValidatingVisitor implements TypeElementVisit
             return;
         }
 
-        List<MethodElement> executables = element.getMethods().stream()
-            .filter(m -> m.hasAnnotation(PluginTaskExecutable.class))
-            .toList();
-        if (executables.size() != 1) {
-            throw new ProcessingException(element, "Expected exactly one method annotated with @PluginTaskExecutable but found " + executables.size());
-        }
-        if (executables.get(0).getParameters().length != 0) {
-            throw new ProcessingException(element, "Expected @PluginTaskExecutable method to have no parameters");
-        }
-        if (!executables.get(0).getReturnType().isVoid()) {
-            throw new ProcessingException(element, "Expected @PluginTaskExecutable to have void return type");
-        }
+        // Verify that method is present
+        PluginUtils.getTaskExecutableMethodName(element);
     }
 
 }

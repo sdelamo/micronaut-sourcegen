@@ -69,12 +69,13 @@ public @interface PluginTaskParameter {
     boolean internal() default false;
 
     /**
-     * The property name for parameters generated in Maven Mojo.
-     * It will fill in the {@code @Parameter(property='')} value.
+     * The global property name.
+     * For maven Mojo it will correspond to {@code @Parameter(property='')} value.
+     * It has no current effect for Gradle.
      *
      * @return The property name
      */
-    String mavenProperty() default "";
+    String globalProperty() default "";
 
     /**
      * Whether the file is a directory.

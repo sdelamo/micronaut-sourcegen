@@ -25,12 +25,12 @@ import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
 import io.micronaut.sourcegen.generator.SourceGenerator;
 import io.micronaut.sourcegen.generator.SourceGenerators;
+import io.micronaut.sourcegen.generator.visitors.gradle.GradlePluginUtils.GradlePluginConfig;
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleExtensionBuilder;
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradlePluginBuilder;
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleSpecificationBuilder;
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTaskBuilder;
 import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.GradlePluginConfig;
 import io.micronaut.sourcegen.model.ObjectDef;
 
 import java.util.ArrayList;
@@ -82,13 +82,13 @@ public final class GradlePluginGenerationTriggerAnnotationVisitor implements Typ
                 return;
             }
 
-            GradlePluginConfig taskConfig = GradlePluginUtils.getPluginConfig(element, context);
+            GradlePluginConfig pluginConfig = GradlePluginUtils.getPluginConfig(element, context);
             List<ObjectDef> definitions = new ArrayList<>();
-            for (Type type: taskConfig.types()) {
+            for (Type type: pluginConfig.types()) {
                 List<ObjectDef> typeDefinitions = new ArrayList<>();
                 for (GradleTypeBuilder gradleTypeBuilder : BUILDERS) {
                     if (gradleTypeBuilder.getType().equals(type)) {
-                        typeDefinitions = gradleTypeBuilder.build(taskConfig);
+                        typeDefinitions = gradleTypeBuilder.build(pluginConfig);
                     }
                 }
                 if (typeDefinitions == null) {

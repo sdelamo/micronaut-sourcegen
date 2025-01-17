@@ -16,20 +16,16 @@
 package io.micronaut.sourcegen.generator.visitors.gradle;
 
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.GenerateGradleTask;
-import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
-import io.micronaut.sourcegen.annotations.PluginTaskParameter;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.GradlePluginConfig;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.GradleTaskConfig;
-import io.micronaut.sourcegen.generator.visitors.gradle.builder.GradleTypeBuilder.ParameterConfig;
+import io.micronaut.sourcegen.generator.visitors.PluginUtils;
+import io.micronaut.sourcegen.generator.visitors.PluginUtils.ParameterConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +33,18 @@ import java.util.List;
 /**
  * Utility class for Gradle plugin generation.
  */
-final class GradlePluginUtils {
+@Internal
+public final class GradlePluginUtils {
 
-    static @NonNull GradleTypeBuilder.GradlePluginConfig getPluginConfig(
+    /**
+     * Get task configurations configured for a given element
+     * with {@link GenerateGradlePlugin} annotation.
+     *
+     * @param element The element
+     * @param context The visitor context
+     * @return The maven task config
+     */
+    public static @NonNull GradlePluginConfig getPluginConfig(
             @NonNull ClassElement element,
             @NonNull VisitorContext context
     ) {
@@ -74,26 +79,12 @@ final class GradlePluginUtils {
             throw new ProcessingException(element, "Could not load source type defined in @GenerateGradleTask");
         }
 
-        List<MethodElement> executables = source.getMethods().stream()
-            .filter(m -> m.hasAnnotation(PluginTaskExecutable.class))
-            .toList();
-
-        if (executables.size() != 1) {
-            throw new ProcessingException(source, "Expected exactly one method annotated with @PluginTaskExecutable but found " + executables.size());
-        }
-        if (executables.get(0).getParameters().length != 0) {
-            throw new ProcessingException(source, "Expected @PluginTaskExecutable method to have no parameters");
-        }
-        if (!executables.get(0).getReturnType().isVoid()) {
-            throw new ProcessingException(source, "Expected @PluginTaskExecutable to have void return type");
-        }
-        String methodName = executables.get(0).getName();
-
         List<ParameterConfig> parameters = new ArrayList<>();
         for (PropertyElement property: source.getBeanProperties()) {
-            parameters.add(getParameterConfig(property));
+            parameters.add(PluginUtils.getParameterConfig(property));
         }
 
+        String methodName = PluginUtils.getTaskExecutableMethodName(source);
         return new GradleTaskConfig(
             source,
             parameters,
@@ -103,19 +94,44 @@ final class GradlePluginUtils {
         );
     }
 
-    private static @NonNull ParameterConfig getParameterConfig(@NonNull PropertyElement property) {
-        AnnotationValue<PluginTaskParameter> annotation = property.getAnnotation(PluginTaskParameter.class);
-        if (annotation == null) {
-            return new ParameterConfig(property, false, null, false, false, false);
-        }
-        return new ParameterConfig(
-            property,
-            annotation.booleanValue("required").orElse(false),
-            annotation.stringValue("defaultValue").orElse(null),
-            annotation.booleanValue("internal").orElse(false),
-            annotation.booleanValue("directory").orElse(false),
-            annotation.booleanValue("output").orElse(false)
-        );
+    /**
+     * Configuration for a gradle plugin.
+     *
+     * @param tasks The task configuration
+     * @param packageName The package name
+     * @param namePrefix The type name prefix
+     * @param taskGroup The gradle group to use
+     * @param micronautPlugin Whether to extend micronaut plugin
+     * @param dependency The dependency
+     * @param types The types to generate
+     */
+    public record GradlePluginConfig(
+        List<GradleTaskConfig> tasks,
+        String packageName,
+        String namePrefix,
+        String taskGroup,
+        boolean micronautPlugin,
+        String dependency,
+        GenerateGradlePlugin.Type[] types
+    ) {
+    }
+
+    /**
+     * Configuration for a gradle task.
+     *
+     * @param source The source element
+     * @param parameters The parameters
+     * @param methodName The run method name
+     * @param namePrefix The prefix to use for classnames
+     * @param extensionMethodName The method name for gradle extension
+     */
+    public record GradleTaskConfig (
+        ClassElement source,
+        List<ParameterConfig> parameters,
+        String methodName,
+        String namePrefix,
+        String extensionMethodName
+    ) {
     }
 
 }
