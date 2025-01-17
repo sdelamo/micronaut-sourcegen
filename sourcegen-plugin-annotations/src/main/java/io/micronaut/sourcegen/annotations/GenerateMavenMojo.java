@@ -24,10 +24,11 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * An annotation that triggers the generation of plugin sources.
+ * An annotation that triggers the generation of Maven Mojo.
+ * A plugin can include multiple Mojos.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Documented
 @Retention(CLASS)

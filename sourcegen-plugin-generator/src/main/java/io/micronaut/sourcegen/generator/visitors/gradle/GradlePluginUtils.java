@@ -135,6 +135,8 @@ public final class GradlePluginUtils {
      * @param methodName The run method name
      * @param namePrefix The prefix to use for classnames
      * @param extensionMethodName The method name for gradle extension
+     * @param methodJavadoc The javadoc for executable method
+     * @param taskJavadoc The javadoc for the whole task
      */
     public record GradleTaskConfig (
         @NonNull ClassElement source,

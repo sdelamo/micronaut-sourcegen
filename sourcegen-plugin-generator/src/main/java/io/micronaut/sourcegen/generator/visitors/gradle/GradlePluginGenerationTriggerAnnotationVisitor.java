@@ -42,7 +42,7 @@ import java.util.Set;
  * The visitor for generating Gradle plugins.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Internal
 public final class GradlePluginGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateGradlePlugin, Object> {

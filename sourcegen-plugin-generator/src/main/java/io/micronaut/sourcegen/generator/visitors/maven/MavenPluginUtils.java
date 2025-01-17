@@ -123,6 +123,8 @@ public final class MavenPluginUtils {
      * @param namePrefix The type name prefix
      * @param micronautPlugin Whether to extend micronaut plugin
      * @param mavenPropertyPrefix The prefix for maven properties
+     * @param taskJavadoc The javadoc for the whole task
+     * @param methodJavadoc The javadoc for the executable method
      */
     public record MavenTaskConfig(
         ClassElement source,

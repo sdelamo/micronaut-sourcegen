@@ -23,10 +23,12 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * An annotation that triggers the generation of plugin sources.
+ * An annotation that triggers the generation of Gradle plugin and other types.
+ * Only single Gradle plugin should be generated. But a plugin may contain
+ * more than one task. Each task will have an corresponding extension method.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Documented
 @Retention(CLASS)

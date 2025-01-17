@@ -15,30 +15,23 @@
  */
 package io.micronaut.sourcegen.generator.visitors;
 
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.javadoc.Javadoc;
-import com.github.javaparser.javadoc.JavadocBlockTag;
-import com.github.javaparser.javadoc.JavadocBlockTag.Type;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.PluginTask;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The visitor that validates a PluginTaskConfig annotated type.
  * It also creates a META-INF file with javadoc that will be used for plugin generation.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Internal
 public final class PluginTaskConfigValidatingVisitor implements TypeElementVisitor<PluginTask, Object> {

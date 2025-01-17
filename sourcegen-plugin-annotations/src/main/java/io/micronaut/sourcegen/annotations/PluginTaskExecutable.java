@@ -27,7 +27,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  * Should be inside a type annotated with {@link PluginTask}.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Documented
 @Retention(CLASS)

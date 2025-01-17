@@ -27,7 +27,6 @@ import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 import io.micronaut.sourcegen.annotations.PluginTaskParameter;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Common utility methods for plugin generation.
@@ -61,6 +60,7 @@ public class PluginUtils {
     /**
      * Get configuration for a plugin parameter.
      *
+     * @param sourceJavadoc The javadoc for the task type
      * @param property The property representing the parameter
      * @return THe configuration
      */

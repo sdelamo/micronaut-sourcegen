@@ -64,8 +64,8 @@ public class JavadocUtils {
         try (InputStream inputStream = classLoader.getResourceAsStream(javadocMetaPath)) {
             if (inputStream != null) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                    String line;
-                    if ((line = reader.readLine()) != null) {
+                    String line = reader.readLine();
+                    if (line  != null) {
                         javadoc = parseJavadocInfo(line);
                     }
                     while ((line = reader.readLine()) != null) {

@@ -12,3 +12,9 @@ dependencies {
     testImplementation(mn.micronaut.inject.java.test)
     testImplementation(projects.sourcegenGeneratorJava)
 }
+
+micronautBuild {
+    binaryCompatibility {
+        enabled.set(false)
+    }
+}

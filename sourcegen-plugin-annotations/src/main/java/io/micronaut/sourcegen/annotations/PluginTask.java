@@ -28,7 +28,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  * Mojos or Gradle Tasks.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Documented
 @Retention(CLASS)

@@ -33,7 +33,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  * TODO support simple records and enums.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Documented
 @Retention(CLASS)

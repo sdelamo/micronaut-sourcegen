@@ -36,7 +36,7 @@ import java.util.Set;
  * Visitor for generating maven mojos.
  *
  * @author Andriy Dmytruk
- * @since 1.5.x
+ * @since 1.6.x
  */
 @Internal
 public final class MavenMojoGenerationTriggerAnnotationVisitor implements TypeElementVisitor<GenerateMavenMojo.List, Object> {
