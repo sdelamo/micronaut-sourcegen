@@ -76,7 +76,8 @@ public class GradleTaskBuilder implements GradleTypeBuilder {
         ClassDefBuilder builder = ClassDef.builder(taskType)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .superclass(ClassTypeDef.of("org.gradle.api.DefaultTask"))
-            .addAnnotation("org.gradle.api.tasks.CacheableTask");
+            .addAnnotation("org.gradle.api.tasks.CacheableTask")
+            .addJavadoc(taskConfig.taskJavadoc());
         builder.addInnerType(createWorkAction(taskConfig));
         builder.addInnerType(createWorkActionParameters(taskConfig));
         builder.addInnerType(createWorkActionParameterConfigurator(TypeDef.of(taskType), taskConfig));
@@ -86,6 +87,7 @@ public class GradleTaskBuilder implements GradleTypeBuilder {
             MethodDefBuilder propBuilder = MethodDef
                 .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                .addJavadoc(parameter.javadoc())
                 .returns(createGradleProperty(parameter));
             if (parameter.output()) {
                 if (parameter.source().getType().isAssignable(File.class)) {
@@ -137,6 +139,7 @@ public class GradleTaskBuilder implements GradleTypeBuilder {
             .returns(TypeDef.VOID)
             .addModifiers(Modifier.PUBLIC)
             .addAnnotation("org.gradle.api.tasks.TaskAction")
+            .addJavadoc(taskConfig.methodJavadoc())
             .build((t, params) ->
                 t.invoke("getWorkerExecutor", workerExecutorType)
                     .invoke("classLoaderIsolation",

@@ -9,6 +9,7 @@ repositories {
 
 dependencies {
     api(projects.testSuitePluginCommon)
+    annotationProcessor(projects.testSuitePluginCommon)
     annotationProcessor(mn.micronaut.inject)
     annotationProcessor(mn.micronaut.inject.java)
     annotationProcessor(projects.sourcegenGeneratorJava)

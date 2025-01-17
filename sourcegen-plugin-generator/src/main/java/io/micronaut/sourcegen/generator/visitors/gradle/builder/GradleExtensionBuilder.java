@@ -92,6 +92,7 @@ public class GradleExtensionBuilder implements GradleTypeBuilder {
                     TypeDef.parameterized(ClassTypeDef.of("org.gradle.api.Action"), specificationType)
                 ).build())
                 .addJavadoc("Create a task for " + taskConfig.extensionMethodName() + "." +
+                    "\n" + taskConfig.methodJavadoc() +
                     "\n@param name The unique identifier used to derive task names" +
                     "\n@param spec The configurable specification"
                 )

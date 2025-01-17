@@ -24,6 +24,8 @@ import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin;
 import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.GenerateGradleTask;
+import io.micronaut.sourcegen.generator.visitors.JavadocUtils;
+import io.micronaut.sourcegen.generator.visitors.JavadocUtils.TypeJavadoc;
 import io.micronaut.sourcegen.generator.visitors.PluginUtils;
 import io.micronaut.sourcegen.generator.visitors.PluginUtils.ParameterConfig;
 
@@ -79,18 +81,26 @@ public final class GradlePluginUtils {
             throw new ProcessingException(element, "Could not load source type defined in @GenerateGradleTask");
         }
 
+        TypeJavadoc javadoc = JavadocUtils.getTaskJavadoc(context, source);
         List<ParameterConfig> parameters = new ArrayList<>();
         for (PropertyElement property: source.getBeanProperties()) {
-            parameters.add(PluginUtils.getParameterConfig(property));
+            parameters.add(PluginUtils.getParameterConfig(javadoc, property));
         }
 
-        String methodName = PluginUtils.getTaskExecutableMethodName(source);
+        String namePrefix = annotation.stringValue("namePrefix").orElse(source.getSimpleName());
+        String methodName = PluginUtils.getTaskExecutable(source).getName();
+        String methodJavadoc = javadoc.elements().get(methodName + "()");
+        if (methodJavadoc == null) {
+            methodJavadoc = "Main execution of " + namePrefix + " task.";
+        }
         return new GradleTaskConfig(
             source,
             parameters,
             methodName,
-            annotation.stringValue("namePrefix").orElse(source.getSimpleName()),
-            annotation.stringValue("extensionMethodName").orElse(methodName)
+            namePrefix,
+            annotation.stringValue("extensionMethodName").orElse(methodName),
+            javadoc.javadoc().orElse(namePrefix + " Gradle task."),
+            methodJavadoc
         );
     }
 
@@ -126,11 +136,13 @@ public final class GradlePluginUtils {
      * @param extensionMethodName The method name for gradle extension
      */
     public record GradleTaskConfig (
-        ClassElement source,
-        List<ParameterConfig> parameters,
-        String methodName,
-        String namePrefix,
-        String extensionMethodName
+        @NonNull ClassElement source,
+        @NonNull List<ParameterConfig> parameters,
+        @NonNull String methodName,
+        @NonNull String namePrefix,
+        @NonNull String extensionMethodName,
+        @NonNull String taskJavadoc,
+        @NonNull String methodJavadoc
     ) {
     }
 

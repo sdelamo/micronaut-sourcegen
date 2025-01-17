@@ -66,6 +66,9 @@ public record %s(
 }
 """;
 
+    /**
+     * Generate a simple record in the supplied package and with the specified version.
+     */
     @PluginTaskExecutable
     public void generateSimpleRecord() {
         System.out.println("Generating record " + typeName);

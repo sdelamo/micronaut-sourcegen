@@ -7,5 +7,6 @@ dependencies {
     annotationProcessor(mn.micronaut.inject.java)
     annotationProcessor(projects.sourcegenGeneratorJava)
     annotationProcessor(projects.sourcegenPluginGenerator)
+
     implementation(projects.sourcegenPluginAnnotations)
 }

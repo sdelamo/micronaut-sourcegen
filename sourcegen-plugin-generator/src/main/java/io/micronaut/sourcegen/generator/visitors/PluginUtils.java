@@ -27,6 +27,7 @@ import io.micronaut.sourcegen.annotations.PluginTaskExecutable;
 import io.micronaut.sourcegen.annotations.PluginTaskParameter;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Common utility methods for plugin generation.
@@ -34,29 +35,13 @@ import java.util.List;
 @Internal
 public class PluginUtils {
 
-    public static @NonNull ParameterConfig getParameterConfig(@NonNull PropertyElement property) {
-        AnnotationValue<PluginTaskParameter> annotation = property.getAnnotation(PluginTaskParameter.class);
-        if (annotation == null) {
-            return new ParameterConfig(property, false, null, false, false, false, null);
-        }
-        return new ParameterConfig(
-            property,
-            annotation.booleanValue("required").orElse(false),
-            annotation.stringValue("defaultValue").orElse(null),
-            annotation.booleanValue("internal").orElse(false),
-            annotation.booleanValue("directory").orElse(false),
-            annotation.booleanValue("output").orElse(false),
-            annotation.stringValue("globalProperty").orElse(null)
-        );
-    }
-
     /**
      * Validate and get the method name of the task executable.
      *
      * @param source The source element annotated with {@link io.micronaut.sourcegen.annotations.PluginTask}.
      * @return The method name
      */
-    public static String getTaskExecutableMethodName(ClassElement source) {
+    public static MethodElement getTaskExecutable(ClassElement source) {
         List<MethodElement> executables = source.getMethods().stream()
             .filter(m -> m.hasAnnotation(PluginTaskExecutable.class))
             .toList();
@@ -70,7 +55,36 @@ public class PluginUtils {
         if (!executables.get(0).getReturnType().isVoid()) {
             throw new ProcessingException(source, "Expected @PluginTaskExecutable to have void return type");
         }
-        return executables.get(0).getName();
+        return executables.get(0);
+    }
+
+    /**
+     * Get configuration for a plugin parameter.
+     *
+     * @param property The property representing the parameter
+     * @return THe configuration
+     */
+    public static @NonNull ParameterConfig getParameterConfig(
+            @NonNull JavadocUtils.TypeJavadoc sourceJavadoc, @NonNull PropertyElement property
+    ) {
+        AnnotationValue<PluginTaskParameter> annotation = property.getAnnotation(PluginTaskParameter.class);
+        String javadoc = sourceJavadoc.elements().get(property.getName());
+        if (javadoc == null) {
+            javadoc = "Configurable " + property.getName() + " parameter.";
+        }
+        if (annotation == null) {
+            return new ParameterConfig(property, false, null, false, false, false, null, javadoc);
+        }
+        return new ParameterConfig(
+            property,
+            annotation.booleanValue("required").orElse(false),
+            annotation.stringValue("defaultValue").orElse(null),
+            annotation.booleanValue("internal").orElse(false),
+            annotation.booleanValue("directory").orElse(false),
+            annotation.booleanValue("output").orElse(false),
+            annotation.stringValue("globalProperty").orElse(null),
+            javadoc
+        );
     }
 
     /**
@@ -83,6 +97,7 @@ public class PluginUtils {
      * @param directory Whether it is a directory
      * @param output Whether it is an output
      * @param globalProperty A global property
+     * @param javadoc The javadoc for property
      */
     public record ParameterConfig(
         @NonNull PropertyElement source,
@@ -91,7 +106,8 @@ public class PluginUtils {
         boolean internal,
         boolean directory,
         boolean output,
-        @Nullable String globalProperty
+        @Nullable String globalProperty,
+        @NonNull String javadoc
     ) {
     }
 

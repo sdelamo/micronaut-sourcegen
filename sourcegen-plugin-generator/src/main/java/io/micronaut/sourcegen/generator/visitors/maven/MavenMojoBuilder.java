@@ -27,6 +27,7 @@ import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
 import io.micronaut.sourcegen.model.FieldDef;
 import io.micronaut.sourcegen.model.MethodDef;
+import io.micronaut.sourcegen.model.MethodDef.MethodDefBuilder;
 import io.micronaut.sourcegen.model.StatementDef;
 import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
@@ -70,6 +71,7 @@ public class MavenMojoBuilder {
             .build()
         );
         builder.addMethod(createExecuteMethod(taskConfig));
+        builder.addJavadoc(taskConfig.taskJavadoc());
 
         return builder.build();
     }
@@ -80,6 +82,7 @@ public class MavenMojoBuilder {
                 .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                 .returns(TypeDef.of(parameter.source().getType()))
                 .addModifiers(Modifier.PROTECTED, Modifier.ABSTRACT)
+                .addJavadoc(parameter.javadoc())
                 .build()
             );
         } else {
@@ -98,6 +101,7 @@ public class MavenMojoBuilder {
                 .ofType(TypeDef.of(parameter.source().getType()))
                 .addModifiers(Modifier.PROTECTED)
                 .addAnnotation(ann.build())
+                .addJavadoc(parameter.javadoc())
                 .build();
             builder.addField(field);
         }
@@ -107,6 +111,7 @@ public class MavenMojoBuilder {
         return MethodDef.builder("execute")
             .overrides()
             .addModifiers(Modifier.PUBLIC)
+            .addJavadoc(taskConfig.methodJavadoc())
             .build((t, params) -> {
                 StatementDef isEnabled = t.invoke("isEnabled", TypeDef.of(boolean.class))
                     .ifFalse(StatementDef.multi(

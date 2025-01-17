@@ -60,7 +60,9 @@ public class GradleSpecificationBuilder implements GradleTypeBuilder {
 
     private ObjectDef buildForTask(String packageName, GradleTaskConfig taskConfig) {
         InterfaceDefBuilder builder = InterfaceDef.builder(packageName + "." + taskConfig.namePrefix() + SPECIFICATION_NAME_SUFFIX)
-            .addModifiers(Modifier.PUBLIC);
+            .addModifiers(Modifier.PUBLIC)
+            .addJavadoc("Specification that is used for configuring " + taskConfig.namePrefix() + " task.\n" +
+                taskConfig.taskJavadoc());
         for (ParameterConfig parameter: taskConfig.parameters()) {
             if (parameter.internal()) {
                 continue;
@@ -68,6 +70,7 @@ public class GradleSpecificationBuilder implements GradleTypeBuilder {
             MethodDefBuilder propBuilder = MethodDef
                 .builder("get" + NameUtils.capitalize(parameter.source().getName()))
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+                .addJavadoc(parameter.javadoc())
                 .returns(createGradleProperty(parameter));
             builder.addMethod(propBuilder.build());
         }

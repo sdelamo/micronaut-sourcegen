@@ -18,11 +18,14 @@ package io.micronaut.sourcegen.generator.visitors.maven;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.annotations.GenerateMavenMojo;
+import io.micronaut.sourcegen.generator.visitors.JavadocUtils;
+import io.micronaut.sourcegen.generator.visitors.JavadocUtils.TypeJavadoc;
 import io.micronaut.sourcegen.generator.visitors.PluginUtils;
 import io.micronaut.sourcegen.generator.visitors.PluginUtils.ParameterConfig;
 
@@ -84,20 +87,28 @@ public final class MavenPluginUtils {
             throw new ProcessingException(element, "Could not load source type defined in @GenerateMavenMojo");
         }
 
+        TypeJavadoc javadoc = JavadocUtils.getTaskJavadoc(context, source);
         List<ParameterConfig> parameters = new ArrayList<>();
         for (PropertyElement property: source.getBeanProperties()) {
-            parameters.add(PluginUtils.getParameterConfig(property));
+            parameters.add(PluginUtils.getParameterConfig(javadoc, property));
         }
 
         String namePrefix = annotation.stringValue("namePrefix").orElse(element.getSimpleName());
+        String methodName = PluginUtils.getTaskExecutable(source).getName();
+        String methodJavadoc = javadoc.elements().get(methodName + "()");
+        if (methodJavadoc == null) {
+            methodJavadoc = "Main execution of " + namePrefix + " Mojo.";
+        }
         return new MavenTaskConfig(
             source,
             parameters,
-            PluginUtils.getTaskExecutableMethodName(source),
+            methodName,
             element.getPackageName(),
             namePrefix,
             annotation.booleanValue("micronautPlugin").orElse(true),
-            annotation.stringValue("mavenPropertyPrefix").orElse(toDotSeparated(namePrefix))
+            annotation.stringValue("mavenPropertyPrefix").orElse(toDotSeparated(namePrefix)),
+            javadoc.javadoc().orElse(namePrefix + " Maven Mojo."),
+            methodJavadoc
         );
     }
 
@@ -115,11 +126,13 @@ public final class MavenPluginUtils {
     public record MavenTaskConfig(
         ClassElement source,
         List<ParameterConfig> parameters,
-        String methodName,
-        String packageName,
-        String namePrefix,
+        @NonNull String methodName,
+        @NonNull String packageName,
+        @NonNull String namePrefix,
         boolean micronautPlugin,
-        String mavenPropertyPrefix
+        @Nullable String mavenPropertyPrefix,
+        @NonNull String taskJavadoc,
+        @NonNull String methodJavadoc
     ) {
     }
 
