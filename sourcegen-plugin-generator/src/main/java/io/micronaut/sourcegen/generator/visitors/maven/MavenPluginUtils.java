@@ -84,7 +84,8 @@ public final class MavenPluginUtils {
         ClassElement source = annotation.stringValue("source")
             .flatMap(context::getClassElement).orElse(null);
         if (source == null) {
-            throw new ProcessingException(element, "Could not load source type defined in @GenerateMavenMojo");
+            throw new ProcessingException(element, "Could not load source type defined in @GenerateMavenMojo: "
+                + annotation.stringValue("source"));
         }
 
         TypeJavadoc javadoc = JavadocUtils.getTaskJavadoc(context, source);

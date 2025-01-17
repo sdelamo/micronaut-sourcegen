@@ -205,7 +205,7 @@ public class GradleExtensionBuilder implements GradleTypeBuilder {
         ClassTypeDef taskType = ClassTypeDef.of(pluginConfig.packageName() + "." + taskConfig.namePrefix() + TASK_SUFFIX);
         TypeDef taskProviderType = TypeDef.parameterized(ClassTypeDef.of("org.gradle.api.tasks.TaskProvider"), TypeDef.wildcardSubtypeOf(taskType));
         TypeDef taskContainerType = TypeDef.of("org.gradle.api.tasks.TaskContainer");
-        TypeDef pluginConfiguratorType = ClassTypeDef.of(taskConfig.namePrefix() + TASK_CONFIGURATOR_SUFFIX);
+        TypeDef pluginConfiguratorType = TypeDef.parameterized(ClassTypeDef.of("org.gradle.api.Action"), taskType);
 
         return MethodDef.builder("create" + taskConfig.namePrefix() + "Task")
             .returns(taskProviderType)

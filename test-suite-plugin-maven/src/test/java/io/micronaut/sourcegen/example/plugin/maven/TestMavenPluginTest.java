@@ -30,4 +30,16 @@ public class TestMavenPluginTest extends AbstractMavenPluginTest {
             """);
     }
 
+    @Test
+    void generateSimpleResource() throws Exception {
+        File pom = new File("src/test/resources/test-resource-pom.xml");
+
+        GenerateSimpleResourceMojo mojo = (GenerateSimpleResourceMojo) findConfiguredMojo("generateSimpleResource", pom);
+        mojo.execute();
+
+        File generated = file("META-INF/hello.txt");
+        assertTrue(generated.exists());
+        assertEquals(content(generated), "Hello!");
+    }
+
 }

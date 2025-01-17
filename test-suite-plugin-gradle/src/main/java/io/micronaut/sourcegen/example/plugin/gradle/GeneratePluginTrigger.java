@@ -33,6 +33,11 @@ import io.micronaut.sourcegen.annotations.GenerateGradlePlugin.Type;
             namePrefix = "GenerateSimpleRecord",
             extensionMethodName = "generateSimpleRecord",
             source = "io.micronaut.sourcegen.example.plugin.GenerateSimpleRecordTask"
+        ),
+        @GenerateGradleTask(
+            namePrefix = "GenerateSimpleResource",
+            extensionMethodName = "generateSimpleResource",
+            source = "io.micronaut.sourcegen.example.plugin.GenerateSimpleResourceTask"
         )
     }
 )

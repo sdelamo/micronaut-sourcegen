@@ -78,7 +78,8 @@ public final class GradlePluginUtils {
         ClassElement source = annotation.stringValue("source")
             .flatMap(context::getClassElement).orElse(null);
         if (source == null) {
-            throw new ProcessingException(element, "Could not load source type defined in @GenerateGradleTask");
+            throw new ProcessingException(element, "Could not load source type defined in @GenerateGradleTask: "
+                + annotation.stringValue("source"));
         }
 
         TypeJavadoc javadoc = JavadocUtils.getTaskJavadoc(context, source);

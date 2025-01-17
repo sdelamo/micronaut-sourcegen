@@ -68,6 +68,7 @@ public record %s(
 
     /**
      * Generate a simple record in the supplied package and with the specified version.
+     * This javadoc will be copied to the respected plugin implementations.
      */
     @PluginTaskExecutable
     public void generateSimpleRecord() {

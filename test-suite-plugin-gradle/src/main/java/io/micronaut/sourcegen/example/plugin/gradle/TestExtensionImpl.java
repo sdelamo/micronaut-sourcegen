@@ -52,6 +52,20 @@ public abstract class TestExtensionImpl extends DefaultTestExtension {
     }
 
     /**
+     * This is another example of a utility method.
+     *
+     * @param name The task name
+     * @param fileName The file name
+     * @param content The content
+     */
+    public void generateResource(String name, String fileName, String content) {
+        super.generateSimpleResource(name, spec -> {
+            spec.getFileName().set(fileName);
+            spec.getContent().set(content);
+        });
+    }
+
+    /**
      * Overriding a method to make sure that output directory has a correct default value.
      * We are also adding to source sets here.
      *
@@ -61,9 +75,9 @@ public abstract class TestExtensionImpl extends DefaultTestExtension {
      */
     @Override
     TaskProvider<? extends GenerateSimpleRecordTask> createGenerateSimpleRecordTask(
-            String name, GenerateSimpleRecordTaskConfigurator configurator
+            String name, Action<GenerateSimpleRecordTask> configurator
     ) {
-        TaskProvider<GenerateSimpleRecordTask> task = project.getTasks().register(name, GenerateSimpleRecordTask.class, t -> {
+        TaskProvider<? extends GenerateSimpleRecordTask> task = super.createGenerateSimpleRecordTask(name, t -> {
             configurator.execute(t);
             t.getOutputFolder().convention(
                 project.getLayout().getBuildDirectory().dir("generated/" + t.getName())
@@ -72,6 +86,31 @@ public abstract class TestExtensionImpl extends DefaultTestExtension {
         withJavaSourceSets(sourceSets -> {
             var javaMain = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).getJava();
             javaMain.srcDir(task.map(t -> t.getOutputFolder().dir("src/main/java")));
+        });
+        return task;
+    }
+
+    /**
+     * Overriding a method to make sure that output directory has a correct default value.
+     * We are also adding to resource sets here.
+     *
+     * @param name The task name
+     * @param configurator The configurator action
+     * @return The task
+     */
+    @Override
+    TaskProvider<? extends GenerateSimpleResourceTask> createGenerateSimpleResourceTask(
+        String name, Action<GenerateSimpleResourceTask> configurator
+    ) {
+        TaskProvider<? extends GenerateSimpleResourceTask> task = super.createGenerateSimpleResourceTask(name, t -> {
+            configurator.execute(t);
+            t.getOutputFolder().convention(
+                project.getLayout().getBuildDirectory().dir("generated/" + t.getName())
+            );
+        });
+        withJavaSourceSets(sourceSets -> {
+            var resources = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).getResources();
+            resources.srcDir(task.map(GenerateSimpleResourceTask::getOutputFolder));
         });
         return task;
     }

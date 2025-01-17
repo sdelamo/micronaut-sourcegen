@@ -5,6 +5,8 @@ import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,6 +28,7 @@ class TestPluginTest extends AbstractPluginTest {
                 spec.getProperties().put("title", "java.lang.String")
                 spec.getProperties().put("age", "java.lang.Integer")
             })
+            generateResource("generateHello", "META-INF/hello.txt", "Hello!");
         }
 
         repositories {
@@ -39,7 +42,6 @@ class TestPluginTest extends AbstractPluginTest {
 
         var result = configureRunner(":build").build();
 
-        System.out.println("Tasks: " + result.getTasks().stream().map(BuildTask::getPath).toList());
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateMyRecord").getOutcome());
         assertEquals(TaskOutcome.SUCCESS, result.task(":compileJava").getOutcome());
 
@@ -60,6 +62,42 @@ class TestPluginTest extends AbstractPluginTest {
             """);
 
         assertTrue(file("build/classes/java/main/io/micronaut/test/MyRecord.class").exists());
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateHello").getOutcome());
+        File generatedResource = file("build/generated/generateHello/META-INF/hello.txt");
+        assertTrue(generatedResource.exists());
+        assertEquals("Hello!", content(generatedResource));
+    }
+
+    @Test
+    void generateSimpleResource() {
+        settingsFile("rootProject.name = 'test-project'");
+        buildFile("""
+        plugins {
+            id "io.micronaut.sourcegen.test"
+            id "java"
+        }
+
+        test {
+            generateResource("generateHello", "META-INF/hello.txt", "Hello!");
+        }
+
+        repositories {
+            mavenLocal()
+            mavenCentral()
+        }
+
+        dependencies {
+        }
+        """);
+
+        var result = configureRunner(":generateHello").build();
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateHello").getOutcome());
+
+        File generatedResource = file("build/generated/generateHello/META-INF/hello.txt");
+        assertTrue(generatedResource.exists());
+        assertEquals("Hello!", content(generatedResource));
     }
 
     @Test
