@@ -1,0 +1,14 @@
+<component-set>
+    <components>
+        <component>
+            <role>org.apache.maven.plugin.Mojo</role>
+            <role-hint>io.micronaut.test:test:1.0.0:generateSimpleRecord</role-hint>
+            <implementation>io.micronaut.sourcegen.example.plugin.maven.GenerateSimpleRecordMojo</implementation>
+        </component>
+        <component>
+            <role>org.apache.maven.plugin.Mojo</role>
+            <role-hint>io.micronaut.test:test:1.0.0:generateSimpleResource</role-hint>
+            <implementation>io.micronaut.sourcegen.example.plugin.maven.GenerateSimpleResourceMojo</implementation>
+        </component>
+    </components>
+</component-set>

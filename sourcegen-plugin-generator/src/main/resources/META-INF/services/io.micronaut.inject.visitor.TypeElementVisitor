@@ -1,0 +1,3 @@
+io.micronaut.sourcegen.generator.visitors.PluginTaskConfigValidatingVisitor
+io.micronaut.sourcegen.generator.visitors.gradle.GradlePluginGenerationTriggerAnnotationVisitor
+io.micronaut.sourcegen.generator.visitors.maven.MavenMojoGenerationTriggerAnnotationVisitor

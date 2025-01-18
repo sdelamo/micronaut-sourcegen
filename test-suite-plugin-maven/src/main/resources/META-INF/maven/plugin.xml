@@ -1,0 +1,20 @@
+<plugin>
+    <groupId>io.micronaut.test</groupId>
+    <artifactId>test</artifactId>
+    <version>1.0.0</version>
+
+    <mojos>
+        <mojo>
+            <goal>generateSimpleRecord</goal>
+            <implementation>io.micronaut.sourcegen.example.plugin.maven.GenerateSimpleRecordMojo</implementation>
+            <phase>generate-sources</phase>
+            <requiresProject>false</requiresProject>
+        </mojo>
+        <mojo>
+            <goal>generateSimpleResource</goal>
+            <implementation>io.micronaut.sourcegen.example.plugin.maven.GenerateSimpleResourceMojo</implementation>
+            <phase>generate-sources</phase>
+            <requiresProject>false</requiresProject>
+        </mojo>
+    </mojos>
+</plugin>

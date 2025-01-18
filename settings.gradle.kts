@@ -21,6 +21,8 @@ include("sourcegen-generator-kotlin")
 include("sourcegen-generator-bytecode")
 include("sourcegen-bytecode-writer")
 include("sourcegen-bom")
+include("sourcegen-plugin-annotations")
+include("sourcegen-plugin-generator")
 
 include("test-suite-java")
 include("test-suite-bytecode")
@@ -28,6 +30,9 @@ include("test-suite-bytecode")
 include("test-suite-kotlin")
 include("test-suite-custom-annotations")
 include("test-suite-custom-generators")
+include("test-suite-plugin-common")
+include("test-suite-plugin-gradle")
+include("test-suite-plugin-maven")
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
